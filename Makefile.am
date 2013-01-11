@@ -4011,7 +4011,8 @@ endif
 SYSTEM_UNIT_ALIASES += \
 	graphical.target default.target \
 	reboot.target ctrl-alt-del.target \
-	getty@.service autovt@.service
+	getty@.service autovt@.service \
+	rescue.service single.service
 
 USER_UNIT_ALIASES += \
 	$(systemunitdir)/shutdown.target shutdown.target \
