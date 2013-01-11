@@ -362,6 +362,11 @@ static int sysv_translate_facility(const char *name, const char *filename, char 
                 "null",                 NULL,
                 "mail-transport-agent", SPECIAL_MAIL_TRANSFER_AGENT_TARGET,
                 "smtp",                 SPECIAL_MAIL_TRANSFER_AGENT_TARGET,
+
+                /* re-added these for F18 */
+                "MTA",                  SPECIAL_MAIL_TRANSFER_AGENT_TARGET,
+                "smtpdaemon",           SPECIAL_MAIL_TRANSFER_AGENT_TARGET,
+                "httpd",                SPECIAL_HTTP_DAEMON_TARGET,
         };
 
         unsigned i;

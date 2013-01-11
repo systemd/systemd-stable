@@ -63,6 +63,7 @@
                 <filename>graphical.target</filename>,
                 <filename>halt.target</filename>,
                 <filename>hibernate.target</filename>,
+                <filename>http-daemon.target</filename>,
                 <filename>hybrid-sleep.target</filename>,
                 <filename>initrd-fs.target</filename>,
                 <filename>kbrequest.target</filename>,

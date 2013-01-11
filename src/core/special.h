@@ -91,6 +91,7 @@
  * of a kind. .target units can be used to support multiple
  * implementations that can run side-by-side.
  */
+#define SPECIAL_HTTP_DAEMON_TARGET "http-daemon.target"
 
 /* Magic early boot services */
 #define SPECIAL_FSCK_SERVICE "systemd-fsck@.service"
