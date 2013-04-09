@@ -895,6 +895,11 @@ static int list_dependencies(DBusConnection *bus, char **args) {
         return list_dependencies_one(bus, u, 0, NULL, 0);
 }
 
+static int dot(DBusConnection *bus, char **args) {
+        log_info("The 'systemctl dot' command has been removed. Use 'systemd-analyze dot' instead.");
+        return 0;
+}
+
 static int list_jobs(DBusConnection *bus, char **args) {
         _cleanup_dbus_message_unref_ DBusMessage *reply = NULL;
         DBusMessageIter iter, sub, sub2;
@@ -5202,6 +5207,7 @@ static int systemctl_main(DBusConnection *bus, int argc, char *argv[], DBusError
                 { "status",                MORE,  1, show              },
                 { "help",                  MORE,  2, show              },
                 { "dump",                  EQUAL, 1, dump              },
+                { "dot",                   EQUAL, 1, dot               },
                 { "snapshot",              LESS,  2, snapshot          },
                 { "delete",                MORE,  2, delete_snapshot   },
                 { "daemon-reload",         EQUAL, 1, daemon_reload     },
