@@ -355,6 +355,13 @@ static int sysv_translate_facility(const char *name, const char *filename, char 
                 "remote_fs",            SPECIAL_REMOTE_FS_TARGET,
                 "syslog",               NULL,
                 "time",                 SPECIAL_TIME_SYNC_TARGET,
+
+                /* common extensions */
+                "mail-transfer-agent",  SPECIAL_MAIL_TRANSFER_AGENT_TARGET,
+                "x-display-manager",    SPECIAL_DISPLAY_MANAGER_SERVICE,
+                "null",                 NULL,
+                "mail-transport-agent", SPECIAL_MAIL_TRANSFER_AGENT_TARGET,
+                "smtp",                 SPECIAL_MAIL_TRANSFER_AGENT_TARGET,
         };
 
         unsigned i;
@@ -805,6 +812,7 @@ static int service_load_sysv_path(Service *s, const char *path) {
                                         }
 
                                         r = sysv_translate_facility(n, path_get_file_name(path), &m);
+
                                         if (r < 0) {
                                                 log_error_unit(u->id,
                                                                "[%s:%u] Failed to translate LSB dependency %s, ignoring: %s",
