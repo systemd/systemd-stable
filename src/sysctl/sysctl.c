@@ -306,7 +306,9 @@ int main(int argc, char *argv[]) {
 
                 r = parse_file(sysctl_options, "/etc/sysctl.conf", true);
 
-                STRV_FOREACH(f, files) {
+                /* F18: iterate backwards to preserve v197's behaviour */
+                f = files + strv_length(files) - 1;
+                STRV_FOREACH_BACKWARDS(f, files) {
                         k = parse_file(sysctl_options, *f, true);
                         if (k < 0 && r == 0)
                                 r = k;
