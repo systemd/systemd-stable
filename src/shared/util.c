@@ -2265,7 +2265,7 @@ ssize_t loop_write(int fd, const void *buf, size_t nbytes, bool do_poll) {
 int parse_bytes(const char *t, off_t *bytes) {
         static const struct {
                 const char *suffix;
-                off_t factor;
+                unsigned long long factor;
         } table[] = {
                 { "B", 1 },
                 { "K", 1024ULL },
@@ -2278,7 +2278,7 @@ int parse_bytes(const char *t, off_t *bytes) {
         };
 
         const char *p;
-        off_t r = 0;
+        unsigned long long r = 0;
 
         assert(t);
         assert(bytes);
@@ -2305,7 +2305,17 @@ int parse_bytes(const char *t, off_t *bytes) {
 
                 for (i = 0; i < ELEMENTSOF(table); i++)
                         if (startswith(e, table[i].suffix)) {
-                                r += (off_t) l * table[i].factor;
+                                unsigned long long tmp;
+                                if ((unsigned long long) l > ULLONG_MAX / table[i].factor)
+                                        return -ERANGE;
+                                tmp = l * table[i].factor;
+                                if (tmp > ULLONG_MAX - r)
+                                        return -ERANGE;
+
+                                r += tmp;
+                                if ((unsigned long long) (off_t) r != r)
+                                        return -ERANGE;
+
                                 p = e + strlen(table[i].suffix);
                                 break;
                         }
@@ -2313,7 +2323,7 @@ int parse_bytes(const char *t, off_t *bytes) {
                 if (i >= ELEMENTSOF(table))
                         return -EINVAL;
 
-        } while (*p != 0);
+        } while (*p);
 
         *bytes = r;
 
