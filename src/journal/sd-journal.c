@@ -101,7 +101,8 @@ static void init_location(Location *l, LocationType type, JournalFile *f, Object
         l->seqnum_set = l->realtime_set = l->monotonic_set = l->xor_hash_set = true;
 }
 
-static void set_location(sd_journal *j, LocationType type, JournalFile *f, Object *o, uint64_t offset) {
+static void set_location(sd_journal *j, LocationType type, JournalFile *f, Object *o,
+                         direction_t direction, uint64_t offset) {
         assert(j);
         assert(type == LOCATION_DISCRETE || type == LOCATION_SEEK);
         assert(f);
@@ -112,6 +113,7 @@ static void set_location(sd_journal *j, LocationType type, JournalFile *f, Objec
         j->current_file = f;
         j->current_field = 0;
 
+        f->last_direction = direction;
         f->current_offset = offset;
 }
 
@@ -797,7 +799,7 @@ static int next_beyond_location(sd_journal *j, JournalFile *f, direction_t direc
         assert(j);
         assert(f);
 
-        if (f->current_offset > 0) {
+        if (f->last_direction == direction && f->current_offset > 0) {
                 cp = f->current_offset;
 
                 r = journal_file_move_to_object(f, OBJECT_ENTRY, cp, &c);
@@ -894,7 +896,7 @@ static int real_journal_next(sd_journal *j, direction_t direction) {
         if (r < 0)
                 return r;
 
-        set_location(j, LOCATION_DISCRETE, new_file, o, new_offset);
+        set_location(j, LOCATION_DISCRETE, new_file, o, direction, new_offset);
 
         return 1;
 }
