@@ -282,7 +282,7 @@ static JournalFile* find_journal(Server *s, uid_t uid) {
                 journal_file_close(f);
         }
 
-        r = journal_file_open_reliably(p, O_RDWR|O_CREAT, 0640, s->compress, s->seal, &s->system_metrics, s->mmap, s->system_journal, &f);
+        r = journal_file_open_reliably(p, O_RDWR|O_CREAT, 0640, s->compress, s->seal, &s->system_metrics, s->mmap, NULL, &f);
         free(p);
 
         if (r < 0)
