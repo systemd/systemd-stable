@@ -328,6 +328,7 @@ _outputmodes() {
 {
   local -a _systemctl_cmds
   _systemctl_cmds=(
+    "list-sockets:List sockets"
     "list-units:List units"
     "start:Start (activate) one or more units"
     "stop:Stop (deactivate) one or more units"
