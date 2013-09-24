@@ -103,8 +103,8 @@
                 system itself or are accessible user journals.</para>
 
                 <para>All users are granted access to their private
-                per-user journals. However, by default only root and
-                users who are members of the <literal>adm</literal>
+                per-user journals. However, by default, only root and
+                users who are members of the <literal>systemd-journal</literal>
                 group get access to the system journal and the
                 journals of other users.</para>
         </refsect1>
