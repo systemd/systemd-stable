@@ -40,7 +40,7 @@
 #include "label.h"
 
 #define SMACK_CONFIG "/etc/smack/accesses.d/"
-#define CIPSO_CONFIG "/etc/smack/cipso/"
+#define CIPSO_CONFIG "/etc/smack/cipso.d/"
 
 static int write_rules(const char* dstpath, const char* srcdir) {
         _cleanup_fclose_ FILE *dst = NULL;
