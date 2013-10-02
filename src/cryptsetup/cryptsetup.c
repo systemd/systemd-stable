@@ -70,7 +70,7 @@ static int parse_one_option(const char *option) {
 
                 t = strdup(option+7);
                 if (!t)
-                        return -ENOMEM;
+                        return log_oom();
 
                 free(opt_cipher);
                 opt_cipher = t;
@@ -101,7 +101,7 @@ static int parse_one_option(const char *option) {
 
                 t = strdup(option+5);
                 if (!t)
-                        return -ENOMEM;
+                        return log_oom();
 
                 free(opt_hash);
                 opt_hash = t;
