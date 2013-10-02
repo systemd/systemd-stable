@@ -1248,6 +1248,135 @@
         </refsect1>
 
         <refsect1>
+                <title>Environment variables in spawned processes</title>
+
+                <para>Processes started by the system are executed in
+                a clean environment in which select variables
+                listed below are set. System processes started by systemd
+                do not inherit variables from PID 1, but processes
+                started by user systemd instances inherit all
+                environment variables from the user systemd instance.
+                </para>
+
+                <variablelist class='environment-variables'>
+                        <varlistentry>
+                                <term><varname>$PATH</varname></term>
+
+                                <listitem><para>Colon-separated list
+                                of directiories to use when launching
+                                executables. Systemd uses a fixed
+                                value of
+                                <filename>/usr/local/sbin</filename>:<filename>/usr/local/bin</filename>:<filename>/usr/sbin</filename>:<filename>/usr/bin</filename>:<filename>/sbin</filename>:<filename>/bin</filename>.
+                                </para></listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                                <term><varname>$LANG</varname></term>
+
+                                <listitem><para>Locale. Can be set in
+                                <citerefentry><refentrytitle>locale.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+                                or on the kernel command line (see
+                                <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+                                and
+                                <citerefentry><refentrytitle>kernel-command-line</refentrytitle><manvolnum>7</manvolnum></citerefentry>).
+                                </para></listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                                <term><varname>$USER</varname></term>
+                                <term><varname>$LOGNAME</varname></term>
+                                <term><varname>$HOME</varname></term>
+                                <term><varname>$SHELL</varname></term>
+
+                                <listitem><para>User name (twice), home
+                                directory, and the login shell.
+                                Set for the units which
+                                have <varname>User=</varname> set,
+                                which includes user
+                                <command>systemd</command> instances.
+                                See
+                                <citerefentry><refentrytitle>passwd</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
+                                </para></listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                                <term><varname>$XDG_RUNTIME_DIR</varname></term>
+
+                                <listitem><para>The directory for volatile
+                                state. Set for the user <command>systemd</command>
+                                instance, and also in user sessions.
+                                See
+                                <citerefentry><refentrytitle>pam_systemd</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+                                </para></listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                                <term><varname>$XDG_SESSION_ID</varname></term>
+                                <term><varname>$XDG_SEAT</varname></term>
+                                <term><varname>$XDG_VTNR</varname></term>
+
+                                <listitem><para>The identifier of the
+                                session, and the seat name, and
+                                virtual terminal of the session. Set
+                                by
+                                <citerefentry><refentrytitle>pam_systemd</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+                                for login sessions.
+                                <varname>$XDG_SEAT</varname> and
+                                <varname>$XDG_VTNR</varname> will be
+                                only set when attached to a seat and a
+                                tty.</para></listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                                <term><varname>$MANAGERPID</varname></term>
+
+                                <listitem><para>The PID of the user
+                                <command>systemd</command> instance,
+                                set for processes spawned by it.
+                                </para></listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                                <term><varname>$LISTEN_FDS</varname></term>
+                                <term><varname>$LISTEN_PID</varname></term>
+
+                                <listitem><para>Information about file
+                                descriptors passed to a service for
+                                socket activation.  See
+                                <citerefentry><refentrytitle>sd_listen_fds</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
+                                </para></listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                                <term><varname>$TERM</varname></term>
+
+                                <listitem><para>Terminal type, set
+                                only for units connected to a terminal
+                                (<varname>StandardInput=tty</varname>,
+                                <varname>StandardOutput=tty</varname>,
+                                or
+                                <varname>StandardError=tty</varname>).
+                                See
+                                <citerefentry><refentrytitle>termcap</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
+                                </para></listitem>
+                        </varlistentry>
+                </variablelist>
+
+                <para>Additional variables may be configured by the
+                following means: for processes spawned in specific
+                units, use the <varname>Environment=</varname> and
+                <varname>EnvironmentFile=</varname> options above; to
+                specify variables globally, use
+                <varname>DefaultEnvironment=</varname> (see
+                <citerefentry><refentrytitle>systemd-system.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>)
+                or the kernel option
+                <varname>systemd.setenv=</varname> (see
+                <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>). Additional
+                variables may also be set through PAM,
+                c.f. <citerefentry><refentrytitle>pam_env</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+        </refsect1>
+
+        <refsect1>
                   <title>See Also</title>
                   <para>
                           <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
