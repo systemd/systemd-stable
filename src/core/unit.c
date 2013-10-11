@@ -2964,6 +2964,9 @@ int unit_remove_drop_in(Unit *u, bool runtime, const char *name) {
         assert(u);
 
         r = drop_in_file(u, runtime, name, &p, &q);
+        if (r < 0)
+                return r;
+
         if (unlink(q) < 0)
                 r = -errno;
         else
