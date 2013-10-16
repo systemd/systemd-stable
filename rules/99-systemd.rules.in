@@ -54,7 +54,7 @@ SUBSYSTEM=="net", KERNEL!="lo", RUN+="@rootlibexecdir@/systemd-sysctl --prefix=/
 # Asynchronously mount file systems implemented by these modules as
 # soon as they are loaded.
 
-SUBSYSTEM=="module", KERNEL=="fuse", ACTION=="add", TAG+="systemd", ENV{SYSTEMD_WANTS}+="sys-fs-fuse-connections.mount"
-SUBSYSTEM=="module", KERNEL=="configfs", ACTION=="add", TAG+="systemd", ENV{SYSTEMD_WANTS}+="sys-kernel-config.mount"
+SUBSYSTEM=="module", KERNEL=="fuse", TAG+="systemd", ENV{SYSTEMD_WANTS}+="sys-fs-fuse-connections.mount"
+SUBSYSTEM=="module", KERNEL=="configfs", TAG+="systemd", ENV{SYSTEMD_WANTS}+="sys-kernel-config.mount"
 
 LABEL="systemd_end"
