@@ -301,6 +301,7 @@ _systemd_analyze_command(){
         'critical-chain:Print a tree of the time critical chain of units'
         'plot:Output SVG graphic showing service initialization'
         'dot:Dump dependency graph (in dot(1) format)'
+        'dump:Dump server status'
     )
 
     if (( CURRENT == 1 )); then
@@ -362,7 +363,6 @@ _outputmodes() {
     "is-enabled:Check whether unit files are enabled"
     "list-jobs:List jobs"
     "cancel:Cancel all, one, or more jobs"
-    "dump:Dump server status"
     "snapshot:Create a snapshot"
     "delete:Remove one or more snapshots"
     "show-environment:Dump environment"
@@ -588,7 +588,7 @@ done
 (( $+functions[_systemctl_link] )) || _systemctl_link() { _files }
 
 # no systemctl completion for:
-#    [STANDALONE]='daemon-reexec daemon-reload default dump
+#    [STANDALONE]='daemon-reexec daemon-reload default
 #                  emergency exit halt kexec list-jobs list-units
 #                  list-unit-files poweroff reboot rescue show-environment'
 #         [NAME]='snapshot load'
