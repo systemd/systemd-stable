@@ -306,13 +306,15 @@ int main(int argc, char *argv[]) {
                         goto finish;
                 }
 
-                r = parse_file(sysctl_options, "/etc/sysctl.conf", true);
-
                 STRV_FOREACH(f, files) {
                         k = parse_file(sysctl_options, *f, true);
                         if (k < 0 && r == 0)
                                 r = k;
                 }
+
+                k = parse_file(sysctl_options, "/etc/sysctl.conf", true);
+		if (k < 0 && r == 0)
+			r = k;
         }
 
         k = apply_all(sysctl_options);
