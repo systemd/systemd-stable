@@ -1329,7 +1329,7 @@ static int list_jobs(DBusConnection *bus, char **args) {
         }
         free(jobs);
 
-        return 0;
+        return r;
 }
 
 static int load_unit(DBusConnection *bus, char **args) {
