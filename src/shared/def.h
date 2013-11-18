@@ -33,3 +33,16 @@
 
 #define SIGNALS_CRASH_HANDLER SIGSEGV,SIGILL,SIGFPE,SIGBUS,SIGQUIT,SIGABRT
 #define SIGNALS_IGNORE SIGKILL,SIGPIPE
+
+#ifdef HAVE_SPLIT_USR
+#define KBD_KEYMAP_DIRS                         \
+        "/usr/share/keymaps/\0"                 \
+        "/usr/share/kbd/keymaps/\0"             \
+        "/usr/lib/kbd/keymaps/\0"               \
+        "/lib/kbd/keymaps/\0"
+#else
+#define KBD_KEYMAP_DIRS                         \
+        "/usr/share/keymaps/\0"                 \
+        "/usr/share/kbd/keymaps/\0"             \
+        "/usr/lib/kbd/keymaps/\0"
+#endif
