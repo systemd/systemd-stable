@@ -1868,6 +1868,9 @@ void manager_send_unit_plymouth(Manager *m, Unit *u) {
         if (m->running_as != SYSTEMD_SYSTEM)
                 return;
 
+        if (detect_container(NULL) > 0)
+                return;
+
         if (u->type != UNIT_SERVICE &&
             u->type != UNIT_MOUNT &&
             u->type != UNIT_SWAP)
