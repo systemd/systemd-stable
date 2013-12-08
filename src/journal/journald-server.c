@@ -615,6 +615,9 @@ static void dispatch_message_real(
                                 IOVEC_SET_STRING(iovec[n++], unit);
 
                         free(c);
+                } else if (unit_id) {
+                        x = strappenda("_SYSTEMD_UNIT=", unit_id);
+                        IOVEC_SET_STRING(iovec[n++], x);
                 }
 
 #ifdef HAVE_SELINUX
