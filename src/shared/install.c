@@ -1035,6 +1035,7 @@ static int unit_file_search(
 
         char **p;
         int r;
+        _cleanup_free_ char *template = NULL;
 
         assert(c);
         assert(info);
@@ -1045,62 +1046,42 @@ static int unit_file_search(
 
         assert(info->name);
 
+        template = unit_name_template(info->name);
+        if (!template)
+                return -ENOMEM;
+
         STRV_FOREACH(p, paths->unit_path) {
-                char *path = NULL;
+                _cleanup_free_ char *path = NULL;
 
                 if (isempty(root_dir))
                         asprintf(&path, "%s/%s", *p, info->name);
                 else
                         asprintf(&path, "%s/%s/%s", root_dir, *p, info->name);
-
                 if (!path)
                         return -ENOMEM;
 
                 r = unit_file_load(c, info, path, allow_symlink);
-
-                if (r >= 0)
+                if (r >= 0) {
                         info->path = path;
-                else {
+                        path = NULL;
+                } else {
                         if (r == -ENOENT && unit_name_is_instance(info->name)) {
                                 /* Unit file doesn't exist, however instance enablement was requested.
                                  * We will check if it is possible to load template unit file. */
-                                char *template = NULL,
-                                     *template_path = NULL,
-                                     *template_dir = NULL;
-
-                                template = unit_name_template(info->name);
-                                if (!template) {
-                                        free(path);
-                                        return -ENOMEM;
-                                }
+                                char *template_path;
 
                                 /* We will reuse path variable since we don't need it anymore. */
-                                template_dir = path;
                                 *(strrchr(path, '/') + 1) = '\0';
 
-                                template_path = strjoin(template_dir, template, NULL);
-                                if (!template_path) {
-                                        free(path);
-                                        free(template);
+                                template_path = strappend(path, template);
+                                if (!template_path)
                                         return -ENOMEM;
-                                }
 
                                 /* Let's try to load template unit. */
                                 r = unit_file_load(c, info, template_path, allow_symlink);
-                                if (r >= 0) {
-                                        info->path = strdup(template_path);
-                                        if (!info->path) {
-                                                free(path);
-                                                free(template);
-                                                free(template_path);
-                                                return -ENOMEM;
-                                        }
-                                }
-
-                                free(template);
-                                free(template_path);
+                                if (r >= 0)
+                                        info->path = template_path;
                         }
-                        free(path);
                 }
 
                 if (r != -ENOENT && r != -ELOOP)

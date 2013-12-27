@@ -4394,7 +4394,7 @@ static int enable_unit(DBusConnection *bus, char **args) {
                         dbus_message_iter_next(&sub);
                 }
 
-                /* Try to reload if enabeld */
+                /* Try to reload if enabled */
                 if (!arg_no_reload)
                         r = daemon_reload(bus, args);
         }
