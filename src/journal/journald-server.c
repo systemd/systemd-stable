@@ -616,6 +616,8 @@ static void dispatch_message_real(
 
                         free(c);
                 } else if (unit_id) {
+                        char *x;
+
                         x = strappenda("_SYSTEMD_UNIT=", unit_id);
                         IOVEC_SET_STRING(iovec[n++], x);
                 }
