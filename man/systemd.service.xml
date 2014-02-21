@@ -597,7 +597,7 @@
                                 specified with
                                 <varname>ExecStartPre=</varname>,
                                 <varname>ExecStartPost=</varname>,
-                                <varname>ExecStopPre=</varname>,
+                                <varname>ExecStop=</varname>,
                                 <varname>ExecStopPost=</varname>, or
                                 <varname>ExecReload=</varname>.
                                 When the death of the process is a
