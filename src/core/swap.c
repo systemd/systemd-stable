@@ -1091,7 +1091,7 @@ static int open_proc_swaps(Manager *m) {
 
                 m->proc_swaps = fopen("/proc/swaps", "re");
                 if (!m->proc_swaps)
-                        return (errno == ENOENT) ? 0 : -errno;
+                        return -errno;
 
                 m->swap_watch.type = WATCH_SWAP;
                 m->swap_watch.fd = fileno(m->proc_swaps);
@@ -1114,7 +1114,7 @@ int swap_dispatch_reload(Manager *m) {
 
         r = open_proc_swaps(m);
         if (r < 0)
-                return r;
+                return (r == -ENOENT) ? 0 : r;
 
         return swap_fd_event(m, EPOLLPRI);
 }
@@ -1267,7 +1267,7 @@ static int swap_enumerate(Manager *m) {
 
         r = open_proc_swaps(m);
         if (r < 0)
-                return r;
+                return (r == -ENOENT) ? 0 : r;
 
         r = swap_load_proc_swaps(m, false);
         if (r < 0)
