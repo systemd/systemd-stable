@@ -1477,6 +1477,8 @@ static int method_do_shutdown_or_sleep(
                                             action_multiple_sessions, interactive, error, method, m);
                 if (r < 0)
                         return r;
+                if (r == 0)
+                        return 1; /* No authorization for now, but the async polkit stuff will call us again when it has it */
         }
 
         if (blocked) {
@@ -1484,6 +1486,8 @@ static int method_do_shutdown_or_sleep(
                                             action_ignore_inhibit, interactive, error, method, m);
                 if (r < 0)
                         return r;
+                if (r == 0)
+                        return 1; /* No authorization for now, but the async polkit stuff will call us again when it has it */
         }
 
         if (!multiple_sessions && !blocked) {
@@ -1491,6 +1495,8 @@ static int method_do_shutdown_or_sleep(
                                             action, interactive, error, method, m);
                 if (r < 0)
                         return r;
+                if (r == 0)
+                        return 1; /* No authorization for now, but the async polkit stuff will call us again when it has it */
         }
 
         r = bus_manager_shutdown_or_sleep_now_or_later(m, unit_name, w, error);
