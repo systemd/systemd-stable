@@ -119,9 +119,7 @@ void socket_free_ports(Socket *s) {
 
                 sd_event_source_unref(p->event_source);
 
-                if (p->fd >= 0)
-                        close_nointr_nofail(p->fd);
-
+                safe_close(p->fd);
                 free(p->path);
                 free(p);
         }
@@ -706,7 +704,7 @@ static void socket_close_fds(Socket *s) {
                 if (p->fd < 0)
                         continue;
 
-                close_nointr_nofail(p->fd);
+                p->fd = safe_close(p->fd);
 
                 /* One little note: we should never delete any sockets
                  * in the file system here! After all some other
@@ -715,8 +713,6 @@ static void socket_close_fds(Socket *s) {
                  * we delete sockets in the file system before we
                  * create a new one, not after we stopped using
                  * one! */
-
-                p->fd = -1;
         }
 }
 
@@ -886,9 +882,7 @@ static int fifo_address_create(
 
 fail:
         label_context_clear();
-
-        if (fd >= 0)
-                close_nointr_nofail(fd);
+        safe_close(fd);
 
         return r;
 }
@@ -923,8 +917,7 @@ static int special_address_create(
         return 0;
 
 fail:
-        if (fd >= 0)
-                close_nointr_nofail(fd);
+        safe_close(fd);
 
         return r;
 }
@@ -983,9 +976,7 @@ static int mq_address_create(
         return 0;
 
 fail:
-        if (fd >= 0)
-                close_nointr_nofail(fd);
-
+        safe_close(fd);
         return r;
 }
 
@@ -1475,7 +1466,7 @@ static void socket_enter_running(Socket *s, int cfd) {
                 log_debug_unit(UNIT(s)->id, "Suppressing connection request on %s since unit stop is scheduled.", UNIT(s)->id);
 
                 if (cfd >= 0)
-                        close_nointr_nofail(cfd);
+                        safe_close(cfd);
                 else  {
                         /* Flush all sockets by closing and reopening them */
                         socket_close_fds(s);
@@ -1523,7 +1514,7 @@ static void socket_enter_running(Socket *s, int cfd) {
 
                 if (s->n_connections >= s->max_connections) {
                         log_warning_unit(UNIT(s)->id, "%s: Too many incoming connections (%u)", UNIT(s)->id, s->n_connections);
-                        close_nointr_nofail(cfd);
+                        safe_close(cfd);
                         return;
                 }
 
@@ -1538,7 +1529,7 @@ static void socket_enter_running(Socket *s, int cfd) {
 
                         /* ENOTCONN is legitimate if TCP RST was received.
                          * This connection is over, but the socket unit lives on. */
-                        close_nointr_nofail(cfd);
+                        safe_close(cfd);
                         return;
                 }
 
@@ -1589,9 +1580,7 @@ fail:
                          bus_error_message(&error, r));
 
         socket_enter_stop_pre(s, SOCKET_FAILURE_RESOURCES);
-
-        if (cfd >= 0)
-                close_nointr_nofail(cfd);
+        safe_close(cfd);
 }
 
 static void socket_run_next(Socket *s) {
@@ -1822,8 +1811,7 @@ static int socket_deserialize_item(Unit *u, const char *key, const char *value, 
                                         break;
 
                         if (p) {
-                                if (p->fd >= 0)
-                                        close_nointr_nofail(p->fd);
+                                safe_close(p->fd);
                                 p->fd = fdset_remove(fds, fd);
                         }
                 }
@@ -1842,8 +1830,7 @@ static int socket_deserialize_item(Unit *u, const char *key, const char *value, 
                                         break;
 
                         if (p) {
-                                if (p->fd >= 0)
-                                        close_nointr_nofail(p->fd);
+                                safe_close(p->fd);
                                 p->fd = fdset_remove(fds, fd);
                         }
                 }
@@ -1862,8 +1849,7 @@ static int socket_deserialize_item(Unit *u, const char *key, const char *value, 
                                         break;
 
                         if (p) {
-                                if (p->fd >= 0)
-                                        close_nointr_nofail(p->fd);
+                                safe_close(p->fd);
                                 p->fd = fdset_remove(fds, fd);
                         }
                 }
@@ -1881,8 +1867,7 @@ static int socket_deserialize_item(Unit *u, const char *key, const char *value, 
                                         break;
 
                         if (p) {
-                                if (p->fd >= 0)
-                                        close_nointr_nofail(p->fd);
+                                safe_close(p->fd);
                                 p->fd = fdset_remove(fds, fd);
                         }
                 }
@@ -1900,8 +1885,7 @@ static int socket_deserialize_item(Unit *u, const char *key, const char *value, 
                                         break;
 
                         if (p) {
-                                if (p->fd >= 0)
-                                        close_nointr_nofail(p->fd);
+                                safe_close(p->fd);
                                 p->fd = fdset_remove(fds, fd);
                         }
                 }

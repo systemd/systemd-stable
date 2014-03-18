@@ -958,7 +958,7 @@ static int setup_kmsg(const char *dest, int kmsg_socket) {
         /* Store away the fd in the socket, so that it stays open as
          * long as we run the child */
         k = sendmsg(kmsg_socket, &mh, MSG_DONTWAIT|MSG_NOSIGNAL);
-        close_nointr_nofail(fd);
+        safe_close(fd);
 
         if (k < 0) {
                 log_error("Failed to send FIFO fd: %m");
@@ -1838,15 +1838,13 @@ int main(int argc, char *argv[]) {
                         if (envp[n_env])
                                 n_env ++;
 
-                        close_nointr_nofail(master);
-                        master = -1;
+                        master = safe_close(master);
 
                         close_nointr(STDIN_FILENO);
                         close_nointr(STDOUT_FILENO);
                         close_nointr(STDERR_FILENO);
 
-                        close_nointr_nofail(kmsg_socket_pair[0]);
-                        kmsg_socket_pair[0] = -1;
+                        kmsg_socket_pair[0] = safe_close(kmsg_socket_pair[0]);
 
                         reset_all_signal_handlers();
 
@@ -1856,7 +1854,7 @@ int main(int argc, char *argv[]) {
                         k = open_terminal(console, O_RDWR);
                         if (k != STDIN_FILENO) {
                                 if (k >= 0) {
-                                        close_nointr_nofail(k);
+                                        safe_close(k);
                                         k = -EINVAL;
                                 }
 
@@ -1923,8 +1921,7 @@ int main(int argc, char *argv[]) {
                         if (setup_kmsg(arg_directory, kmsg_socket_pair[1]) < 0)
                                 goto child_fail;
 
-                        close_nointr_nofail(kmsg_socket_pair[1]);
-                        kmsg_socket_pair[1] = -1;
+                        kmsg_socket_pair[1] = safe_close(kmsg_socket_pair[1]);
 
                         if (setup_boot_id(arg_directory) < 0)
                                 goto child_fail;
@@ -2071,8 +2068,7 @@ int main(int argc, char *argv[]) {
                         }
 
                         eventfd_read(sync_fd, &x);
-                        close_nointr_nofail(sync_fd);
-                        sync_fd = -1;
+                        sync_fd = safe_close(sync_fd);
 
                         if (!strv_isempty(arg_setenv)) {
                                 char **n;
@@ -2144,8 +2140,7 @@ int main(int argc, char *argv[]) {
                         goto finish;
 
                 eventfd_write(sync_fd, 1);
-                close_nointr_nofail(sync_fd);
-                sync_fd = -1;
+                sync_fd = safe_close(sync_fd);
 
                 k = process_pty(master, &mask, arg_boot ? pid : 0, SIGRTMIN+3);
                 if (k < 0) {

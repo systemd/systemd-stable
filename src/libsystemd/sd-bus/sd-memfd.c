@@ -106,7 +106,7 @@ _public_ int sd_memfd_new(sd_memfd **m, const char *name) {
 
         n = new0(struct sd_memfd, 1);
         if (!n) {
-                close_nointr_nofail(cmd->fd);
+                safe_close(cmd->fd);
                 return -ENOMEM;
         }
 
@@ -143,7 +143,7 @@ _public_ void sd_memfd_free(sd_memfd *m) {
         if (m->f)
                 fclose(m->f);
         else
-                close_nointr_nofail(m->fd);
+                safe_close(m->fd);
 
         free(m);
 }
