@@ -1592,9 +1592,11 @@ static int bus_send_internal(sd_bus *bus, sd_bus_message *_m, uint64_t *cookie, 
         int r;
 
         assert_return(bus, -EINVAL);
-        assert_return(BUS_IS_OPEN(bus->state), -ENOTCONN);
         assert_return(m, -EINVAL);
         assert_return(!bus_pid_changed(bus), -ECHILD);
+
+        if (!BUS_IS_OPEN(bus->state))
+                return -ENOTCONN;
 
         if (m->n_fds > 0) {
                 r = sd_bus_can_send(bus, SD_BUS_TYPE_UNIX_FD);
@@ -1671,9 +1673,11 @@ _public_ int sd_bus_send_to(sd_bus *bus, sd_bus_message *m, const char *destinat
         int r;
 
         assert_return(bus, -EINVAL);
-        assert_return(BUS_IS_OPEN(bus->state), -ENOTCONN);
         assert_return(m, -EINVAL);
         assert_return(!bus_pid_changed(bus), -ECHILD);
+
+        if (!BUS_IS_OPEN(bus->state))
+                return -ENOTCONN;
 
         if (!streq_ptr(m->destination, destination)) {
 
@@ -1726,12 +1730,14 @@ _public_ int sd_bus_call_async(
         int r;
 
         assert_return(bus, -EINVAL);
-        assert_return(BUS_IS_OPEN(bus->state), -ENOTCONN);
         assert_return(m, -EINVAL);
         assert_return(m->header->type == SD_BUS_MESSAGE_METHOD_CALL, -EINVAL);
         assert_return(!(m->header->flags & BUS_MESSAGE_NO_REPLY_EXPECTED), -EINVAL);
         assert_return(callback, -EINVAL);
         assert_return(!bus_pid_changed(bus), -ECHILD);
+
+        if (!BUS_IS_OPEN(bus->state))
+                return -ENOTCONN;
 
         r = hashmap_ensure_allocated(&bus->reply_callbacks, uint64_hash_func, uint64_compare_func);
         if (r < 0)
@@ -1839,12 +1845,14 @@ _public_ int sd_bus_call(
         int r;
 
         assert_return(bus, -EINVAL);
-        assert_return(BUS_IS_OPEN(bus->state), -ENOTCONN);
         assert_return(m, -EINVAL);
         assert_return(m->header->type == SD_BUS_MESSAGE_METHOD_CALL, -EINVAL);
         assert_return(!(m->header->flags & BUS_MESSAGE_NO_REPLY_EXPECTED), -EINVAL);
         assert_return(!bus_error_is_dirty(error), -EINVAL);
         assert_return(!bus_pid_changed(bus), -ECHILD);
+
+        if (!BUS_IS_OPEN(bus->state))
+                return -ENOTCONN;
 
         r = bus_ensure_running(bus);
         if (r < 0)
@@ -1971,8 +1979,10 @@ _public_ int sd_bus_get_events(sd_bus *bus) {
         int flags = 0;
 
         assert_return(bus, -EINVAL);
-        assert_return(BUS_IS_OPEN(bus->state) || bus->state == BUS_CLOSING, -ENOTCONN);
         assert_return(!bus_pid_changed(bus), -ECHILD);
+
+        if (!BUS_IS_OPEN(bus->state) && bus->state != BUS_CLOSING)
+                return -ENOTCONN;
 
         if (bus->state == BUS_OPENING)
                 flags |= POLLOUT;
@@ -1998,8 +2008,10 @@ _public_ int sd_bus_get_timeout(sd_bus *bus, uint64_t *timeout_usec) {
 
         assert_return(bus, -EINVAL);
         assert_return(timeout_usec, -EINVAL);
-        assert_return(BUS_IS_OPEN(bus->state) || bus->state == BUS_CLOSING, -ENOTCONN);
         assert_return(!bus_pid_changed(bus), -ECHILD);
+
+        if (!BUS_IS_OPEN(bus->state) && bus->state != BUS_CLOSING)
+                return -ENOTCONN;
 
         if (bus->state == BUS_CLOSING) {
                 *timeout_usec = 0;
@@ -2510,7 +2522,8 @@ static int bus_poll(sd_bus *bus, bool need_more, uint64_t timeout_usec) {
         if (bus->state == BUS_CLOSING)
                 return 1;
 
-        assert_return(BUS_IS_OPEN(bus->state), -ENOTCONN);
+        if (!BUS_IS_OPEN(bus->state))
+                return -ENOTCONN;
 
         e = sd_bus_get_events(bus);
         if (e < 0)
@@ -2565,7 +2578,8 @@ _public_ int sd_bus_wait(sd_bus *bus, uint64_t timeout_usec) {
         if (bus->state == BUS_CLOSING)
                 return 0;
 
-        assert_return(BUS_IS_OPEN(bus->state) , -ENOTCONN);
+        if (!BUS_IS_OPEN(bus->state))
+                return -ENOTCONN;
 
         if (bus->rqueue_size > 0)
                 return 0;
@@ -2582,7 +2596,8 @@ _public_ int sd_bus_flush(sd_bus *bus) {
         if (bus->state == BUS_CLOSING)
                 return 0;
 
-        assert_return(BUS_IS_OPEN(bus->state), -ENOTCONN);
+        if (!BUS_IS_OPEN(bus->state))
+                return -ENOTCONN;
 
         r = bus_ensure_running(bus);
         if (r < 0)
@@ -3058,9 +3073,13 @@ _public_ int sd_bus_get_peer_creds(sd_bus *bus, uint64_t mask, sd_bus_creds **re
         assert_return(bus, -EINVAL);
         assert_return(mask <= _SD_BUS_CREDS_ALL, -ENOTSUP);
         assert_return(ret, -EINVAL);
-        assert_return(BUS_IS_OPEN(bus->state), -ENOTCONN);
         assert_return(!bus_pid_changed(bus), -ECHILD);
-        assert_return(!bus->is_kernel, -ENOTSUP);
+
+        if (!bus->is_kernel)
+                return -ENOTSUP;
+
+        if (!BUS_IS_OPEN(bus->state))
+                return -ENOTCONN;
 
         if (!bus->ucred_valid && !isempty(bus->label))
                 return -ENODATA;
@@ -3099,9 +3118,13 @@ _public_ int sd_bus_try_close(sd_bus *bus) {
         int r;
 
         assert_return(bus, -EINVAL);
-        assert_return(BUS_IS_OPEN(bus->state), -ENOTCONN);
         assert_return(!bus_pid_changed(bus), -ECHILD);
-        assert_return(bus->is_kernel, -ENOTSUP);
+
+        if (!bus->is_kernel)
+                return -ENOTSUP;
+
+        if (!BUS_IS_OPEN(bus->state))
+                return -ENOTCONN;
 
         if (bus->rqueue_size > 0)
                 return -EBUSY;
