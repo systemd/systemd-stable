@@ -648,13 +648,31 @@ _public_ int sd_event_add_io(
         return 0;
 }
 
+static void initialize_perturb(sd_event *e) {
+        sd_id128_t bootid = {};
+
+        /* When we sleep for longer, we try to realign the wakeup to
+           the same time wihtin each minute/second/250ms, so that
+           events all across the system can be coalesced into a single
+           CPU wakeup. However, let's take some system-specific
+           randomness for this value, so that in a network of systems
+           with synced clocks timer events are distributed a
+           bit. Here, we calculate a perturbation usec offset from the
+           boot ID. */
+
+        if (_likely_(e->perturb != (usec_t) -1))
+                return;
+
+        if (sd_id128_get_boot(&bootid) >= 0)
+                e->perturb = (bootid.qwords[0] ^ bootid.qwords[1]) % USEC_PER_MINUTE;
+}
+
 static int event_setup_timer_fd(
                 sd_event *e,
                 EventSourceType type,
                 int *timer_fd,
                 clockid_t id) {
 
-        sd_id128_t bootid = {};
         struct epoll_event ev = {};
         int r, fd;
 
@@ -677,19 +695,8 @@ static int event_setup_timer_fd(
                 return -errno;
         }
 
-        /* When we sleep for longer, we try to realign the wakeup to
-           the same time wihtin each minute/second/250ms, so that
-           events all across the system can be coalesced into a single
-           CPU wakeup. However, let's take some system-specific
-           randomness for this value, so that in a network of systems
-           with synced clocks timer events are distributed a
-           bit. Here, we calculate a perturbation usec offset from the
-           boot ID. */
-
-        if (sd_id128_get_boot(&bootid) >= 0)
-                e->perturb = (bootid.qwords[0] ^ bootid.qwords[1]) % USEC_PER_MINUTE;
-
         *timer_fd = fd;
+
         return 0;
 }
 
@@ -1505,6 +1512,8 @@ static usec_t sleep_between(sd_event *e, usec_t a, usec_t b) {
 
         if (b <= a + 1)
                 return a;
+
+        initialize_perturb(e);
 
         /*
           Find a good time to wake up again between times a and b. We
