@@ -886,6 +886,8 @@ unsigned long personality_from_string(const char *p);
 const char *personality_to_string(unsigned long);
 
 union file_handle_union {
-  struct file_handle handle;
-  char padding[sizeof(struct file_handle) + MAX_HANDLE_SZ];
+        struct file_handle handle;
+        char padding[sizeof(struct file_handle) + MAX_HANDLE_SZ];
 };
+
+int update_reboot_param_file(const char *param);
