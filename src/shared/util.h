@@ -22,6 +22,7 @@
 ***/
 
 #include <alloca.h>
+#include <fcntl.h>
 #include <inttypes.h>
 #include <time.h>
 #include <sys/time.h>
@@ -883,3 +884,8 @@ int fd_warn_permissions(const char *path, int fd);
 
 unsigned long personality_from_string(const char *p);
 const char *personality_to_string(unsigned long);
+
+union file_handle_union {
+  struct file_handle handle;
+  char padding[sizeof(struct file_handle) + MAX_HANDLE_SZ];
+};
