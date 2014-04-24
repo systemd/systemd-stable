@@ -47,7 +47,9 @@ typedef struct {
 
 #define _cleanup_install_context_done_ _cleanup_(install_context_done)
 
-static int lookup_paths_init_from_scope(LookupPaths *paths, UnitFileScope scope) {
+static int lookup_paths_init_from_scope(LookupPaths *paths,
+                                        UnitFileScope scope,
+                                        const char *root_dir) {
         assert(paths);
         assert(scope >= 0);
         assert(scope < _UNIT_FILE_SCOPE_MAX);
@@ -57,6 +59,7 @@ static int lookup_paths_init_from_scope(LookupPaths *paths, UnitFileScope scope)
         return lookup_paths_init(paths,
                                  scope == UNIT_FILE_SYSTEM ? SYSTEMD_SYSTEM : SYSTEMD_USER,
                                  scope == UNIT_FILE_USER,
+                                 root_dir,
                                  NULL, NULL, NULL);
 }
 
@@ -703,7 +706,7 @@ int unit_file_link(
         assert(scope >= 0);
         assert(scope < _UNIT_FILE_SCOPE_MAX);
 
-        r = lookup_paths_init_from_scope(&paths, scope);
+        r = lookup_paths_init_from_scope(&paths, scope, root_dir);
         if (r < 0)
                 return r;
 
@@ -1475,7 +1478,7 @@ int unit_file_enable(
         assert(scope >= 0);
         assert(scope < _UNIT_FILE_SCOPE_MAX);
 
-        r = lookup_paths_init_from_scope(&paths, scope);
+        r = lookup_paths_init_from_scope(&paths, scope, root_dir);
         if (r < 0)
                 return r;
 
@@ -1515,7 +1518,7 @@ int unit_file_disable(
         assert(scope >= 0);
         assert(scope < _UNIT_FILE_SCOPE_MAX);
 
-        r = lookup_paths_init_from_scope(&paths, scope);
+        r = lookup_paths_init_from_scope(&paths, scope, root_dir);
         if (r < 0)
                 return r;
 
@@ -1579,7 +1582,7 @@ int unit_file_set_default(
         if (unit_name_to_type(file) != UNIT_TARGET)
                 return -EINVAL;
 
-        r = lookup_paths_init_from_scope(&paths, scope);
+        r = lookup_paths_init_from_scope(&paths, scope, root_dir);
         if (r < 0)
                 return r;
 
@@ -1619,7 +1622,7 @@ int unit_file_get_default(
         assert(scope < _UNIT_FILE_SCOPE_MAX);
         assert(name);
 
-        r = lookup_paths_init_from_scope(&paths, scope);
+        r = lookup_paths_init_from_scope(&paths, scope, root_dir);
         if (r < 0)
                 return r;
 
@@ -1677,12 +1680,13 @@ UnitFileState unit_file_get_state(
         if (!unit_name_is_valid(name, TEMPLATE_VALID))
                 return -EINVAL;
 
-        r = lookup_paths_init_from_scope(&paths, scope);
+        r = lookup_paths_init_from_scope(&paths, scope, root_dir);
         if (r < 0)
                 return r;
 
         STRV_FOREACH(i, paths.unit_path) {
                 struct stat st;
+                char *partial;
 
                 free(path);
                 path = NULL;
@@ -1691,9 +1695,13 @@ UnitFileState unit_file_get_state(
                         asprintf(&path, "%s/%s/%s", root_dir, *i, name);
                 else
                         asprintf(&path, "%s/%s", *i, name);
-
                 if (!path)
                         return -ENOMEM;
+
+                if (root_dir)
+                        partial = path + strlen(root_dir) + 1;
+                else
+                        partial = path;
 
                 /*
                  * Search for a unit file in our default paths, to
@@ -1726,7 +1734,7 @@ UnitFileState unit_file_get_state(
                 else if (r > 0)
                         return state;
 
-                r = unit_file_can_install(&paths, root_dir, path, true);
+                r = unit_file_can_install(&paths, root_dir, partial, true);
                 if (r < 0 && errno != ENOENT)
                         return r;
                 else if (r > 0)
@@ -1834,7 +1842,7 @@ int unit_file_preset(
         assert(scope >= 0);
         assert(scope < _UNIT_FILE_SCOPE_MAX);
 
-        r = lookup_paths_init_from_scope(&paths, scope);
+        r = lookup_paths_init_from_scope(&paths, scope, root_dir);
         if (r < 0)
                 return r;
 
@@ -1904,7 +1912,7 @@ int unit_file_get_list(
         if (root_dir && scope != UNIT_FILE_SYSTEM)
                 return -EINVAL;
 
-        r = lookup_paths_init_from_scope(&paths, scope);
+        r = lookup_paths_init_from_scope(&paths, scope, root_dir);
         if (r < 0)
                 return r;
 
