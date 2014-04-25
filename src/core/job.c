@@ -1057,6 +1057,9 @@ int job_coldplug(Job *j) {
         if (j->timer_event_source)
                 j->timer_event_source = sd_event_source_unref(j->timer_event_source);
 
+        if (j->state == JOB_WAITING)
+                job_add_to_run_queue(j);
+
         r = sd_event_add_monotonic(j->manager->event, &j->timer_event_source, j->begin_usec + j->unit->job_timeout, 0, job_dispatch_timer, j);
         if (r < 0)
                 log_debug("Failed to restart timeout for job: %s", strerror(-r));
