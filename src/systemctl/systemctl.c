@@ -3824,7 +3824,7 @@ static int show_all(
         _cleanup_free_ UnitInfo *unit_infos = NULL;
         const UnitInfo *u;
         unsigned c;
-        int r;
+        int r, ret = 0;
 
         r = get_unit_list(bus, &reply, &unit_infos, NULL);
         if (r < 0)
@@ -3846,9 +3846,11 @@ static int show_all(
                 r = show_one(verb, bus, p, show_properties, new_line, ellipsized);
                 if (r != 0)
                         return r;
+                else if (r > 0 && ret == 0)
+                        ret = r;
         }
 
-        return 0;
+        return ret;
 }
 
 static int cat(sd_bus *bus, char **args) {
@@ -3993,7 +3995,12 @@ static int show(sd_bus *bus, char **args) {
                                 }
                         }
 
-                        show_one(args[0], bus, unit, show_properties, &new_line, &ellipsized);
+                        r = show_one(args[0], bus, unit, show_properties,
+                                     &new_line, &ellipsized);
+                        if (r < 0)
+                                return r;
+                        else if (r > 0 && ret == 0)
+                                ret = r;
                 }
 
                 if (!strv_isempty(patterns)) {
@@ -4010,7 +4017,12 @@ static int show(sd_bus *bus, char **args) {
                                 if (!unit)
                                         return log_oom();
 
-                                show_one(args[0], bus, unit, show_properties, &new_line, &ellipsized);
+                                r = show_one(args[0], bus, unit, show_properties,
+                                             &new_line, &ellipsized);
+                                if (r < 0)
+                                        return r;
+                                else if (r > 0 && ret == 0)
+                                        ret = r;
                         }
                 }
         }
