@@ -59,6 +59,8 @@ typedef enum SessionType {
         _SESSION_TYPE_INVALID = -1
 } SessionType;
 
+#define SESSION_TYPE_IS_GRAPHICAL(type) IN_SET(type, SESSION_X11, SESSION_WAYLAND)
+
 enum KillWho {
         KILL_LEADER,
         KILL_ALL,
