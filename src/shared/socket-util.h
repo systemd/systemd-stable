@@ -86,6 +86,8 @@ int socket_address_listen(
 bool socket_address_is(const SocketAddress *a, const char *s, int type);
 bool socket_address_is_netlink(const SocketAddress *a, const char *s);
 
+const char* socket_address_get_path(const SocketAddress *a);
+
 bool socket_address_matches_fd(const SocketAddress *a, int fd);
 
 int make_socket_fd(const char* address, int flags);

@@ -486,6 +486,18 @@ bool socket_address_is_netlink(const SocketAddress *a, const char *s) {
         return socket_address_equal(a, &b);
 }
 
+const char* socket_address_get_path(const SocketAddress *a) {
+        assert(a);
+
+        if (socket_address_family(a) != AF_UNIX)
+                return NULL;
+
+        if (a->sockaddr.un.sun_path[0] == 0)
+                return NULL;
+
+        return a->sockaddr.un.sun_path;
+}
+
 bool socket_address_needs_mount(const SocketAddress *a, const char *prefix) {
         assert(a);
 

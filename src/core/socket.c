@@ -1733,19 +1733,17 @@ static int socket_start(Unit *u) {
 
         /* We cannot fulfill this request right now, try again later
          * please! */
-        if (IN_SET(s->state,
-                   SOCKET_STOP_PRE,
-                   SOCKET_STOP_PRE_SIGKILL,
-                   SOCKET_STOP_PRE_SIGTERM,
-                   SOCKET_STOP_POST,
-                   SOCKET_FINAL_SIGTERM,
-                   SOCKET_FINAL_SIGKILL))
+        if (s->state == SOCKET_STOP_PRE ||
+            s->state == SOCKET_STOP_PRE_SIGKILL ||
+            s->state == SOCKET_STOP_PRE_SIGTERM ||
+            s->state == SOCKET_STOP_POST ||
+            s->state == SOCKET_FINAL_SIGTERM ||
+            s->state == SOCKET_FINAL_SIGKILL)
                 return -EAGAIN;
 
-        if (IN_SET(s->state,
-                   SOCKET_START_PRE,
-                   SOCKET_START_CHOWN,
-                   SOCKET_START_POST))
+        if (s->state == SOCKET_START_PRE ||
+            s->state == SOCKET_START_CHOWN ||
+            s->state == SOCKET_START_POST)
                 return 0;
 
         /* Cannot run this without the service being around */
@@ -1794,21 +1792,20 @@ static int socket_stop(Unit *u) {
         assert(s);
 
         /* Already on it */
-        if (IN_SET(s->state,
-                   SOCKET_STOP_PRE,
-                   SOCKET_STOP_PRE_SIGTERM,
-                   SOCKET_STOP_PRE_SIGKILL,
-                   SOCKET_STOP_POST,
-                   SOCKET_FINAL_SIGTERM,
-                   SOCKET_FINAL_SIGKILL))
+        if (
+            s->state == SOCKET_STOP_PRE ||
+            s->state == SOCKET_STOP_PRE_SIGTERM ||
+            s->state == SOCKET_STOP_PRE_SIGKILL ||
+            s->state == SOCKET_STOP_POST ||
+            s->state == SOCKET_FINAL_SIGTERM ||
+            s->state == SOCKET_FINAL_SIGKILL)
                 return 0;
 
         /* If there's already something running we go directly into
          * kill mode. */
-        if (IN_SET(s->state,
-                   SOCKET_START_PRE,
-                   SOCKET_START_CHOWN,
-                   SOCKET_START_POST)) {
+        if (s->state == SOCKET_START_PRE ||
+            s->state == SOCKET_START_CHOWN ||
+            s->state == SOCKET_START_POST) {
                 socket_enter_signal(s, SOCKET_STOP_PRE_SIGTERM, SOCKET_SUCCESS);
                 return -EAGAIN;
         }
