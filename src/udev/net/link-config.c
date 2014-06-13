@@ -184,7 +184,7 @@ failure:
 }
 
 static bool enable_name_policy(void) {
-        _cleanup_free_ char *line;
+        _cleanup_free_ char *line = NULL;
         char *w, *state;
         int r;
         size_t l;
