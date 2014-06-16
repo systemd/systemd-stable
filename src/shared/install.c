@@ -47,6 +47,37 @@ typedef struct {
 
 #define _cleanup_install_context_done_ _cleanup_(install_context_done)
 
+static int in_search_path(const char *path, char **search, const char *root_dir) {
+        _cleanup_free_ char *parent = NULL;
+        char **i;
+        int r;
+
+        assert(path);
+
+        r = path_get_parent(path, &parent);
+        if (r < 0)
+                return r;
+
+        STRV_FOREACH(i, search) {
+                _cleanup_free_ char *buf = NULL;
+                const char *p;
+
+                if (root_dir) {
+                        buf = strjoin(root_dir, "/", *i, NULL);
+                        if (!buf)
+                                return -ENOMEM;
+
+                        p = buf;
+                } else
+                        p = *i;
+
+                if (path_equal(parent, p))
+                        return 1;
+        }
+
+        return 0;
+}
+
 static int lookup_paths_init_from_scope(LookupPaths *paths,
                                         UnitFileScope scope,
                                         const char *root_dir) {
@@ -746,7 +777,7 @@ int unit_file_link(
                         continue;
                 }
 
-                q = in_search_path(*i, paths.unit_path);
+                q = in_search_path(*i, paths.unit_path, root_dir);
                 if (q < 0)
                         return q;
 
@@ -1296,6 +1327,7 @@ static int install_info_symlink_link(
                 InstallInfo *i,
                 LookupPaths *paths,
                 const char *config_path,
+                const char *root_dir,
                 bool force,
                 UnitFileChange **changes,
                 unsigned *n_changes) {
@@ -1308,7 +1340,7 @@ static int install_info_symlink_link(
         assert(config_path);
         assert(i->path);
 
-        r = in_search_path(i->path, paths->unit_path);
+        r = in_search_path(i->path, paths->unit_path, root_dir);
         if (r != 0)
                 return r;
 
@@ -1323,6 +1355,7 @@ static int install_info_apply(
                 InstallInfo *i,
                 LookupPaths *paths,
                 const char *config_path,
+                const char *root_dir,
                 bool force,
                 UnitFileChange **changes,
                 unsigned *n_changes) {
@@ -1343,7 +1376,7 @@ static int install_info_apply(
         if (r == 0)
                 r = q;
 
-        q = install_info_symlink_link(i, paths, config_path, force, changes, n_changes);
+        q = install_info_symlink_link(i, paths, config_path, root_dir, force, changes, n_changes);
         if (r == 0)
                 r = q;
 
@@ -1383,7 +1416,7 @@ static int install_context_apply(
                 } else if (r >= 0)
                         r += q;
 
-                q = install_info_apply(i, paths, config_path, force, changes, n_changes);
+                q = install_info_apply(i, paths, config_path, root_dir, force, changes, n_changes);
                 if (r >= 0 && q < 0)
                         r = q;
         }
