@@ -123,7 +123,7 @@ static int create_disk(
                 "DefaultDependencies=no\n"
                 "BindsTo=dev-mapper-%i.device\n"
                 "IgnoreOnIsolate=true\n"
-                "After=systemd-readahead-collect.service systemd-readahead-replay.service\n",
+                "After=systemd-readahead-collect.service systemd-readahead-replay.service cryptsetup-pre.target\n",
                 f);
 
         if (!nofail)
