@@ -64,6 +64,7 @@
 /systemd-delta
 /systemd-detect-virt
 /systemd-efi-boot-generator
+/systemd-escape
 /systemd-fsck
 /systemd-fstab-generator
 /systemd-getty-generator
