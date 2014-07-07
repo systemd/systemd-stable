@@ -692,7 +692,7 @@ _alloc_(2, 3) static inline void *memdup_multiply(const void *p, size_t a, size_
 bool filename_is_safe(const char *p) _pure_;
 bool path_is_safe(const char *p) _pure_;
 bool string_is_safe(const char *p) _pure_;
-bool string_has_cc(const char *p) _pure_;
+bool string_has_cc(const char *p, const char *ok) _pure_;
 
 /**
  * Check if a string contains any glob patterns.
