@@ -1724,6 +1724,7 @@ systemd_update_done_SOURCES = \
 
 systemd_update_done_LDADD = \
 	libsystemd-internal.la \
+	libsystemd-label.la \
 	libsystemd-shared.la
 
 # ------------------------------------------------------------------------------
