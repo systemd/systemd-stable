@@ -316,6 +316,7 @@ int main(int argc, char *argv[]) {
         time_t t = 0;
         int r;
         struct rlimit rlim;
+        bool has_procfs = false;
 
         parse_conf();
 
@@ -355,6 +356,8 @@ int main(int argc, char *argv[]) {
 
         log_uptime();
 
+        has_procfs = access("/proc/vmstat", F_OK) == 0;
+
         LIST_HEAD_INIT(head);
 
         /* main program loop */
@@ -391,11 +394,11 @@ int main(int argc, char *argv[]) {
                                 parse_env_file("/usr/lib/os-release", NEWLINE, "PRETTY_NAME", &build, NULL);
                 }
 
-                /* wait for /proc to become available, discarding samples */
-                if (graph_start <= 0.0)
-                        log_uptime();
-                else
+                if (has_procfs)
                         log_sample(samples, &sampledata);
+                else
+                        /* wait for /proc to become available, discarding samples */
+                        has_procfs = access("/proc/vmstat", F_OK) == 0;
 
                 sample_stop = gettime_ns();
 
