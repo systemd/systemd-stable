@@ -95,3 +95,5 @@ int parse_sec(const char *t, usec_t *usec);
 int parse_nsec(const char *t, nsec_t *nsec);
 
 bool ntp_synced(void);
+
+clockid_t clock_boottime_or_monotonic(void);
