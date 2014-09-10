@@ -49,6 +49,7 @@ struct Manager {
         LIST_HEAD(ServerName, servers);
 
         RateLimit ratelimit;
+        bool exhausted_servers;
 
         /* network */
         sd_event_source *network_event_source;

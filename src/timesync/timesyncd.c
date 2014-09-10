@@ -935,11 +935,31 @@ static int manager_connect(Manager *m) {
                 if (m->current_server_name && m->current_server_name->names_next)
                         m->current_server_name = m->current_server_name->names_next;
                 else {
+
                         if (!m->servers) {
                                 m->current_server_name = NULL;
                                 log_debug("No server found.");
                                 return 0;
                         }
+
+                        if (!m->exhausted_servers && m->poll_interval_usec) {
+                                log_debug("Waiting after exhausting servers.");
+                                r = sd_event_add_time(m->event, &m->event_retry, clock_boottime_or_monotonic(), now(clock_boottime_or_monotonic()) + m->poll_interval_usec, 0, manager_retry, m);
+                                if (r < 0) {
+                                        log_error("Failed to create retry timer: %s", strerror(-r));
+                                        return r;
+                                }
+
+                                m->exhausted_servers = true;
+
+                                /* Increase the polling interval */
+                                if (m->poll_interval_usec < NTP_POLL_INTERVAL_MAX_SEC * USEC_PER_SEC)
+                                        m->poll_interval_usec *= 2;
+
+                                return 0;
+                        }
+
+                        m->exhausted_servers = false;
 
                         m->current_server_name = m->servers;
                 }
@@ -1150,7 +1170,7 @@ static int manager_network_event_handler(sd_event_source *s, int fd, uint32_t re
         online = network_is_online();
 
         /* check if the client is currently connected */
-        connected = (m->server_socket != -1);
+        connected = (m->server_socket != -1) || m->exhausted_servers;
 
         if (connected && !online) {
                 log_info("No network connectivity, watching for changes.");
