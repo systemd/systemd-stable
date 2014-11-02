@@ -100,6 +100,8 @@ CHANGES WITH 217:
           servers that do not do forwarding, "fq" may perform better.
           Systems without a good clocksource should use "pfifo_fast".
 
+          [ reverted in this branch ]
+
         * If kdbus is enabled during build a new option BusPolicy= is
           available for service units, that allows locking all service
           processes into a stricter bus policy, in order to limit
