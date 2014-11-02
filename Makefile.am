@@ -109,6 +109,7 @@ udevrulesdir=$(udevlibexecdir)/rules.d
 udevhwdbdir=$(udevlibexecdir)/hwdb.d
 catalogdir=$(prefix)/lib/systemd/catalog
 kernelinstalldir = $(prefix)/lib/kernel/install.d
+ntpunitsdir=$(prefix)/lib/systemd/ntp-units.d
 factory_etcdir = $(prefix)/share/factory/etc
 factory_pamdir = $(prefix)/share/factory/etc/pam.d
 
@@ -4762,6 +4763,10 @@ dist_systemunit_DATA_busnames += \
 polkitpolicy_files += \
 	src/timedate/org.freedesktop.timedate1.policy
 
+INSTALL_DIRS += \
+	$(prefix)/lib/systemd/ntp-units.d \
+	$(sysconfdir)/systemd/ntp-units.d
+
 SYSTEM_UNIT_ALIASES += \
 	systemd-timedated.service dbus-org.freedesktop.timedate1.service
 
@@ -4840,6 +4845,10 @@ EXTRA_DIST += \
 
 CLEANFILES += \
 	src/timesync/timesyncd.conf
+
+dist_ntpunits_DATA = \
+	src/timesync/90-systemd.list
+
 endif
 
 # ------------------------------------------------------------------------------

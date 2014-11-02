@@ -218,6 +218,8 @@ CHANGES WITH 216:
           to their unit files to take over and replace systemd's NTP
           default functionality.
 
+          [ reverted in this branch ]
+
         * systemd-sysusers gained a new line type "r" for configuring
           which UID/GID ranges to allocate system users/groups
           from. Lines of type "u" may now add an additional column
