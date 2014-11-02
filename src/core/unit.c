@@ -3313,7 +3313,7 @@ int unit_make_transient(Unit *u) {
 int unit_kill_context(
                 Unit *u,
                 KillContext *c,
-                KillOperation k,
+                bool sigkill,
                 pid_t main_pid,
                 pid_t control_pid,
                 bool main_pid_alien) {
@@ -3326,19 +3326,7 @@ int unit_kill_context(
         if (c->kill_mode == KILL_NONE)
                 return 0;
 
-        switch (k) {
-        case KILL_KILL:
-                sig = SIGKILL;
-                break;
-        case KILL_ABORT:
-                sig = SIGABRT;
-                break;
-        case KILL_TERMINATE:
-                sig = c->kill_signal;
-                break;
-        default:
-                assert_not_reached("KillOperation unknown");
-        }
+        sig = sigkill ? SIGKILL : c->kill_signal;
 
         if (main_pid > 0) {
                 r = kill_and_sigcont(main_pid, sig);
@@ -3352,7 +3340,7 @@ int unit_kill_context(
                         if (!main_pid_alien)
                                 wait_for_exit = true;
 
-                        if (c->send_sighup && k != KILL_KILL)
+                        if (c->send_sighup && !sigkill)
                                 kill(main_pid, SIGHUP);
                 }
         }
@@ -3368,12 +3356,12 @@ int unit_kill_context(
                 } else {
                         wait_for_exit = true;
 
-                        if (c->send_sighup && k != KILL_KILL)
+                        if (c->send_sighup && !sigkill)
                                 kill(control_pid, SIGHUP);
                 }
         }
 
-        if ((c->kill_mode == KILL_CONTROL_GROUP || (c->kill_mode == KILL_MIXED && k == KILL_KILL)) && u->cgroup_path) {
+        if ((c->kill_mode == KILL_CONTROL_GROUP || (c->kill_mode == KILL_MIXED && sigkill)) && u->cgroup_path) {
                 _cleanup_set_free_ Set *pid_set = NULL;
 
                 /* Exclude the main/control pids from being killed via the cgroup */
@@ -3397,7 +3385,7 @@ int unit_kill_context(
 
                         /* wait_for_exit = true; */
 
-                        if (c->send_sighup && k != KILL_KILL) {
+                        if (c->send_sighup && !sigkill) {
                                 set_free(pid_set);
 
                                 pid_set = unit_pid_set(main_pid, control_pid);

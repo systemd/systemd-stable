@@ -775,8 +775,7 @@ static void mount_enter_signal(Mount *m, MountState state, MountResult f) {
         r = unit_kill_context(
                         UNIT(m),
                         &m->kill_context,
-                        (state != MOUNT_MOUNTING_SIGTERM && state != MOUNT_UNMOUNTING_SIGTERM && state != MOUNT_REMOUNTING_SIGTERM) ?
-                        KILL_KILL : KILL_TERMINATE,
+                        state != MOUNT_MOUNTING_SIGTERM && state != MOUNT_UNMOUNTING_SIGTERM && state != MOUNT_REMOUNTING_SIGTERM,
                         -1,
                         m->control_pid,
                         false);

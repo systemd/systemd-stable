@@ -56,7 +56,6 @@ static const UnitActiveState state_translation_table[_SERVICE_STATE_MAX] = {
         [SERVICE_EXITED] = UNIT_ACTIVE,
         [SERVICE_RELOAD] = UNIT_RELOADING,
         [SERVICE_STOP] = UNIT_DEACTIVATING,
-        [SERVICE_STOP_SIGABRT] = UNIT_DEACTIVATING,
         [SERVICE_STOP_SIGTERM] = UNIT_DEACTIVATING,
         [SERVICE_STOP_SIGKILL] = UNIT_DEACTIVATING,
         [SERVICE_STOP_POST] = UNIT_DEACTIVATING,
@@ -77,7 +76,6 @@ static const UnitActiveState state_translation_table_idle[_SERVICE_STATE_MAX] = 
         [SERVICE_EXITED] = UNIT_ACTIVE,
         [SERVICE_RELOAD] = UNIT_RELOADING,
         [SERVICE_STOP] = UNIT_DEACTIVATING,
-        [SERVICE_STOP_SIGABRT] = UNIT_DEACTIVATING,
         [SERVICE_STOP_SIGTERM] = UNIT_DEACTIVATING,
         [SERVICE_STOP_SIGKILL] = UNIT_DEACTIVATING,
         [SERVICE_STOP_POST] = UNIT_DEACTIVATING,
@@ -665,7 +663,7 @@ static void service_set_state(Service *s, ServiceState state) {
                     SERVICE_START_PRE, SERVICE_START, SERVICE_START_POST,
                     SERVICE_RELOAD,
                     SERVICE_STOP, SERVICE_STOP_SIGTERM, SERVICE_STOP_SIGKILL,
-                    SERVICE_STOP_SIGABRT, SERVICE_STOP_POST,
+                    SERVICE_STOP_POST,
                     SERVICE_FINAL_SIGTERM, SERVICE_FINAL_SIGKILL,
                     SERVICE_AUTO_RESTART))
                 s->timer_event_source = sd_event_source_unref(s->timer_event_source);
@@ -674,7 +672,7 @@ static void service_set_state(Service *s, ServiceState state) {
                     SERVICE_START, SERVICE_START_POST,
                     SERVICE_RUNNING, SERVICE_RELOAD,
                     SERVICE_STOP, SERVICE_STOP_SIGTERM, SERVICE_STOP_SIGKILL,
-                    SERVICE_STOP_SIGABRT, SERVICE_STOP_POST,
+                    SERVICE_STOP_POST,
                     SERVICE_FINAL_SIGTERM, SERVICE_FINAL_SIGKILL)) {
                 service_unwatch_main_pid(s);
                 s->main_command = NULL;
@@ -684,7 +682,7 @@ static void service_set_state(Service *s, ServiceState state) {
                     SERVICE_START_PRE, SERVICE_START, SERVICE_START_POST,
                     SERVICE_RELOAD,
                     SERVICE_STOP, SERVICE_STOP_SIGTERM, SERVICE_STOP_SIGKILL,
-                    SERVICE_STOP_SIGABRT, SERVICE_STOP_POST,
+                    SERVICE_STOP_POST,
                     SERVICE_FINAL_SIGTERM, SERVICE_FINAL_SIGKILL)) {
                 service_unwatch_control_pid(s);
                 s->control_command = NULL;
@@ -698,7 +696,7 @@ static void service_set_state(Service *s, ServiceState state) {
                     SERVICE_START_PRE, SERVICE_START, SERVICE_START_POST,
                     SERVICE_RUNNING, SERVICE_RELOAD,
                     SERVICE_STOP, SERVICE_STOP_SIGTERM, SERVICE_STOP_SIGKILL, SERVICE_STOP_POST,
-                    SERVICE_STOP_SIGABRT, SERVICE_FINAL_SIGTERM, SERVICE_FINAL_SIGKILL) &&
+                    SERVICE_FINAL_SIGTERM, SERVICE_FINAL_SIGKILL) &&
             !(state == SERVICE_DEAD && UNIT(s)->job)) {
                 service_close_socket_fd(s);
                 service_connection_unref(s);
@@ -752,7 +750,7 @@ static int service_coldplug(Unit *u) {
                            SERVICE_START_PRE, SERVICE_START, SERVICE_START_POST,
                            SERVICE_RELOAD,
                            SERVICE_STOP, SERVICE_STOP_SIGTERM, SERVICE_STOP_SIGKILL,
-                           SERVICE_STOP_SIGABRT, SERVICE_STOP_POST,
+                           SERVICE_STOP_POST,
                            SERVICE_FINAL_SIGTERM, SERVICE_FINAL_SIGKILL)) {
 
                         usec_t k;
@@ -781,7 +779,7 @@ static int service_coldplug(Unit *u) {
                             SERVICE_START, SERVICE_START_POST,
                             SERVICE_RUNNING, SERVICE_RELOAD,
                             SERVICE_STOP, SERVICE_STOP_SIGTERM, SERVICE_STOP_SIGKILL,
-                            SERVICE_STOP_SIGABRT, SERVICE_STOP_POST,
+                            SERVICE_STOP_POST,
                             SERVICE_FINAL_SIGTERM, SERVICE_FINAL_SIGKILL))) {
                         r = unit_watch_pid(UNIT(s), s->main_pid);
                         if (r < 0)
@@ -793,7 +791,7 @@ static int service_coldplug(Unit *u) {
                            SERVICE_START_PRE, SERVICE_START, SERVICE_START_POST,
                            SERVICE_RELOAD,
                            SERVICE_STOP, SERVICE_STOP_SIGTERM, SERVICE_STOP_SIGKILL,
-                           SERVICE_STOP_SIGABRT, SERVICE_STOP_POST,
+                           SERVICE_STOP_POST,
                            SERVICE_FINAL_SIGTERM, SERVICE_FINAL_SIGKILL)) {
                         r = unit_watch_pid(UNIT(s), s->control_pid);
                         if (r < 0)
@@ -1183,8 +1181,7 @@ static void service_enter_signal(Service *s, ServiceState state, ServiceResult f
         r = unit_kill_context(
                         UNIT(s),
                         &s->kill_context,
-                        (state != SERVICE_STOP_SIGTERM && state != SERVICE_FINAL_SIGTERM && state != SERVICE_STOP_SIGABRT) ?
-                        KILL_KILL : (state == SERVICE_STOP_SIGABRT ? KILL_ABORT : KILL_TERMINATE),
+                        state != SERVICE_STOP_SIGTERM && state != SERVICE_FINAL_SIGTERM,
                         s->main_pid,
                         s->control_pid,
                         s->main_pid_alien);
@@ -1200,7 +1197,7 @@ static void service_enter_signal(Service *s, ServiceState state, ServiceResult f
                 }
 
                 service_set_state(s, state);
-        } else if (state == SERVICE_STOP_SIGTERM || state == SERVICE_STOP_SIGABRT)
+        } else if (state == SERVICE_STOP_SIGTERM)
                 service_enter_signal(s, SERVICE_STOP_SIGKILL, SERVICE_SUCCESS);
         else if (state == SERVICE_STOP_SIGKILL)
                 service_enter_stop_post(s, SERVICE_SUCCESS);
@@ -1214,8 +1211,7 @@ static void service_enter_signal(Service *s, ServiceState state, ServiceResult f
 fail:
         log_warning_unit(UNIT(s)->id, "%s failed to kill processes: %s", UNIT(s)->id, strerror(-r));
 
-        if (state == SERVICE_STOP_SIGTERM || state == SERVICE_STOP_SIGKILL ||
-            state == SERVICE_STOP_SIGABRT)
+        if (state == SERVICE_STOP_SIGTERM || state == SERVICE_STOP_SIGKILL)
                 service_enter_stop_post(s, SERVICE_FAILURE_RESOURCES);
         else
                 service_enter_dead(s, SERVICE_FAILURE_RESOURCES, true);
@@ -1641,7 +1637,6 @@ static int service_start(Unit *u) {
         /* We cannot fulfill this request right now, try again later
          * please! */
         if (s->state == SERVICE_STOP ||
-            s->state == SERVICE_STOP_SIGABRT ||
             s->state == SERVICE_STOP_SIGTERM ||
             s->state == SERVICE_STOP_SIGKILL ||
             s->state == SERVICE_STOP_POST ||
@@ -1700,7 +1695,6 @@ static int service_stop(Unit *u) {
 
         /* Already on it */
         if (s->state == SERVICE_STOP ||
-            s->state == SERVICE_STOP_SIGABRT ||
             s->state == SERVICE_STOP_SIGTERM ||
             s->state == SERVICE_STOP_SIGKILL ||
             s->state == SERVICE_STOP_POST ||
@@ -2132,7 +2126,6 @@ static void service_notify_cgroup_empty_event(Unit *u) {
                 service_enter_running(s, SERVICE_SUCCESS);
                 break;
 
-        case SERVICE_STOP_SIGABRT:
         case SERVICE_STOP_SIGTERM:
         case SERVICE_STOP_SIGKILL:
 
@@ -2259,7 +2252,6 @@ static void service_sigchld_event(Unit *u, pid_t pid, int code, int status) {
                                 service_enter_running(s, f);
                                 break;
 
-                        case SERVICE_STOP_SIGABRT:
                         case SERVICE_STOP_SIGTERM:
                         case SERVICE_STOP_SIGKILL:
 
@@ -2400,7 +2392,6 @@ static void service_sigchld_event(Unit *u, pid_t pid, int code, int status) {
                                 service_enter_signal(s, SERVICE_STOP_SIGTERM, f);
                                 break;
 
-                        case SERVICE_STOP_SIGABRT:
                         case SERVICE_STOP_SIGTERM:
                         case SERVICE_STOP_SIGKILL:
                                 if (main_pid_good(s) <= 0)
@@ -2470,12 +2461,6 @@ static int service_dispatch_timer(sd_event_source *source, usec_t usec, void *us
                 service_enter_signal(s, SERVICE_STOP_SIGTERM, SERVICE_FAILURE_TIMEOUT);
                 break;
 
-        case SERVICE_STOP_SIGABRT:
-                log_warning_unit(UNIT(s)->id,
-                                 "%s stop-sigabrt timed out. Terminating.", UNIT(s)->id);
-                service_enter_signal(s, SERVICE_STOP_SIGTERM, s->result);
-                break;
-
         case SERVICE_STOP_SIGTERM:
                 if (s->kill_context.send_sigkill) {
                         log_warning_unit(UNIT(s)->id, "%s stop-sigterm timed out. Killing.", UNIT(s)->id);
@@ -2543,7 +2528,7 @@ static int service_dispatch_watchdog(sd_event_source *source, usec_t usec, void 
         log_error_unit(UNIT(s)->id, "%s watchdog timeout (limit %s)!", UNIT(s)->id,
                        format_timespan(t, sizeof(t), s->watchdog_usec, 1));
 
-        service_enter_signal(s, SERVICE_STOP_SIGABRT, SERVICE_FAILURE_WATCHDOG);
+        service_enter_signal(s, SERVICE_STOP_SIGTERM, SERVICE_FAILURE_WATCHDOG);
 
         return 0;
 }
