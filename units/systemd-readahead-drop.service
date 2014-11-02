@@ -6,14 +6,14 @@
 #  (at your option) any later version.
 
 [Unit]
-Description=Enable File System Quotas
-Documentation=man:quotaon(8)
-DefaultDependencies=no
-After=systemd-readahead-collect.service systemd-readahead-replay.service systemd-quotacheck.service
-Before=local-fs.target shutdown.target
-ConditionPathExists=@QUOTAON@
+Description=Drop Read-Ahead Data
+Documentation=man:systemd-readahead-replay.service(8)
+ConditionPathExists=/.readahead
 
 [Service]
 Type=oneshot
-RemainAfterExit=yes
-ExecStart=@QUOTAON@ -aug
+ExecStart=/bin/rm -f /.readahead
+
+[Install]
+WantedBy=system-update.target
+Also=systemd-readahead-collect.service

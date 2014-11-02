@@ -859,6 +859,14 @@ fi
 AM_CONDITIONAL(ENABLE_VCONSOLE, [test "$have_vconsole" = "yes"])
 
 # ------------------------------------------------------------------------------
+have_readahead=no
+AC_ARG_ENABLE(readahead, AS_HELP_STRING([--disable-readahead], [disable readahead tools]))
+if test "x$enable_readahead" != "xno"; then
+        have_readahead=yes
+fi
+AM_CONDITIONAL(ENABLE_READAHEAD, [test "$have_readahead" = "yes"])
+
+# ------------------------------------------------------------------------------
 have_bootchart=no
 AC_ARG_ENABLE(bootchart, AS_HELP_STRING([--disable-bootchart], [disable bootchart tool]))
 if test "x$enable_bootchart" != "xno"; then
@@ -1342,6 +1350,7 @@ AC_MSG_RESULT([
         ELFUTILS:                ${have_elfutils}
         binfmt:                  ${have_binfmt}
         vconsole:                ${have_vconsole}
+        readahead:               ${have_readahead}
         bootchart:               ${have_bootchart}
         quotacheck:              ${have_quotacheck}
         tmpfiles:                ${have_tmpfiles}

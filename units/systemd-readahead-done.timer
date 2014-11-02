@@ -6,15 +6,17 @@
 #  (at your option) any later version.
 
 [Unit]
-Description=Setup Virtual Console
-Documentation=man:systemd-vconsole-setup.service(8) man:vconsole.conf(5)
+Description=Stop Read-Ahead Data Collection 10s After Completed Startup
+Documentation=man:systemd-readahead-replay.service(8)
 DefaultDependencies=no
 Conflicts=shutdown.target
-After=systemd-readahead-collect.service systemd-readahead-replay.service
-Before=sysinit.target shutdown.target
-ConditionPathExists=/dev/tty0
+After=default.target
+Before=shutdown.target
+ConditionVirtualization=no
 
-[Service]
-Type=oneshot
-RemainAfterExit=yes
-ExecStart=@rootlibexecdir@/systemd-vconsole-setup
+[Timer]
+OnActiveSec=30s
+AccuracySec=1s
+
+[Install]
+Also=systemd-readahead-collect.service

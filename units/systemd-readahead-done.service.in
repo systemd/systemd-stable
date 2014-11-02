@@ -6,15 +6,17 @@
 #  (at your option) any later version.
 
 [Unit]
-Description=Rebuild Journal Catalog
-Documentation=man:systemd-journald.service(8) man:journald.conf(5)
+Description=Stop Read-Ahead Data Collection
+Documentation=man:systemd-readahead-replay.service(8)
 DefaultDependencies=no
 Conflicts=shutdown.target
-After=systemd-readahead-collect.service systemd-readahead-replay.service local-fs.target
-Before=sysinit.target shutdown.target systemd-update-done.service
-ConditionNeedsUpdate=/etc
+After=default.target
+Before=shutdown.target
+ConditionVirtualization=no
 
 [Service]
 Type=oneshot
-RemainAfterExit=yes
-ExecStart=@rootbindir@/journalctl --update-catalog
+ExecStart=@SYSTEMD_NOTIFY@ --readahead=done
+
+[Install]
+Also=systemd-readahead-collect.service
