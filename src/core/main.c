@@ -623,6 +623,9 @@ static int config_parse_join_controllers(const char *unit,
 }
 
 static int parse_config_file(void) {
+        usec_t start_timeout_usec = 0;
+        FailureAction start_timeout_action = FAILURE_ACTION_NONE;
+        char *start_timeout_reboot_arg = NULL;
 
         const ConfigTableItem items[] = {
                 { "Manager", "LogLevel",                  config_parse_level2,           0, NULL                                   },
@@ -670,6 +673,9 @@ static int parse_config_file(void) {
                 { "Manager", "DefaultCPUAccounting",      config_parse_bool,             0, &arg_default_cpu_accounting            },
                 { "Manager", "DefaultBlockIOAccounting",  config_parse_bool,             0, &arg_default_blockio_accounting        },
                 { "Manager", "DefaultMemoryAccounting",   config_parse_bool,             0, &arg_default_memory_accounting         },
+                { "Manager", "StartTimeoutSec",           config_parse_sec,              0, &start_timeout_usec                    },
+                { "Manager", "StartTimeoutAction",        config_parse_failure_action,   0, &start_timeout_action                  },
+                { "Manager", "StartTimeoutRebootArgument",config_parse_string,           0, &start_timeout_reboot_arg              },
                 {}
         };
 
@@ -680,6 +686,10 @@ static int parse_config_file(void) {
                      "Manager\0",
                      config_item_table_lookup, items,
                      false, false, true, NULL);
+
+        if (start_timeout_usec != 0 || start_timeout_action != FAILURE_ACTION_NONE)
+                log_warning("StartTimeoutSec, StartTimeoutAction, StartTimeoutRebootArgument settings have\n"
+                            "been replaced by JobTimeoutSec, JobTimeoutAction, JobTimeoutReboot, ignoring.");
 
         return 0;
 }
