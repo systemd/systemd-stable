@@ -1527,6 +1527,7 @@ test_util_SOURCES = \
 	src/test/test-util.c
 
 test_util_LDADD = \
+	-lm \
 	libsystemd-core.la
 
 test_uid_range_SOURCES = \
