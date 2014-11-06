@@ -741,6 +741,7 @@ noinst_LTLIBRARIES += \
 
 libsystemd_shared_la_SOURCES = \
 	src/shared/linux/auto_dev-ioctl.h \
+	src/shared/linux/fanotify.h \
 	src/shared/ioprio.h \
 	src/shared/missing.h \
 	src/shared/initreq.h \
