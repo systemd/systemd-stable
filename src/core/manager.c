@@ -704,7 +704,7 @@ static int manager_setup_notify(Manager *m) {
                 r = sd_event_add_io(m->event, &m->notify_event_source, m->notify_fd, EPOLLIN, manager_dispatch_notify_fd, m);
                 if (r < 0) {
                         log_error("Failed to allocate notify event source: %s", strerror(-r));
-                        return -errno;
+                        return r;
                 }
 
                 /* Process signals a bit earlier than SIGCHLD, so that we can
