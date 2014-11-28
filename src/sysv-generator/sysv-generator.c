@@ -760,6 +760,10 @@ static int enumerate_sysv(LookupPaths lp, Hashmap *all_services) {
                         service->name = name;
                         service->path = fpath;
 
+                        r = load_sysv(service);
+                        if (r < 0)
+                                continue;
+
                         r = hashmap_put(all_services, service->name, service);
                         if (r < 0)
                                 return log_oom();
@@ -944,10 +948,6 @@ int main(int argc, char *argv[]) {
         }
 
         HASHMAP_FOREACH(service, all_services, j) {
-                q = load_sysv(service);
-                if (q < 0)
-                        continue;
-
                 q = fix_order(service, all_services);
                 if (q < 0)
                         continue;
