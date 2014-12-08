@@ -1222,7 +1222,7 @@ int socket_read_message(sd_rtnl *rtnl) {
                 }
         }
 
-        for (new_msg = rtnl->rbuffer; NLMSG_OK(new_msg, len); new_msg = NLMSG_NEXT(new_msg, len)) {
+        for (new_msg = rtnl->rbuffer; NLMSG_OK(new_msg, len) && !done; new_msg = NLMSG_NEXT(new_msg, len)) {
                 _cleanup_rtnl_message_unref_ sd_rtnl_message *m = NULL;
                 const NLType *nl_type;
 
@@ -1237,7 +1237,8 @@ int socket_read_message(sd_rtnl *rtnl) {
                 if (new_msg->nlmsg_type == NLMSG_DONE) {
                         /* finished reading multi-part message */
                         done = true;
-                        break;
+
+                        continue;
                 }
 
                 /* check that we support this message type */
