@@ -230,7 +230,7 @@ static int manager_sysview_session_control(Manager *m, sysview_event *event) {
                           sysview_session_get_name(session), strerror(-error));
                 session_free(s);
                 sysview_session_set_userdata(session, NULL);
-                return -error;
+                return error;
         }
 
         return 0;
