@@ -515,6 +515,9 @@ fallback:
                 return -errno;
         }
 
+        free(parent);
+        parent = NULL;
+
         r = path_get_parent(t, &parent);
         if (r < 0)
                 return r;
