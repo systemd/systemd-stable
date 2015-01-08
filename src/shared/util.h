@@ -999,3 +999,5 @@ int unquote_many_words(const char **p, ...) _sentinel_;
 int free_and_strdup(char **p, const char *s);
 
 int sethostname_idempotent(const char *s);
+
+#define RLIMIT_MAKE_CONST(lim) ((struct rlimit) { lim, lim })
