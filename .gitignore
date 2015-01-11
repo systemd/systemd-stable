@@ -212,6 +212,7 @@
 /test-network-tables
 /test-ns
 /test-path-util
+/test-fstab-util
 /test-prioq
 /test-ratelimit
 /test-pty
