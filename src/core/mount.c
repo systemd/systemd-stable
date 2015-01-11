@@ -897,7 +897,14 @@ static void mount_enter_mounting(Mount *m) {
         if (r < 0)
                 goto fail;
 
-        if (m->from_fragment)
+        if (m->from_fragment) {
+                _cleanup_free_ char *opts = NULL;
+
+                r = fstab_filter_options(m->parameters_fragment.options,
+                                         "nofail\0" "fail\0" "noauto\0" "auto\0", NULL, NULL, &opts);
+                if (r < 0)
+                        goto fail;
+
                 r = exec_command_set(
                                 m->control_command,
                                 "/bin/mount",
@@ -905,9 +912,9 @@ static void mount_enter_mounting(Mount *m) {
                                 m->parameters_fragment.what,
                                 m->where,
                                 "-t", m->parameters_fragment.fstype ? m->parameters_fragment.fstype : "auto",
-                                m->parameters_fragment.options ? "-o" : NULL, m->parameters_fragment.options,
+                                isempty(opts) ? NULL : "-o", isempty(opts) ? NULL : opts,
                                 NULL);
-        else
+        } else
                 r = -ENOENT;
 
         if (r < 0)
