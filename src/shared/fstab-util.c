@@ -133,13 +133,15 @@ int fstab_find_pri(const char *options, int *ret) {
         assert(ret);
 
         r = fstab_filter_options(options, "pri\0", NULL, &opt, NULL);
-        if (r <= 0)
+        if (r < 0)
                 return r;
+        if (r == 0 || !opt)
+                return 0;
 
         r = safe_atou(opt, &pri);
         if (r < 0)
                 return r;
 
-        *ret = (int) r;
+        *ret = (int) pri;
         return 1;
 }
