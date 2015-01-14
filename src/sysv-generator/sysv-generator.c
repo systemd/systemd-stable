@@ -727,26 +727,32 @@ static int enumerate_sysv(LookupPaths lp, Hashmap *all_services) {
                 }
 
                 while ((de = readdir(d))) {
-                        SysvStub *service;
-                        struct stat st;
                         _cleanup_free_ char *fpath = NULL, *name = NULL;
+                        _cleanup_free_ SysvStub *service = NULL;
+                        struct stat st;
                         int r;
 
                         if (ignore_file(de->d_name))
                                 continue;
 
-                        fpath = strjoin(*path, "/", de->d_name, NULL);
-                        if (!fpath)
-                                return log_oom();
-
-                        if (stat(fpath, &st) < 0)
+                        if (fstatat(dirfd(d), de->d_name, &st, 0) < 0) {
+                                log_warning("stat() failed on %s/%s: %s",
+                                            *path, de->d_name, strerror(-r));
                                 continue;
+                        }
 
                         if (!(st.st_mode & S_IXUSR))
                                 continue;
 
+                        if (!S_ISREG(st.st_mode))
+                                continue;
+
                         name = sysv_translate_name(de->d_name);
                         if (!name)
+                                return log_oom();
+
+                        fpath = strjoin(*path, "/", de->d_name, NULL);
+                        if (!fpath)
                                 return log_oom();
 
                         if (hashmap_contains(all_services, name))
@@ -761,12 +767,11 @@ static int enumerate_sysv(LookupPaths lp, Hashmap *all_services) {
                         service->path = fpath;
 
                         r = hashmap_put(all_services, service->name, service);
-                        if (r < 0) {
-                                free(service);
+                        if (r < 0)
                                 return log_oom();
-                        }
 
                         name = fpath = NULL;
+                        service = NULL;
                 }
         }
 
