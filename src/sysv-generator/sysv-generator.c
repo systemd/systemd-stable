@@ -745,8 +745,10 @@ static int enumerate_sysv(LookupPaths lp, Hashmap *all_services) {
                         struct stat st;
                         int r;
 
-                        if (ignore_file(de->d_name))
-                                continue;
+                        dirent_ensure_type(d, de);
+
+                        if (!dirent_is_file(de))
+                            continue;
 
                         if (fstatat(dirfd(d), de->d_name, &st, 0) < 0) {
                                 log_warning("stat() failed on %s/%s: %s",
