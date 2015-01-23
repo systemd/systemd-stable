@@ -330,7 +330,6 @@ static int user_mkdir_runtime_path(User *u) {
                         r = asprintf(&t, "mode=0700,smackfsroot=*,uid=" UID_FMT ",gid=" GID_FMT ",size=%zu", u->uid, u->gid, u->manager->runtime_dir_size);
                 else
                         r = asprintf(&t, "mode=0700,uid=" UID_FMT ",gid=" GID_FMT ",size=%zu", u->uid, u->gid, u->manager->runtime_dir_size);
-
                 if (r < 0) {
                         r = log_oom();
                         goto fail;
@@ -338,7 +337,8 @@ static int user_mkdir_runtime_path(User *u) {
 
                 r = mount("tmpfs", p, "tmpfs", MS_NODEV|MS_NOSUID, t);
                 if (r < 0) {
-                        log_error("Failed to mount per-user tmpfs directory %s: %s", p, strerror(-r));
+                        log_error("Failed to mount per-user tmpfs directory %s: %m", p);
+                        r = -errno;
                         goto fail;
                 }
         }
@@ -347,7 +347,12 @@ static int user_mkdir_runtime_path(User *u) {
         return 0;
 
 fail:
-        free(p);
+        if (p) {
+                /* Try to clean up, but ignore errors */
+                (void) rmdir(p);
+                free(p);
+        }
+
         u->runtime_path = NULL;
         return r;
 }
