@@ -999,3 +999,5 @@ int free_and_strdup(char **p, const char *s);
 int sethostname_idempotent(const char *s);
 
 #define RLIMIT_MAKE_CONST(lim) ((struct rlimit) { lim, lim })
+
+#define laccess(path, mode) faccessat(AT_FDCWD, (path), (mode), AT_SYMLINK_NOFOLLOW)
