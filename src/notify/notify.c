@@ -44,12 +44,12 @@ static const char *arg_readahead = NULL;
 static void help(void) {
         printf("%s [OPTIONS...] [VARIABLE=VALUE...]\n\n"
                "Notify the init system about service status updates.\n\n"
-               "  -h --help             Show this help\n"
-               "     --version          Show package version\n"
-               "     --ready            Inform the init system about service start-up completion\n"
-               "     --pid[=PID]        Set main pid of daemon\n"
-               "     --status=TEXT      Set status text\n"
-               "     --booted           Returns 0 if the system was booted up with systemd, non-zero otherwise\n"
+               "  -h --help            Show this help\n"
+               "     --version         Show package version\n"
+               "     --ready           Inform the init system about service start-up completion\n"
+               "     --pid[=PID]       Set main pid of daemon\n"
+               "     --status=TEXT     Set status text\n"
+               "     --booted          Check if the system was booted up with systemd\n"
                "     --readahead=ACTION Controls read-ahead operations\n",
                program_invocation_short_name);
 }
