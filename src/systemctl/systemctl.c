@@ -4544,6 +4544,11 @@ static int cat(sd_bus *bus, char **args) {
         assert(bus);
         assert(args);
 
+        if (arg_host) {
+                log_error("Option --host cannot be used with 'cat'");
+                return -EINVAL;
+        }
+
         r = expand_names(bus, args + 1, NULL, &names);
         if (r < 0)
                 log_error("Failed to expand names: %s", strerror(-r));
