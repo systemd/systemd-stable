@@ -1839,6 +1839,8 @@ finish:
         pager_close();
 
         if (m) {
+                arg_shutdown_watchdog = m->shutdown_watchdog;
+
                 manager_free(m);
                 m = NULL;
         }
