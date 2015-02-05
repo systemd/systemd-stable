@@ -91,7 +91,9 @@ static int execute(char **modes, char **states) {
         char* arguments[4];
         int r;
         _cleanup_fclose_ FILE *f = NULL;
-        const char* note = strappenda("SLEEP=", arg_verb);
+        const char* note;
+
+        note = strappenda("SLEEP=", arg_verb);
 
         /* This file is opened first, so that if we hit an error,
          * we can abort before modifying any state. */
