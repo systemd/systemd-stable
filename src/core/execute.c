@@ -1609,13 +1609,14 @@ static int exec_child(ExecCommand *command,
                 _cleanup_free_ char *d = NULL;
 
                 if (asprintf(&d, "%s/%s",
-                             context->root_directory ? context->root_directory : "",
-                             context->working_directory ? context->working_directory : "") < 0) {
+                             context->root_directory ?: "",
+                             context->working_directory ?: "") < 0) {
                         *error = EXIT_MEMORY;
                         return -ENOMEM;
                 }
 
-                if (chdir(d) < 0) {
+                if (chdir(d) < 0 &&
+                    !context->working_directory_missing_ok) {
                         *error = EXIT_CHDIR;
                         return -errno;
                 }
