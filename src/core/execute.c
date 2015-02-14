@@ -1512,7 +1512,7 @@ static int exec_child(ExecCommand *command,
                                 return -ENOMEM;
                         }
 
-                        err = mkdir_safe(p, context->runtime_directory_mode, uid, gid);
+                        err = mkdir_safe_label(p, context->runtime_directory_mode, uid, gid);
                         if (err < 0) {
                                 *error = EXIT_RUNTIME_DIRECTORY;
                                 return err;
