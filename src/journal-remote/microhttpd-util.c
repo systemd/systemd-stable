@@ -184,6 +184,7 @@ static int verify_cert_authorized(gnutls_session_t session) {
         }
 
         log_info("Certificate status: %s", out.data);
+        gnutls_free(out.data);
 
         return status == 0 ? 0 : -EPERM;
 }
