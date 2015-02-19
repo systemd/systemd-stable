@@ -2097,7 +2097,7 @@ static int socket_deserialize_item(Unit *u, const char *key, const char *value, 
 
                         LIST_FOREACH(port, p, s->ports)
                                 if (p->type == SOCKET_FIFO &&
-                                    streq_ptr(p->path, value+skip))
+                                    path_equal_or_files_same(p->path, value+skip))
                                         break;
 
                         if (p) {
@@ -2116,7 +2116,7 @@ static int socket_deserialize_item(Unit *u, const char *key, const char *value, 
 
                         LIST_FOREACH(port, p, s->ports)
                                 if (p->type == SOCKET_SPECIAL &&
-                                    streq_ptr(p->path, value+skip))
+                                    path_equal_or_files_same(p->path, value+skip))
                                         break;
 
                         if (p) {
@@ -2135,7 +2135,7 @@ static int socket_deserialize_item(Unit *u, const char *key, const char *value, 
 
                         LIST_FOREACH(port, p, s->ports)
                                 if (p->type == SOCKET_MQUEUE &&
-                                    streq_ptr(p->path, value+skip))
+                                    streq(p->path, value+skip))
                                         break;
 
                         if (p) {
