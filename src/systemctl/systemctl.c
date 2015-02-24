@@ -7204,6 +7204,11 @@ found:
                 }
         }
 
+        /* Increase max number of open files to 16K if we can, we
+         * might needs this when browsing journal files, which might
+         * be split up into many files. */
+        setrlimit_closest(RLIMIT_NOFILE, &RLIMIT_MAKE_CONST(16384));
+
         return verb->dispatch(bus, argv + optind);
 }
 
@@ -7452,11 +7457,6 @@ int main(int argc, char*argv[]) {
                 r = 0;
                 goto finish;
         }
-
-        /* Increase max number of open files to 16K if we can, we
-         * might needs this when browsing journal files, which might
-         * be split up into many files. */
-        setrlimit_closest(RLIMIT_NOFILE, &RLIMIT_MAKE_CONST(16384));
 
         if (!avoid_bus())
                 r = bus_open_transport_systemd(arg_transport, arg_host, arg_scope != UNIT_FILE_SYSTEM, &bus);
