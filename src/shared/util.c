@@ -5768,7 +5768,7 @@ int on_ac_power(void) {
 
         d = opendir("/sys/class/power_supply");
         if (!d)
-                return -errno;
+                return errno == ENOENT ? true : -errno;
 
         for (;;) {
                 struct dirent *de;
