@@ -3627,7 +3627,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 if (arg_ephemeral) {
-                        char *np;
+                        _cleanup_free_ char *np = NULL;
 
                         /* If the specified path is a mount point we
                          * generate the new snapshot immediately
@@ -3657,13 +3657,13 @@ int main(int argc, char *argv[]) {
 
                         r = btrfs_subvol_snapshot(arg_directory, np, arg_read_only, true);
                         if (r < 0) {
-                                free(np);
                                 log_error_errno(r, "Failed to create snapshot %s from %s: %m", np, arg_directory);
                                 goto finish;
                         }
 
                         free(arg_directory);
                         arg_directory = np;
+                        np = NULL;
 
                         remove_subvol = true;
 
