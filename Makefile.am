@@ -3555,6 +3555,7 @@ dist_udevrules_DATA += \
 	rules/42-usb-hid-pm.rules \
 	rules/50-udev-default.rules \
 	rules/60-drm.rules \
+	rules/60-evdev.rules \
 	rules/60-keyboard.rules \
 	rules/60-persistent-storage-tape.rules \
 	rules/60-persistent-serial.rules \
@@ -3754,6 +3755,7 @@ dist_udevhwdb_DATA = \
 	hwdb/20-acpi-vendor.hwdb \
 	hwdb/20-OUI.hwdb \
 	hwdb/20-net-ifname.hwdb \
+	hwdb/60-evdev.hwdb \
 	hwdb/60-keyboard.hwdb \
 	hwdb/70-mouse.hwdb \
 	hwdb/70-touchpad.hwdb
