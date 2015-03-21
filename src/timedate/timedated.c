@@ -286,7 +286,7 @@ static int context_start_ntp(Context *c, sd_bus *bus, sd_bus_error *error) {
         l = get_ntp_services();
         STRV_FOREACH(i, l) {
 
-                if (c->use_ntp)
+                if (!c->use_ntp)
                         r = sd_bus_call_method(
                                         bus,
                                         "org.freedesktop.systemd1",
@@ -337,7 +337,7 @@ static int context_enable_ntp(Context*c, sd_bus *bus, sd_bus_error *error) {
 
         l = get_ntp_services();
         STRV_FOREACH(i, l) {
-                if (c->use_ntp)
+                if (!c->use_ntp)
                         r = sd_bus_call_method(
                                         bus,
                                         "org.freedesktop.systemd1",
@@ -673,8 +673,6 @@ static int method_set_ntp(sd_bus *bus, sd_bus_message *m, void *userdata, sd_bus
         if (r == 0)
                 return 1;
 
-        c->use_ntp = ntp;
-
         r = context_enable_ntp(c, bus, error);
         if (r < 0)
                 return r;
@@ -682,6 +680,8 @@ static int method_set_ntp(sd_bus *bus, sd_bus_message *m, void *userdata, sd_bus
         r = context_start_ntp(c, bus, error);
         if (r < 0)
                 return r;
+
+        c->use_ntp = ntp;
 
         log_info("Set NTP to %s", c->use_ntp ? "enabled" : "disabled");
 
