@@ -18,3 +18,4 @@ WatchdogSec=1min
 PrivateTmp=yes
 ProtectSystem=full
 ProtectHome=yes
+KillMode=mixed
