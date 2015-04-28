@@ -323,7 +323,7 @@ class SysvGeneratorTest(unittest.TestCase):
         self.add_sysv('foo.sh', {'Provides': 'foo bar'})
         err, results = self.run_generator()
         # ensure we don't try to create a symlink to itself
-        self.assertNotIn(err, 'itself')
+        self.assertNotIn('itself', err)
         self.assertEqual(list(results), ['foo.service'])
         self.assertEqual(results['foo.service'].get('Unit', 'Description'),
                          'LSB: test foo service')
@@ -361,7 +361,7 @@ class SysvGeneratorTest(unittest.TestCase):
                          ['foo.bak.service', 'foo.old.service', 'foo.service'])
 
         # ensure we don't try to create a symlink to itself
-        self.assertNotIn(err, 'itself')
+        self.assertNotIn('itself', err)
 
         self.assert_enabled('foo.service', [2, 3, 4, 5])
         self.assert_enabled('foo.bak.service', [])
