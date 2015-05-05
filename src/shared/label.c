@@ -78,3 +78,21 @@ int symlink_label(const char *old_path, const char *new_path) {
 
         return mac_smack_fix(new_path, false, false);
 }
+
+int symlink_label_atomic(const char *old_path, const char *new_path) {
+        int r;
+
+        assert(old_path);
+        assert(new_path);
+
+        r = mac_selinux_create_file_prepare(new_path, S_IFLNK);
+        if (r < 0)
+                return r;
+
+        r = symlink_atomic(old_path, new_path);
+        mac_selinux_create_file_clear();
+        if (r < 0)
+                return r;
+
+        return mac_smack_fix(new_path, false, false);
+}

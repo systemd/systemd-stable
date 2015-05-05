@@ -34,6 +34,7 @@
 #include "clock-util.h"
 #include "conf-files.h"
 #include "path-util.h"
+#include "label.h"
 #include "fileio-label.h"
 #include "label.h"
 #include "bus-util.h"
@@ -123,7 +124,8 @@ static int context_write_data_timezone(Context *c) {
         if (!p)
                 return log_oom();
 
-        r = symlink_atomic(p, "/etc/localtime");
+        mac_selinux_init("/etc");
+        r = symlink_label_atomic(p, "/etc/localtime");
         if (r < 0)
                 return r;
 
