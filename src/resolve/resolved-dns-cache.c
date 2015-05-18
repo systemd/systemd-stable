@@ -93,9 +93,7 @@ void dns_cache_flush(DnsCache *c) {
 
         hashmap_free(c->by_key);
         c->by_key = NULL;
-
-        prioq_free(c->by_expiry);
-        c->by_expiry = NULL;
+        c->by_expiry = prioq_free(c->by_expiry);
 }
 
 static void dns_cache_remove(DnsCache *c, DnsResourceKey *key) {
