@@ -2192,6 +2192,7 @@ int unit_file_get_list(
                         _cleanup_(unit_file_list_free_onep) UnitFileList *f = NULL;
                         struct dirent *de;
                         _cleanup_free_ char *path = NULL;
+                        bool also = false;
 
                         errno = 0;
                         de = readdir(d);
@@ -2245,7 +2246,7 @@ int unit_file_get_list(
                         if (!path)
                                 return -ENOMEM;
 
-                        r = unit_file_can_install(&paths, root_dir, path, true, NULL);
+                        r = unit_file_can_install(&paths, root_dir, path, true, &also);
                         if (r == -EINVAL ||  /* Invalid setting? */
                             r == -EBADMSG || /* Invalid format? */
                             r == -ENOENT     /* Included file not found? */)
@@ -2255,7 +2256,7 @@ int unit_file_get_list(
                         else if (r > 0)
                                 f->state = UNIT_FILE_DISABLED;
                         else
-                                f->state = UNIT_FILE_STATIC;
+                                f->state = also ? UNIT_FILE_INDIRECT : UNIT_FILE_STATIC;
 
                 found:
                         r = hashmap_put(h, basename(f->path), f);
