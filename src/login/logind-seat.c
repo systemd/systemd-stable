@@ -508,7 +508,7 @@ void seat_claim_position(Seat *s, Session *session, unsigned int pos) {
         seat_evict_position(s, session);
 
         session->pos = pos;
-        if (pos > 0 && !s->positions[pos])
+        if (pos > 0)
                 s->positions[pos] = session;
 }
 
