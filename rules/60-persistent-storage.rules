@@ -79,6 +79,9 @@ ENV{ID_FS_USAGE}=="filesystem|other", ENV{ID_FS_LABEL_ENC}=="?*", SYMLINK+="disk
 # by-id (World Wide Name)
 ENV{DEVTYPE}=="disk", ENV{ID_WWN_WITH_EXTENSION}=="?*", SYMLINK+="disk/by-id/wwn-$env{ID_WWN_WITH_EXTENSION}"
 ENV{DEVTYPE}=="partition", ENV{ID_WWN_WITH_EXTENSION}=="?*", SYMLINK+="disk/by-id/wwn-$env{ID_WWN_WITH_EXTENSION}-part%n"
+# Temporary compatibility rules for https://bugzilla.redhat.com/show_bug.cgi?id=1227503
+ENV{DEVTYPE}=="disk", ENV{ID_WWN_WITH_EXTENSION_REVERSED_DO_NOT_USE}=="?*", SYMLINK+="disk/by-id/wwn-$env{ID_WWN_WITH_EXTENSION_REVERSED_DO_NOT_USE}"
+ENV{DEVTYPE}=="partition", ENV{ID_WWN_WITH_EXTENSION_REVERSED_DO_NOT_USE}=="?*", SYMLINK+="disk/by-id/wwn-$env{ID_WWN_WITH_EXTENSION_REVERSED_DO_NOT_USE}-part%n"
 
 # by-partlabel/by-partuuid links (partition metadata)
 ENV{ID_PART_ENTRY_SCHEME}=="gpt", ENV{ID_PART_ENTRY_UUID}=="?*", SYMLINK+="disk/by-partuuid/$env{ID_PART_ENTRY_UUID}"

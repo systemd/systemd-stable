@@ -651,6 +651,8 @@ int main(int argc, char *argv[])
                         printf("ID_WWN=0x%1$" PRIx64 "\n"
                                "ID_WWN_WITH_EXTENSION=0x%1$" PRIx64 "\n",
                                wwwn);
+                        printf("ID_WWN_WITH_EXTENSION_REVERSED_DO_NOT_USE=0x%" PRIu64 "x\n",
+                               identify.octa[108/4]);
                 }
 
                 /* from Linux's include/linux/ata.h */
