@@ -2057,6 +2057,10 @@ int main(int argc, char *argv[]) {
                 log_error_errno(r, "Failed to iterate through journal: %m");
                 return EXIT_FAILURE;
         }
+        if (r == 0) {
+                printf("-- No entries --\n");
+                goto finish;
+        }
 
         if (!arg_follow)
                 pager_open_if_enabled();
