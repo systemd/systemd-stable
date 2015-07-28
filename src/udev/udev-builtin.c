@@ -56,7 +56,7 @@ void udev_builtin_init(struct udev *udev) {
                 return;
 
         for (i = 0; i < ELEMENTSOF(builtins); i++)
-                if (builtins[i]->init)
+                if (builtins[i] && builtins[i]->init)
                         builtins[i]->init(udev);
 
         initialized = true;
@@ -69,7 +69,7 @@ void udev_builtin_exit(struct udev *udev) {
                 return;
 
         for (i = 0; i < ELEMENTSOF(builtins); i++)
-                if (builtins[i]->exit)
+                if (builtins[i] && builtins[i]->exit)
                         builtins[i]->exit(udev);
 
         initialized = false;
@@ -79,7 +79,7 @@ bool udev_builtin_validate(struct udev *udev) {
         unsigned int i;
 
         for (i = 0; i < ELEMENTSOF(builtins); i++)
-                if (builtins[i]->validate && builtins[i]->validate(udev))
+                if (builtins[i] && builtins[i]->validate && builtins[i]->validate(udev))
                         return true;
         return false;
 }
@@ -88,7 +88,8 @@ void udev_builtin_list(struct udev *udev) {
         unsigned int i;
 
         for (i = 0; i < ELEMENTSOF(builtins); i++)
-                fprintf(stderr, "  %-14s  %s\n", builtins[i]->name, builtins[i]->help);
+                if (builtins[i])
+                        fprintf(stderr, "  %-14s  %s\n", builtins[i]->name, builtins[i]->help);
 }
 
 const char *udev_builtin_name(enum udev_builtin_cmd cmd) {
@@ -109,7 +110,7 @@ enum udev_builtin_cmd udev_builtin_lookup(const char *command) {
         if (pos)
                 pos[0] = '\0';
         for (i = 0; i < ELEMENTSOF(builtins); i++)
-                if (streq(builtins[i]->name, name))
+                if (builtins[i] && streq(builtins[i]->name, name))
                         return i;
         return UDEV_BUILTIN_MAX;
 }
