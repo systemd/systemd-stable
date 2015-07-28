@@ -101,7 +101,7 @@ const char *udev_builtin_name(enum udev_builtin_cmd cmd) {
 
 bool udev_builtin_run_once(enum udev_builtin_cmd cmd) {
         if (!builtins[cmd])
-                return -EOPNOTSUPP;
+                return false;
 
         return builtins[cmd]->run_once;
 }
