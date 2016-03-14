@@ -19,6 +19,7 @@
 #pragma once
 
 #include <sys/param.h>
+#include <sys/sysmacros.h>
 #include <sys/types.h>
 
 #include "libudev.h"
