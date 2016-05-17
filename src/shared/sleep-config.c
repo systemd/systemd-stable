@@ -36,6 +36,10 @@
 #include "sleep-config.h"
 #include "string-util.h"
 #include "strv.h"
+#include "proc-cmdline.h"
+#include "fstab-util.h"
+
+static char *arg_resume_dev = NULL;
 
 #define USE(x, y) do{ (x) = (y); (y) = NULL; } while(0)
 
@@ -255,6 +259,51 @@ static bool enough_memory_for_hibernation(void) {
         return r;
 }
 
+static int parse_proc_cmdline_item(const char *key, const char *value) {
+
+        assert(key);
+
+        if (streq(key, "resume") && value) {
+                free(arg_resume_dev);
+                arg_resume_dev = fstab_node_to_udev_node(value);
+                if (!arg_resume_dev)
+                        return log_oom();
+        }
+
+        return 0;
+
+}
+
+static bool resume_passed_to_kernel(void) {
+        int r = 0;
+        struct stat rd;
+
+        r = parse_proc_cmdline(parse_proc_cmdline_item);
+        if (r < 0) {
+                log_warning("Failed to parse kernel command line, disabling hibernation.");
+                return false;
+        }
+
+        if (arg_resume_dev == NULL) {
+                log_warning("No resume= argument specified in the kernel command line, disabling hibernation.");
+                return false;
+        }
+
+        if (stat(arg_resume_dev, &rd) < 0) {
+                log_warning("Could not stat device %s specified in resume=, disabling hibernation.",
+                            arg_resume_dev);
+                return false;
+        }
+
+        if (!S_ISBLK(rd.st_mode)) {
+                log_warning("Device %s specified in resume= is not a block device, disabling hibernation.",
+                            arg_resume_dev);
+                return false;
+        }
+
+        return true;
+}
+
 int can_sleep(const char *verb) {
         _cleanup_strv_free_ char **modes = NULL, **states = NULL;
         int r;
@@ -270,5 +319,8 @@ int can_sleep(const char *verb) {
         if (!can_sleep_state(states) || !can_sleep_disk(modes))
                 return false;
 
-        return streq(verb, "suspend") || enough_memory_for_hibernation();
+        if (streq(verb, "suspend"))
+                return true;
+
+        return enough_memory_for_hibernation() && resume_passed_to_kernel();
 }
