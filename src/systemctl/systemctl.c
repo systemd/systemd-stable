@@ -5521,7 +5521,7 @@ static int enable_unit(int argc, char *argv[], void *userdata) {
                         r = 0;
         }
 
-        if (carries_install_info == 0)
+        if (carries_install_info == 0 && !arg_quiet)
                 log_warning("The unit files have no [Install] section. They are not meant to be enabled\n"
                             "using systemctl.\n"
                             "Possible reasons for having this kind of units are:\n"
