@@ -45,6 +45,9 @@ bool link_dhcp6_enabled(Link *link) {
         if (!link->network)
                 return false;
 
+        if (link->network->bridge)
+                return false;
+
         return link->network->dhcp & ADDRESS_FAMILY_IPV6;
 }
 
