@@ -101,9 +101,11 @@ static const char* nonempty(const char *s) {
 }
 
 static bool startswith_comma(const char *s, const char *prefix) {
-        const char *t;
+        s = startswith(s, prefix);
+        if (!s)
+                return false;
 
-        return s && (t = startswith(s, prefix)) && (*t == ',');
+        return *s == ',' || *s == '\0';
 }
 
 static void context_free_x11(Context *c) {
@@ -681,6 +683,8 @@ static int find_legacy_keymap(Context *c, char **new_keymap) {
         unsigned best_matching = 0;
         int r;
 
+        assert(c->x11_layout);
+
         f = fopen(SYSTEMD_KBD_MODEL_MAP, "re");
         if (!f)
                 return -errno;
@@ -696,7 +700,7 @@ static int find_legacy_keymap(Context *c, char **new_keymap) {
                         break;
 
                 /* Determine how well matching this entry is */
-                if (streq_ptr(c->x11_layout, a[1]))
+                if (streq(c->x11_layout, a[1]))
                         /* If we got an exact match, this is best */
                         matching = 10;
                 else {
