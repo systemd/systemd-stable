@@ -1974,7 +1974,7 @@ static int busctl_main(sd_bus *bus, int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
-        _cleanup_(sd_bus_flush_close_unrefp) sd_bus *bus = NULL;
+        sd_bus *bus = NULL;
         int r;
 
         log_parse_environment();
@@ -2065,6 +2065,7 @@ int main(int argc, char *argv[]) {
         r = busctl_main(bus, argc, argv);
 
 finish:
+        sd_bus_flush_close_unref(bus);
         pager_close();
 
         strv_free(arg_matches);
