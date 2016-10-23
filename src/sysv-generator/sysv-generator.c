@@ -566,7 +566,7 @@ static int load_sysv(SysvStub *s) {
                                 char *d = NULL;
 
                                 if (chkconfig_description)
-                                        d = strjoin(chkconfig_description, " ", j, NULL);
+                                        d = strjoin(chkconfig_description, " ", j);
                                 else
                                         d = strdup(j);
                                 if (!d)
@@ -628,7 +628,7 @@ static int load_sysv(SysvStub *s) {
                                                 char *d = NULL;
 
                                                 if (long_description)
-                                                        d = strjoin(long_description, " ", t, NULL);
+                                                        d = strjoin(long_description, " ", t);
                                                 else
                                                         d = strdup(j);
                                                 if (!d)
@@ -807,7 +807,7 @@ static int enumerate_sysv(const LookupPaths *lp, Hashmap *all_services) {
                                 continue;
                         }
 
-                        fpath = strjoin(*path, "/", de->d_name, NULL);
+                        fpath = strjoin(*path, "/", de->d_name);
                         if (!fpath)
                                 return log_oom();
 
@@ -853,7 +853,7 @@ static int set_dependencies_from_rcnd(const LookupPaths *lp, Hashmap *all_servic
                         _cleanup_free_ char *path = NULL;
                         struct dirent *de;
 
-                        path = strjoin(*p, "/", rcnd_table[i].path, NULL);
+                        path = strjoin(*p, "/", rcnd_table[i].path);
                         if (!path) {
                                 r = log_oom();
                                 goto finish;
@@ -883,7 +883,7 @@ static int set_dependencies_from_rcnd(const LookupPaths *lp, Hashmap *all_servic
                                 if (a < 0 || b < 0)
                                         continue;
 
-                                fpath = strjoin(*p, "/", de->d_name, NULL);
+                                fpath = strjoin(*p, "/", de->d_name);
                                 if (!fpath) {
                                         r = log_oom();
                                         goto finish;
