@@ -244,7 +244,9 @@ static void scope_enter_signal(Scope *s, ScopeState state, ScopeResult f) {
         if (state == SCOPE_STOP_SIGTERM)
                 skip_signal = bus_scope_send_request_stop(s) > 0;
 
-        if (!skip_signal) {
+        if (skip_signal)
+                r = 1; /* wait */
+        else {
                 r = unit_kill_context(
                                 UNIT(s),
                                 &s->kill_context,
@@ -254,8 +256,8 @@ static void scope_enter_signal(Scope *s, ScopeState state, ScopeResult f) {
                                 -1, -1, false);
                 if (r < 0)
                         goto fail;
-        } else
-                r = 1;
+        }
+        log_unit_debug(UNIT(s), "Killing unit %s: ret=%d", UNIT(s)->id, r);
 
         if (r > 0) {
                 r = scope_arm_timer(s, usec_add(now(CLOCK_MONOTONIC), s->timeout_stop_usec));
