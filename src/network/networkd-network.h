@@ -236,7 +236,7 @@ int config_parse_dhcp_route_table(const char *unit, const char *filename, unsign
 /* Legacy IPv4LL support */
 int config_parse_ipv4ll(const char *unit, const char *filename, unsigned line, const char *section, unsigned section_line, const char *lvalue, int ltype, const char *rvalue, void *data, void *userdata);
 
-const struct ConfigPerfItem* network_network_gperf_lookup(const char *key, unsigned length);
+const struct ConfigPerfItem* network_network_gperf_lookup(const char *key, GPERF_LEN_TYPE length);
 
 extern const sd_bus_vtable network_vtable[];
 
