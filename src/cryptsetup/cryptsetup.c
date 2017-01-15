@@ -752,6 +752,7 @@ int main(int argc, char *argv[]) {
 
         } else {
                 log_error("Unknown verb %s.", argv[1]);
+                r = -EINVAL;
                 goto finish;
         }
 
