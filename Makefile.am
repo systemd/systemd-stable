@@ -1005,8 +1005,7 @@ libbasic_la_CFLAGS = \
 libbasic_la_LIBADD = \
 	$(SELINUX_LIBS) \
 	$(CAP_LIBS) \
-	-lrt \
-	-lm
+	-lrt
 
 # -----------------------------------------------------------------------------
 noinst_LTLIBRARIES += \
