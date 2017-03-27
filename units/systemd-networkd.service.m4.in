@@ -39,3 +39,9 @@ SystemCallFilter=~@clock @cpu-emulation @debug @keyring @module @mount @obsolete
 [Install]
 WantedBy=multi-user.target
 Also=systemd-networkd.socket
+
+# We want to enable systemd-networkd-wait-online.service whenever this service
+# is enabled. systemd-networkd-wait-online.service has
+# WantedBy=network-online.target, so enabling it only has an effect if
+# network-online.target itself is enabled or pulled in by some other unit.
+Also=systemd-networkd-wait-online.service
