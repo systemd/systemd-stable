@@ -2264,6 +2264,9 @@ int dns_packet_is_reply_for(DnsPacket *p, const DnsResourceKey *key) {
         if (r < 0)
                 return r;
 
+        if (!p->question)
+                return 0;
+
         if (p->question->n_keys != 1)
                 return 0;
 
