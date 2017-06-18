@@ -5451,6 +5451,7 @@ dist_zshcompletion_data += \
 tests += \
 	test-dns-packet \
 	test-resolve-tables \
+	test-resolved-packet \
 	test-dnssec
 
 manual_tests += \
@@ -5468,6 +5469,19 @@ test_resolve_tables_CFLAGS = \
 	$(GCRYPT_CFLAGS)
 
 test_resolve_tables_LDADD = \
+	libsystemd-shared.la \
+	$(GCRYPT_LIBS) \
+	-lm
+
+test_resolved_packet_SOURCES = \
+	src/resolve/test-resolved-packet.c \
+	$(basic_dns_sources)
+
+test_resolved_packet_CFLAGS = \
+	$(AM_CFLAGS) \
+	$(GCRYPT_CFLAGS)
+
+test_resolved_packet_LDADD = \
 	libsystemd-shared.la \
 	$(GCRYPT_LIBS) \
 	-lm
