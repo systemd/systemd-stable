@@ -537,7 +537,7 @@ static int parse_fstab(bool initrd) {
                         continue;
                 }
 
-                where = initrd ? strappend("/sysroot/", me->mnt_dir) : strdup(me->mnt_dir);
+                where = strdup(me->mnt_dir);
                 if (!where)
                         return log_oom();
 
