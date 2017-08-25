@@ -2884,6 +2884,7 @@ static void service_sigchld_event(Unit *u, pid_t pid, int code, int status) {
 
                 if (s->main_command &&
                     s->main_command->command_next &&
+                    s->type == SERVICE_ONESHOT &&
                     f == SERVICE_SUCCESS) {
 
                         /* There is another command to *
