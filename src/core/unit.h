@@ -115,6 +115,7 @@ struct Unit {
         /* Job timeout and action to take */
         usec_t job_timeout;
         usec_t job_running_timeout;
+        bool job_running_timeout_set:1;
         EmergencyAction job_timeout_action;
         char *job_timeout_reboot_arg;
 

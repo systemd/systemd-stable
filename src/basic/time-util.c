@@ -1010,7 +1010,11 @@ int parse_sec(const char *t, usec_t *usec) {
 }
 
 int parse_sec_fix_0(const char *t, usec_t *usec) {
+        assert(t);
+        assert(usec);
+
         t += strspn(t, WHITESPACE);
+
         if (streq(t, "0")) {
                 *usec = USEC_INFINITY;
                 return 0;
