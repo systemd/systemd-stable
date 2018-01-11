@@ -111,7 +111,7 @@ static void netdev_cancel_callbacks(NetDev *netdev) {
         _cleanup_(sd_netlink_message_unrefp) sd_netlink_message *m = NULL;
         netdev_join_callback *callback;
 
-        if (!netdev)
+        if (!netdev || !netdev->manager)
                 return;
 
         rtnl_message_new_synthetic_error(-ENODEV, 0, &m);
