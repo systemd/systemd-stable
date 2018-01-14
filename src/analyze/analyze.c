@@ -1436,7 +1436,7 @@ static int dump_syscall_filters(char** names) {
 }
 
 #else
-static int dump_syscall_filters(int argc, char *argv[], void *userdata) {
+static int dump_syscall_filters(char** names) {
         log_error("Not compiled with syscall filters, sorry.");
         return -EOPNOTSUPP;
 }
