@@ -1832,6 +1832,9 @@ int dns_packet_read_rr(DnsPacket *p, DnsResourceRecord **ret, bool *ret_cache_fl
                 if (r < 0)
                         return r;
 
+                if (rdlength < 4)
+                        return -EBADMSG;
+
                 r = dns_packet_read_memdup(p, rdlength - 4,
                                            &rr->ds.digest, &rr->ds.digest_size,
                                            NULL);
@@ -1853,6 +1856,9 @@ int dns_packet_read_rr(DnsPacket *p, DnsResourceRecord **ret, bool *ret_cache_fl
                 r = dns_packet_read_uint8(p, &rr->sshfp.fptype, NULL);
                 if (r < 0)
                         return r;
+
+                if (rdlength < 2)
+                        return -EBADMSG;
 
                 r = dns_packet_read_memdup(p, rdlength - 2,
                                            &rr->sshfp.fingerprint, &rr->sshfp.fingerprint_size,
@@ -1877,6 +1883,9 @@ int dns_packet_read_rr(DnsPacket *p, DnsResourceRecord **ret, bool *ret_cache_fl
                 r = dns_packet_read_uint8(p, &rr->dnskey.algorithm, NULL);
                 if (r < 0)
                         return r;
+
+                if (rdlength < 4)
+                        return -EBADMSG;
 
                 r = dns_packet_read_memdup(p, rdlength - 4,
                                            &rr->dnskey.key, &rr->dnskey.key_size,
@@ -1921,6 +1930,9 @@ int dns_packet_read_rr(DnsPacket *p, DnsResourceRecord **ret, bool *ret_cache_fl
                 r = dns_packet_read_name(p, &rr->rrsig.signer, false, NULL);
                 if (r < 0)
                         return r;
+
+                if (rdlength + offset < p->rindex)
+                        return -EBADMSG;
 
                 r = dns_packet_read_memdup(p, offset + rdlength - p->rindex,
                                            &rr->rrsig.signature, &rr->rrsig.signature_size,
@@ -2011,6 +2023,9 @@ int dns_packet_read_rr(DnsPacket *p, DnsResourceRecord **ret, bool *ret_cache_fl
                 if (r < 0)
                         return r;
 
+                if (rdlength < 3)
+                        return -EBADMSG;
+
                 r = dns_packet_read_memdup(p, rdlength - 3,
                                            &rr->tlsa.data, &rr->tlsa.data_size,
                                            NULL);
@@ -2030,6 +2045,9 @@ int dns_packet_read_rr(DnsPacket *p, DnsResourceRecord **ret, bool *ret_cache_fl
                 r = dns_packet_read_string(p, &rr->caa.tag, NULL);
                 if (r < 0)
                         return r;
+
+                if (rdlength + offset < p->rindex)
+                        return -EBADMSG;
 
                 r = dns_packet_read_memdup(p,
                                            rdlength + offset - p->rindex,
