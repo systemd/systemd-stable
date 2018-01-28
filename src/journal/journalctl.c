@@ -75,6 +75,8 @@
 
 #define DEFAULT_FSS_INTERVAL_USEC (15*USEC_PER_MINUTE)
 
+#define PROCESS_INOTIFY_INTERVAL 1024   /* Every 1,024 messages processed */
+
 enum {
         /* Special values for arg_lines */
         ARG_LINES_DEFAULT = -2,
@@ -2464,6 +2466,20 @@ int main(int argc, char *argv[]) {
                                 goto finish;
 
                         n_shown++;
+
+                        /* If journalctl take a long time to process messages, and during that time journal file
+                         * rotation occurs, a journalctl client will keep those rotated files open until it calls
+                         * sd_journal_process(), which typically happens as a result of calling sd_journal_wait() below
+                         * in the "following" case.  By periodically calling sd_journal_process() during the processing
+                         * loop we shrink the window of time a client instance has open file descriptors for rotated
+                         * (deleted) journal files. */
+                        if ((n_shown % PROCESS_INOTIFY_INTERVAL) == 0) {
+                                r = sd_journal_process(j);
+                                if (r < 0) {
+                                        log_error_errno(r, "Failed to process inotify events: %m");
+                                        goto finish;
+                                }
+                        }
                 }
 
                 if (!arg_follow) {
