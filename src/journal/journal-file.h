@@ -121,6 +121,8 @@ typedef struct JournalFile {
         pthread_t offline_thread;
         volatile OfflineState offline_state;
 
+        unsigned last_seen_generation;
+
 #if defined(HAVE_XZ) || defined(HAVE_LZ4)
         void *compress_buffer;
         size_t compress_buffer_size;
