@@ -1725,8 +1725,8 @@ static sd_journal *journal_new(int flags, const char *path) {
                         j->path = t;
         }
 
-        j->files = ordered_hashmap_new(&string_hash_ops);
-        j->directories_by_path = hashmap_new(&string_hash_ops);
+        j->files = ordered_hashmap_new(&path_hash_ops);
+        j->directories_by_path = hashmap_new(&path_hash_ops);
         j->mmap = mmap_cache_new();
         if (!j->files || !j->directories_by_path || !j->mmap)
                 goto fail;
