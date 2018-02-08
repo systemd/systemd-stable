@@ -212,8 +212,19 @@ int path_check_fstype(const char *path, statfs_f_type_t magic_value) {
 }
 
 bool is_temporary_fs(const struct statfs *s) {
-    return is_fs_type(s, TMPFS_MAGIC) ||
-           is_fs_type(s, RAMFS_MAGIC);
+        return is_fs_type(s, TMPFS_MAGIC) ||
+                is_fs_type(s, RAMFS_MAGIC);
+}
+
+bool is_network_fs(const struct statfs *s) {
+        return is_fs_type(s, CIFS_MAGIC_NUMBER) ||
+                is_fs_type(s, CODA_SUPER_MAGIC) ||
+                is_fs_type(s, NCP_SUPER_MAGIC) ||
+                is_fs_type(s, NFS_SUPER_MAGIC) ||
+                is_fs_type(s, SMB_SUPER_MAGIC) ||
+                is_fs_type(s, V9FS_MAGIC) ||
+                is_fs_type(s, AFS_SUPER_MAGIC) ||
+                is_fs_type(s, OCFS2_SUPER_MAGIC);
 }
 
 int fd_is_temporary_fs(int fd) {
@@ -223,6 +234,15 @@ int fd_is_temporary_fs(int fd) {
                 return -errno;
 
         return is_temporary_fs(&s);
+}
+
+int fd_is_network_fs(int fd) {
+        struct statfs s;
+
+        if (fstatfs(fd, &s) < 0)
+                return -errno;
+
+        return is_network_fs(&s);
 }
 
 int path_is_temporary_fs(const char *path) {
