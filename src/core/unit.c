@@ -343,7 +343,11 @@ bool unit_check_gc(Unit *u) {
         assert(u);
 
         /* Checks whether the unit is ready to be unloaded for garbage collection. Returns true, when the unit shall
-         * stay around, false if there's no reason to keep it loaded. */
+         * stay around, false if there's no reason to keep it loaded.
+         *
+         * References from other units are *not* checked here. Instead, this is done
+         * in unit_gc_sweep(), but using markers to properly collect dependency loops.
+         */
 
         if (u->job)
                 return true;
@@ -359,9 +363,6 @@ bool unit_check_gc(Unit *u) {
                 UNIT_VTABLE(u)->release_resources(u);
 
         if (u->perpetual)
-                return true;
-
-        if (u->refs_by_target)
                 return true;
 
         if (sd_bus_track_count(u->bus_track) > 0)
