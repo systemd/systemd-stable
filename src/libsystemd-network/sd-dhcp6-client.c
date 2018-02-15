@@ -843,7 +843,7 @@ static int client_parse_message(
                                          dhcp6_message_type_to_string(message->type));
         }
 
-        return r;
+        return 0;
 }
 
 static int client_receive_reply(sd_dhcp6_client *client, DHCP6Message *reply, size_t len) {
