@@ -348,7 +348,7 @@ foreach arg : ['unused-parameter',
         endif
 endforeach
 
-if cc.compiles('
+if cc.compiles('''
    #include <time.h>
    #include <inttypes.h>
    typedef uint64_t usec_t;
@@ -357,7 +357,7 @@ if cc.compiles('
            struct timespec now;
            return 0;
    }
-', name : '-Werror=shadow with local shadowing')
+''', name : '-Werror=shadow with local shadowing')
         add_project_arguments('-Werror=shadow', language : 'c')
 endif
 
