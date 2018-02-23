@@ -4063,8 +4063,9 @@ static void print_status_info(
                 char ** dropin;
 
                 STRV_FOREACH(dropin, i->dropin_paths) {
-                        if (! dir || last) {
-                                printf(dir ? "        " : "  Drop-In: ");
+                        if (!dir || last) {
+                                printf(dir ? "           " :
+                                             "  Drop-In: ");
 
                                 dir = mfree(dir);
 
@@ -4074,7 +4075,8 @@ static void print_status_info(
                                         return;
                                 }
 
-                                printf("%s\n           %s", dir,
+                                printf("%s\n"
+                                       "           %s", dir,
                                        special_glyph(TREE_RIGHT));
                         }
 
