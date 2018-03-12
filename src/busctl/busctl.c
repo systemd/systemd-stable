@@ -112,6 +112,9 @@ static int list_bus_names(sd_bus *bus, char **argv) {
         }
 
         merged = new(char*, hashmap_size(names) + 1);
+        if (!merged)
+                return log_oom();
+
         HASHMAP_FOREACH_KEY(v, k, names, iterator)
                 merged[n++] = k;
 
