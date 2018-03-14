@@ -314,7 +314,7 @@ static int dm_list_get(MountPoint **head) {
                 if (!node)
                         return -ENOMEM;
 
-                m = new(MountPoint, 1);
+                m = new0(MountPoint, 1);
                 if (!m) {
                         free(node);
                         return -ENOMEM;
