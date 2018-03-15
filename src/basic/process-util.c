@@ -658,7 +658,7 @@ bool is_main_thread(void) {
         return cached > 0;
 }
 
-noreturn void freeze(void) {
+_noreturn_ void freeze(void) {
 
         /* Make sure nobody waits for us on a socket anymore */
         close_all_fds(NULL, 0);

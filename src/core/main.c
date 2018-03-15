@@ -135,7 +135,7 @@ static void pager_open_if_enabled(void) {
         pager_open(false);
 }
 
-noreturn static void freeze_or_reboot(void) {
+_noreturn_ static void freeze_or_reboot(void) {
 
         if (arg_crash_reboot) {
                 log_notice("Rebooting in 10s...");
@@ -150,7 +150,7 @@ noreturn static void freeze_or_reboot(void) {
         freeze();
 }
 
-noreturn static void crash(int sig) {
+_noreturn_ static void crash(int sig) {
         struct sigaction sa;
         pid_t pid;
 
