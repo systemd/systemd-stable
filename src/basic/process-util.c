@@ -743,7 +743,7 @@ bool is_main_thread(void) {
         return cached > 0;
 }
 
-noreturn void freeze(void) {
+_noreturn_ void freeze(void) {
 
         log_close();
 
