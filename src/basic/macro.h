@@ -48,6 +48,15 @@
 #define _weakref_(x) __attribute__((weakref(#x)))
 #define _alignas_(x) __attribute__((aligned(__alignof(x))))
 #define _cleanup_(x) __attribute__((cleanup(x)))
+/* Define C11 noreturn without <stdnoreturn.h> and even on older gcc
+ * compiler versions */
+#ifndef _noreturn_
+#if __STDC_VERSION__ >= 201112L
+#define _noreturn_ _Noreturn
+#else
+#define _noreturn_ __attribute__((noreturn))
+#endif
+#endif
 
 /* Temporarily disable some warnings */
 #define DISABLE_WARNING_DECLARATION_AFTER_STATEMENT                     \
@@ -392,16 +401,6 @@ static inline unsigned long ALIGN_POWER2(unsigned long u) {
 #define thread_local _Thread_local
 #else
 #define thread_local __thread
-#endif
-#endif
-
-/* Define C11 noreturn without <stdnoreturn.h> and even on older gcc
- * compiler versions */
-#ifndef noreturn
-#if __STDC_VERSION__ >= 201112L
-#define noreturn _Noreturn
-#else
-#define noreturn __attribute__((noreturn))
 #endif
 #endif
 

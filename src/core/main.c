@@ -130,7 +130,7 @@ static bool arg_default_tasks_accounting = true;
 static uint64_t arg_default_tasks_max = UINT64_MAX;
 static sd_id128_t arg_machine_id = {};
 
-noreturn static void freeze_or_reboot(void) {
+_noreturn_ static void freeze_or_reboot(void) {
 
         if (arg_crash_reboot) {
                 log_notice("Rebooting in 10s...");
@@ -145,7 +145,7 @@ noreturn static void freeze_or_reboot(void) {
         freeze();
 }
 
-noreturn static void crash(int sig) {
+_noreturn_ static void crash(int sig) {
         struct sigaction sa;
         pid_t pid;
 
