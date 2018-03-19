@@ -181,6 +181,8 @@ int calendar_spec_normalize(CalendarSpec *c) {
 }
 
 _pure_ static bool chain_valid(CalendarComponent *c, int from, int to, bool end_of_month) {
+        assert(to >= from);
+
         if (!c)
                 return true;
 
@@ -189,6 +191,10 @@ _pure_ static bool chain_valid(CalendarComponent *c, int from, int to, bool end_
                 to -= 3;
 
         if (c->start < from || c->start > to)
+                return false;
+
+        /* Avoid overly large values that could cause overflow */
+        if (c->repeat > to - from)
                 return false;
 
         /*
