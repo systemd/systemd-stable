@@ -1190,7 +1190,6 @@ static int parse_attribute_from_arg(Item *item) {
 }
 
 static int fd_set_attribute(Item *item, int fd, const struct stat *st) {
-        char procfs_path[strlen("/proc/self/fd/") + DECIMAL_STR_MAX(int)];
         _cleanup_close_ int procfs_fd = -1;
         _cleanup_free_ char *path = NULL;
         unsigned f;
@@ -1217,9 +1216,7 @@ static int fd_set_attribute(Item *item, int fd, const struct stat *st) {
         if (!S_ISDIR(st->st_mode))
                 f &= ~FS_DIRSYNC_FL;
 
-        xsprintf(procfs_path, "/proc/self/fd/%i", fd);
-
-        procfs_fd = open(procfs_path, O_RDONLY|O_CLOEXEC|O_NOATIME);
+        procfs_fd = fd_reopen(fd, O_RDONLY|O_CLOEXEC|O_NOATIME);
         if (procfs_fd < 0)
                 return -errno;
 
