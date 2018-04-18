@@ -32,6 +32,7 @@
 #include "fd-util.h"
 #include "fileio.h"
 #include "path-util.h"
+#include "unit.h"
 
 static BUS_DEFINE_PROPERTY_GET_ENUM(property_get_cgroup_device_policy, cgroup_device_policy, CGroupDevicePolicy);
 
@@ -351,12 +352,12 @@ static int bus_cgroup_set_transient_property(
         if (streq(name, "Delegate")) {
                 int b;
 
-                if (!UNIT_VTABLE(u)->can_delegate)
-                        return sd_bus_error_setf(error, SD_BUS_ERROR_INVALID_ARGS, "Delegation not available for unit type");
-
                 r = sd_bus_message_read(message, "b", &b);
                 if (r < 0)
                         return r;
+
+                if (!UNIT_VTABLE(u)->can_delegate && b)
+                        log_unit_notice(u, "Delegate=yes set, but has no effect for unit type");
 
                 if (!UNIT_WRITE_FLAGS_NOOP(flags)) {
                         c->delegate = b;
@@ -369,9 +370,6 @@ static int bus_cgroup_set_transient_property(
 
         } else if (streq(name, "DelegateControllers")) {
                 CGroupMask mask = 0;
-
-                if (!UNIT_VTABLE(u)->can_delegate)
-                        return sd_bus_error_setf(error, SD_BUS_ERROR_INVALID_ARGS, "Delegation not available for unit type");
 
                 r = sd_bus_message_enter_container(message, 'a', "s");
                 if (r < 0)
@@ -413,6 +411,9 @@ static int bus_cgroup_set_transient_property(
 
                         unit_write_settingf(u, flags, name, "Delegate=%s", strempty(t));
                 }
+
+                if (!UNIT_VTABLE(u)->can_delegate && c->delegate)
+                        log_unit_notice(u, "Delegate=yes set, but has no effect for unit type");
 
                 return 1;
         }
