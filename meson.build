@@ -315,7 +315,6 @@ foreach arg : ['-Wextra',
                '-Wold-style-definition',
                '-Wpointer-arith',
                '-Winit-self',
-               '-Wdeclaration-after-statement',
                '-Wfloat-equal',
                '-Wsuggest-attribute=noreturn',
                '-Werror=missing-prototypes',
@@ -358,7 +357,7 @@ if not fuzzer_build
 endif
 
 # "negative" arguments: gcc on purpose does not return an error for "-Wno-"
-# arguments, just emits a warnings. So test for the "positive" version instead.
+# arguments, just emits a warning. So test for the "positive" version instead.
 foreach arg : ['unused-parameter',
                'missing-field-initializers',
                'unused-result',
