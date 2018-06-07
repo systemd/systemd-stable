@@ -1151,8 +1151,12 @@ void server_dispatch_message(
                 goto finish;
 
         r = cg_pid_get_path_shifted(ucred->pid, s->cgroup_root, &path);
-        if (r < 0)
-                goto finish;
+        if (r < 0) {
+                /* get all suppressed messages before dispatching */
+                rl = journal_rate_limit_test_all(s->rate_limit, &path,
+                                                 priority & LOG_PRIMASK);
+                goto write_suppressed;
+        }
 
         /* example: /user/lennart/3/foobar
          *          /system/dbus.service/foobar
@@ -1175,6 +1179,7 @@ void server_dispatch_message(
         if (rl == 0)
                 return;
 
+write_suppressed:
         /* Write a suppression message if we suppressed something */
         if (rl > 1)
                 server_driver_message(s, "MESSAGE_ID=" SD_MESSAGE_JOURNAL_DROPPED_STR,

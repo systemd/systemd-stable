@@ -269,3 +269,54 @@ int journal_rate_limit_test(JournalRateLimit *r, const char *id, int priority, u
         p->suppressed++;
         return 0;
 }
+
+/* When getting path failed - get number of all suppressed messages.
+ * Otherwise some messages may become suppressed silently.
+ * This function allocates memory for path.
+ */
+int journal_rate_limit_test_all(JournalRateLimit *r, char **path, int priority) {
+        uint64_t h;
+        JournalRateLimitGroup *g;
+        JournalRateLimitPool *p;
+        usec_t ts;
+        unsigned s = 0;
+        const char *path_p = NULL;
+        unsigned path_n = 0;
+
+        if (!r || r->interval == 0 || r->burst == 0)
+                return 1;
+
+        ts = now(CLOCK_MONOTONIC);
+
+        for (h = 0; h < BUCKETS_MAX; h++) {
+                g = r->buckets[h];
+
+                if (!g)
+                        continue;
+
+                p = &g->pools[priority_map[priority]];
+
+                if (p->suppressed) {
+                        path_p = g->id;
+                        path_n++;
+                }
+
+                s += p->suppressed;
+                p->suppressed = 0;
+                p->num = 1;
+                p->begin = ts;
+        }
+
+        if (path_n == 1) {
+                *path = strdup(path_p);
+        } else {
+                const size_t size = 32;
+
+                *path = malloc(size);
+                if (*path) {
+                        (void)snprintf(*path, size, "%d paths", path_n);
+                }
+        }
+
+        return 1 + s;
+}
