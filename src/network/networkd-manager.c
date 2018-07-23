@@ -1758,7 +1758,7 @@ int manager_set_hostname(Manager *m, const char *hostname) {
                 return log_oom();
 
         if (!m->bus || sd_bus_is_ready(m->bus) <= 0) {
-                log_info("Not connected to system bus, not setting hostname.");
+                log_debug("Not connected to system bus, setting hostname later.");
                 return 0;
         }
 
@@ -1806,7 +1806,7 @@ int manager_set_timezone(Manager *m, const char *tz) {
                 return log_oom();
 
         if (!m->bus || sd_bus_is_ready(m->bus) <= 0) {
-                log_info("Not connected to system bus, not setting timezone.");
+                log_debug("Not connected to system bus, setting timezone later.");
                 return 0;
         }
 
