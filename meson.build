@@ -615,9 +615,9 @@ conf.set_quoted('GETTEXT_PACKAGE', meson.project_name())
 substs.set('SUSHELL', get_option('debug-shell'))
 substs.set('DEBUGTTY', get_option('debug-tty'))
 
-debug = get_option('debug')
-if debug != ''
-        foreach name : debug.split(',')
+debug_extra = get_option('debug-extra')
+if debug_extra != ''
+        foreach name : debug_extra.split(',')
                 if name == 'hashmap'
                         conf.set('ENABLE_DEBUG_HASHMAP', true)
                 elif name == 'mmap-cache'
