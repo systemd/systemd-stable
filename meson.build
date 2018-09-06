@@ -276,7 +276,12 @@ endforeach
 foreach arg : ['unused-parameter',
                'missing-field-initializers',
                'unused-result',
-               'format-signedness']
+               'format-signedness',
+
+               # Disable -Wmaybe-uninitialized, since it's noisy on gcc 8 with
+               # optimizations enabled, producing essentially false positives.
+               'maybe-uninitialized',
+              ]
         if cc.has_argument('-W' + arg)
                 add_project_arguments('-Wno-' + arg, language : 'c')
         endif
