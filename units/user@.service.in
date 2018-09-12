@@ -10,6 +10,7 @@
 [Unit]
 Description=User Manager for UID %i
 After=systemd-user-sessions.service
+IgnoreOnIsolate=yes
 
 [Service]
 User=%i
