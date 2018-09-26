@@ -14,7 +14,7 @@ static void test_parse_sleep_config(void) {
         const char *verb;
 
         FOREACH_STRING(verb, "suspend", "hibernate", "hybrid-sleep", "suspend-then-hibernate")
-                assert_se(parse_sleep_config(verb, NULL, NULL, NULL) == 0);
+                assert_se(parse_sleep_config(verb, NULL, NULL, NULL, NULL) == 0);
 }
 
 static int test_fiemap(const char *path) {
