@@ -400,7 +400,7 @@ static int output_short(
                 unsigned n_columns,
                 OutputFlags flags,
                 Set *output_fields,
-                size_t highlight[2]) {
+                const size_t highlight[2]) {
 
         int r;
         const void *data;
@@ -518,7 +518,7 @@ static int output_verbose(
                 unsigned n_columns,
                 OutputFlags flags,
                 Set *output_fields,
-                size_t highlight[2]) {
+                const size_t highlight[2]) {
 
         const void *data;
         size_t length;
@@ -626,7 +626,7 @@ static int output_export(
                 unsigned n_columns,
                 OutputFlags flags,
                 Set *output_fields,
-                size_t highlight[2]) {
+                const size_t highlight[2]) {
 
         sd_id128_t boot_id;
         char sid[33];
@@ -769,7 +769,7 @@ static int output_json(
                 unsigned n_columns,
                 OutputFlags flags,
                 Set *output_fields,
-                size_t highlight[2]) {
+                const size_t highlight[2]) {
 
         uint64_t realtime, monotonic;
         _cleanup_free_ char *cursor = NULL;
@@ -999,7 +999,7 @@ static int output_cat(
                 unsigned n_columns,
                 OutputFlags flags,
                 Set *output_fields,
-                size_t highlight[2]) {
+                const size_t highlight[2]) {
 
         const void *data;
         size_t l;
@@ -1054,7 +1054,7 @@ static int (*output_funcs[_OUTPUT_MODE_MAX])(
                 unsigned n_columns,
                 OutputFlags flags,
                 Set *output_fields,
-                size_t highlight[2]) = {
+                const size_t highlight[2]) = {
 
         [OUTPUT_SHORT] = output_short,
         [OUTPUT_SHORT_ISO] = output_short,
@@ -1078,7 +1078,7 @@ int output_journal(
                 unsigned n_columns,
                 OutputFlags flags,
                 char **output_fields,
-                size_t highlight[2],
+                const size_t highlight[2],
                 bool *ellipsized) {
 
         int ret;
