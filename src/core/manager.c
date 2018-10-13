@@ -831,9 +831,7 @@ int manager_new(UnitFileScope scope, unsigned test_run_flags, Manager **_m) {
                 if (r < 0)
                         return r;
 
-                r = manager_setup_timezone_change(m);
-                if (r < 0)
-                        return r;
+                (void) manager_setup_timezone_change(m);
 
                 r = manager_setup_sigchld_event_source(m);
                 if (r < 0)
