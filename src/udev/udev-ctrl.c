@@ -119,7 +119,7 @@ int udev_ctrl_enable_receiving(struct udev_ctrl *uctrl) {
         if (!uctrl->bound) {
                 err = bind(uctrl->sock, &uctrl->saddr.sa, uctrl->addrlen);
                 if (err < 0 && errno == EADDRINUSE) {
-                        unlink(uctrl->saddr.un.sun_path);
+                        (void) sockaddr_un_unlink(&uctrl->saddr.un);
                         err = bind(uctrl->sock, &uctrl->saddr.sa, uctrl->addrlen);
                 }
 
@@ -161,7 +161,7 @@ int udev_ctrl_cleanup(struct udev_ctrl *uctrl) {
         if (uctrl == NULL)
                 return 0;
         if (uctrl->cleanup_socket)
-                unlink(uctrl->saddr.un.sun_path);
+                sockaddr_un_unlink(&uctrl->saddr.un);
         return 0;
 }
 
