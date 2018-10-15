@@ -243,7 +243,7 @@ Support: %SUPPORT_URL%
 
 Процесс запуска юнита @UNIT@ был завершен.
 
-Результат: @RESULT@.
+Результат: @JOB_RESULT@.
 
 # Subject: Unit @UNIT@ has begun shutting down
 -- de5b426a63be47a7b6ac3eaac82e2f6f
@@ -269,7 +269,7 @@ Support: %SUPPORT_URL%
 
 Произошел сбой юнита @UNIT@.
 
-Результат: @RESULT@.
+Результат: @JOB_RESULT@.
 
 # Subject: Unit @UNIT@ has begun with reloading its configuration
 -- d34d037fff1847e6ae669a370e694725
@@ -287,7 +287,7 @@ Support: %SUPPORT_URL%
 
 Юнит @UNIT@ завершил процесс перечитывания своей конфигурации.
 
-Результат: @RESULT@.
+Результат: @JOB_RESULT@.
 
 # Subject: Process @EXECUTABLE@ could not be executed
 -- 641257651c1b4ec9a8624d7a40a9e1e7
