@@ -2770,7 +2770,7 @@ static int setup_sd_notify_child(void) {
                 return log_error_errno(errno, "Failed to allocate notification socket: %m");
 
         (void) mkdir_parents(NSPAWN_NOTIFY_SOCKET_PATH, 0755);
-        (void) unlink(NSPAWN_NOTIFY_SOCKET_PATH);
+        (void) sockaddr_un_unlink(&sa.un);
 
         strncpy(sa.un.sun_path, NSPAWN_NOTIFY_SOCKET_PATH, sizeof(sa.un.sun_path));
         r = bind(fd, &sa.sa, SOCKADDR_UN_LEN(sa.un));
