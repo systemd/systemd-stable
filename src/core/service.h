@@ -217,3 +217,5 @@ NotifyState notify_state_from_string(const char *s) _pure_;
 
 const char* service_result_to_string(ServiceResult i) _const_;
 ServiceResult service_result_from_string(const char *s) _pure_;
+
+#define STATUS_TEXT_MAX (16U*1024U)
