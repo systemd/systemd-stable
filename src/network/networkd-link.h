@@ -51,6 +51,7 @@ typedef struct Link {
         int n_ref;
 
         int ifindex;
+        int master_ifindex;
         char *ifname;
         char *kind;
         unsigned short iftype;
