@@ -266,6 +266,7 @@ static int routing_policy_rule_add_internal(Manager *m,
                 *ret = rule;
 
         rule = NULL;
+        iif = oif = NULL;
 
         return 0;
 }
