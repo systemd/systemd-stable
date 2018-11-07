@@ -777,7 +777,7 @@ int manager_read_utmp(Manager *m) {
         endutxent();
         return r;
 #else
-        return 0
+        return 0;
 #endif
 }
 
