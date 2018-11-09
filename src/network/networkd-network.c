@@ -419,7 +419,7 @@ void network_free(Network *network) {
                 if (network->manager->networks)
                         LIST_REMOVE(networks, network->manager->networks, network);
 
-                if (network->manager->networks_by_name)
+                if (network->manager->networks_by_name && network->name)
                         hashmap_remove(network->manager->networks_by_name, network->name);
         }
 
