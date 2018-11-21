@@ -468,12 +468,12 @@ static int set_inq_values(struct udev *udev, struct scsi_id_device *dev_scsi, co
         udev_util_encode_string(dev_scsi->vendor, vendor_enc_str, sizeof(vendor_enc_str));
         udev_util_encode_string(dev_scsi->model, model_enc_str, sizeof(model_enc_str));
 
-        util_replace_whitespace(dev_scsi->vendor, vendor_str, sizeof(vendor_str));
+        util_replace_whitespace(dev_scsi->vendor, vendor_str, sizeof(vendor_str)-1);
         util_replace_chars(vendor_str, NULL);
-        util_replace_whitespace(dev_scsi->model, model_str, sizeof(model_str));
+        util_replace_whitespace(dev_scsi->model, model_str, sizeof(model_str)-1);
         util_replace_chars(model_str, NULL);
         set_type(dev_scsi->type, type_str, sizeof(type_str));
-        util_replace_whitespace(dev_scsi->revision, revision_str, sizeof(revision_str));
+        util_replace_whitespace(dev_scsi->revision, revision_str, sizeof(revision_str)-1);
         util_replace_chars(revision_str, NULL);
         return 0;
 }
@@ -515,10 +515,10 @@ static int scsi_id(struct udev *udev, char *maj_min_dev)
                 printf("ID_REVISION=%s\n", revision_str);
                 printf("ID_TYPE=%s\n", type_str);
                 if (dev_scsi.serial[0] != '\0') {
-                        util_replace_whitespace(dev_scsi.serial, serial_str, sizeof(serial_str));
+                        util_replace_whitespace(dev_scsi.serial, serial_str, sizeof(serial_str)-1);
                         util_replace_chars(serial_str, NULL);
                         printf("ID_SERIAL=%s\n", serial_str);
-                        util_replace_whitespace(dev_scsi.serial_short, serial_str, sizeof(serial_str));
+                        util_replace_whitespace(dev_scsi.serial_short, serial_str, sizeof(serial_str)-1);
                         util_replace_chars(serial_str, NULL);
                         printf("ID_SERIAL_SHORT=%s\n", serial_str);
                 }
@@ -545,7 +545,7 @@ static int scsi_id(struct udev *udev, char *maj_min_dev)
         if (reformat_serial) {
                 char serial_str[MAX_SERIAL_LEN];
 
-                util_replace_whitespace(dev_scsi.serial, serial_str, sizeof(serial_str));
+                util_replace_whitespace(dev_scsi.serial, serial_str, sizeof(serial_str)-1);
                 util_replace_chars(serial_str, NULL);
                 printf("%s\n", serial_str);
                 goto out;
