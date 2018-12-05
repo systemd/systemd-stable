@@ -32,6 +32,9 @@
 #define DATA_SIZE_MAX (1024*1024*768u)
 #define LINE_CHUNK 8*1024u
 
+/* The maximum number of fields in an entry */
+#define ENTRY_FIELD_COUNT_MAX 1024
+
 struct iovec_wrapper {
         struct iovec *iovec;
         size_t size_bytes;
