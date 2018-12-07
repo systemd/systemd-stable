@@ -512,16 +512,17 @@ static int process_http_upload(
                 r = process_source(source, arg_compress, arg_seal);
                 if (r == -EAGAIN)
                         break;
-                else if (r < 0) {
-                        log_warning("Failed to process data for connection %p", connection);
-                        if (r == -E2BIG)
-                                return mhd_respondf(connection,
-                                                    r, MHD_HTTP_PAYLOAD_TOO_LARGE,
-                                                    "Entry is too large, maximum is " STRINGIFY(DATA_SIZE_MAX) " bytes.");
+                if (r < 0) {
+                        if (r == -ENOBUFS)
+                                log_warning_errno(r, "Entry is above the maximum of %u, aborting connection %p.",
+                                                  DATA_SIZE_MAX, connection);
+                        else if (r == -E2BIG)
+                                log_warning_errno(r, "Entry with more fields than the maximum of %u, aborting connection %p.",
+                                                  ENTRY_FIELD_COUNT_MAX, connection);
                         else
-                                return mhd_respondf(connection,
-                                                    r, MHD_HTTP_UNPROCESSABLE_ENTITY,
-                                                    "Processing failed: %m.");
+                                log_warning_errno(r, "Failed to process data, aborting connection %p: %m",
+                                                  connection);
+                        return MHD_NO;
                 }
         }
 
@@ -1087,7 +1088,10 @@ static int handle_raw_source(sd_event_source *event,
                 log_debug("%zu active sources remaining", s->active);
                 return 0;
         } else if (r == -E2BIG) {
-                log_notice_errno(E2BIG, "Entry too big, skipped");
+                log_notice("Entry with too many fields, skipped");
+                return 1;
+        } else if (r == -ENOBUFS) {
+                log_notice("Entry too big, skipped");
                 return 1;
         } else if (r == -EAGAIN) {
                 return 0;
