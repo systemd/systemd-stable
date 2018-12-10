@@ -646,7 +646,10 @@ int address_configure(
 
         link_ref(link);
 
-        r = address_add(link, address->family, &address->in_addr, address->prefixlen, NULL);
+        if (address->family == AF_INET6 && !in_addr_is_null(address->family, &address->in_addr_peer))
+                r = address_add(link, address->family, &address->in_addr_peer, address->prefixlen, NULL);
+        else
+                r = address_add(link, address->family, &address->in_addr, address->prefixlen, NULL);
         if (r < 0) {
                 address_release(address);
                 return log_error_errno(r, "Could not add address: %m");
