@@ -4290,7 +4290,6 @@ static int load_from_path(Unit *u, const char *path) {
                                 r = open_follow(&filename, &f, symlink_names, &id);
                         if (r >= 0)
                                 break;
-                        filename = mfree(filename);
 
                         /* ENOENT means that the file is missing or is a dangling symlink.
                          * ENOTDIR means that one of paths we expect to be is a directory
@@ -4302,6 +4301,7 @@ static int load_from_path(Unit *u, const char *path) {
                         else if (!IN_SET(r, -ENOENT, -ENOTDIR))
                                 return r;
 
+                        filename = mfree(filename);
                         /* Empty the symlink names for the next run */
                         set_clear_free(symlink_names);
                 }
