@@ -7707,11 +7707,6 @@ static int systemctl_parse_argv(int argc, char *argv[]) {
                 return -EINVAL;
         }
 
-        if (arg_runtime && STRPTR_IN_SET(argv[optind], "disable", "unmask", "preset", "preset-all")) {
-                log_error("--runtime cannot be used with %s", argv[optind]);
-                return -EINVAL;
-        }
-
         return 1;
 }
 
