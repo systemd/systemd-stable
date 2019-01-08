@@ -1590,7 +1590,7 @@ static int parse_argv(int argc, char *argv[]) {
 
 static int manager_new(Manager **ret, int fd_ctrl, int fd_uevent, const char *cgroup) {
         _cleanup_(manager_freep) Manager *manager = NULL;
-        int r, fd_worker;
+        int r;
 
         assert(ret);
 
@@ -1604,31 +1604,31 @@ static int manager_new(Manager **ret, int fd_ctrl, int fd_uevent, const char *cg
                 .cgroup = cgroup,
         };
 
-        udev_builtin_init();
-
-        r = udev_rules_new(&manager->rules, arg_resolve_name_timing);
-        if (!manager->rules)
-                return log_error_errno(r, "Failed to read udev rules: %m");
-
         manager->ctrl = udev_ctrl_new_from_fd(fd_ctrl);
         if (!manager->ctrl)
                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Failed to initialize udev control socket");
 
-        if (fd_ctrl < 0) {
-                r = udev_ctrl_enable_receiving(manager->ctrl);
-                if (r < 0)
-                        return log_error_errno(r, "Failed to bind udev control socket: %m");
-        }
-
-        fd_ctrl = udev_ctrl_get_fd(manager->ctrl);
-        if (fd_ctrl < 0)
-                return log_error_errno(fd_ctrl, "Failed to get udev control socket fd: %m");
+        r = udev_ctrl_enable_receiving(manager->ctrl);
+        if (r < 0)
+                return log_error_errno(r, "Failed to bind udev control socket: %m");
 
         r = device_monitor_new_full(&manager->monitor, MONITOR_GROUP_KERNEL, fd_uevent);
         if (r < 0)
                 return log_error_errno(r, "Failed to initialize device monitor: %m");
 
         (void) sd_device_monitor_set_receive_buffer_size(manager->monitor, 128 * 1024 * 1024);
+
+        r = device_monitor_enable_receiving(manager->monitor);
+        if (r < 0)
+                return log_error_errno(r, "Failed to bind netlink socket: %m");
+
+        *ret = TAKE_PTR(manager);
+
+        return 0;
+}
+
+static int main_loop(Manager *manager) {
+        int fd_worker, fd_ctrl, r;
 
         /* unnamed socket from workers to the main daemon */
         r = socketpair(AF_LOCAL, SOCK_DGRAM|SOCK_CLOEXEC, 0, manager->worker_watch);
@@ -1675,6 +1675,10 @@ static int manager_new(Manager **ret, int fd_ctrl, int fd_uevent, const char *cg
         if (r < 0)
                 return log_error_errno(r, "Failed to create watchdog event source: %m");
 
+        fd_ctrl = udev_ctrl_get_fd(manager->ctrl);
+        if (fd_ctrl < 0)
+                return log_error_errno(fd_ctrl, "Failed to get udev control socket fd: %m");
+
         r = sd_event_add_io(manager->event, &manager->ctrl_event, fd_ctrl, EPOLLIN, on_ctrl_msg, manager);
         if (r < 0)
                 return log_error_errno(r, "Failed to create udev control event source: %m");
@@ -1709,20 +1713,11 @@ static int manager_new(Manager **ret, int fd_ctrl, int fd_uevent, const char *cg
         if (r < 0)
                 return log_error_errno(r, "Failed to create post event source: %m");
 
-        *ret = TAKE_PTR(manager);
+        udev_builtin_init();
 
-        return 0;
-}
-
-static int main_loop(int fd_ctrl, int fd_uevent, const char *cgroup) {
-        _cleanup_(manager_freep) Manager *manager = NULL;
-        int r;
-
-        r = manager_new(&manager, fd_ctrl, fd_uevent, cgroup);
-        if (r < 0) {
-                r = log_error_errno(r, "Failed to allocate manager object: %m");
-                goto exit;
-        }
+        r = udev_rules_new(&manager->rules, arg_resolve_name_timing);
+        if (!manager->rules)
+                return log_error_errno(r, "Failed to read udev rules: %m");
 
         r = udev_rules_apply_static_dev_perms(manager->rules);
         if (r < 0)
@@ -1739,13 +1734,12 @@ static int main_loop(int fd_ctrl, int fd_uevent, const char *cgroup) {
         sd_notify(false,
                   "STOPPING=1\n"
                   "STATUS=Shutting down...");
-        if (manager)
-                udev_ctrl_cleanup(manager->ctrl);
         return r;
 }
 
 static int run(int argc, char *argv[]) {
         _cleanup_free_ char *cgroup = NULL;
+        _cleanup_(manager_freep) Manager *manager = NULL;
         int fd_ctrl = -1, fd_uevent = -1;
         int r;
 
@@ -1822,10 +1816,14 @@ static int run(int argc, char *argv[]) {
         if (r < 0)
                 return log_error_errno(r, "Failed to listen on fds: %m");
 
+        r = manager_new(&manager, fd_ctrl, fd_uevent, cgroup);
+        if (r < 0)
+                return log_error_errno(r, "Failed to create manager: %m");
+
         if (arg_daemonize) {
                 pid_t pid;
 
-                log_info("starting version " PACKAGE_VERSION);
+                log_info("Starting version " PACKAGE_VERSION);
 
                 /* connect /dev/null to stdin, stdout, stderr */
                 if (log_get_max_level() < LOG_DEBUG) {
@@ -1849,7 +1847,10 @@ static int run(int argc, char *argv[]) {
                         log_debug_errno(r, "Failed to adjust OOM score, ignoring: %m");
         }
 
-        return main_loop(fd_ctrl, fd_uevent, cgroup);
+        r = main_loop(manager);
+        /* FIXME: move this into manager_free() */
+        udev_ctrl_cleanup(manager->ctrl);
+        return r;
 }
 
 DEFINE_MAIN_FUNCTION(run);
