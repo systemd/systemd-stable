@@ -16,4 +16,4 @@ After=shutdown.target
 
 [Service]
 Type=oneshot
-ExecStart=@SYSTEMCTL@ --user --force exit
+ExecStart=@KILL@ -s 58 $MANAGERPID
