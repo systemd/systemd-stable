@@ -237,7 +237,7 @@ size_t syslog_parse_identifier(const char **buf, char **identifier, char **pid) 
         if (t)
                 *identifier = t;
 
-        if (strchr(WHITESPACE, p[e]))
+        if (p[e] != '\0' && strchr(WHITESPACE, p[e]))
                 e++;
         *buf = p + e;
         return e;
