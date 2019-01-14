@@ -201,6 +201,7 @@ class NetworkdNetDevTests(unittest.TestCase, Utilities):
         'vti6tun99',
         'vtitun99',
         'vxlan99',
+        'wg98',
         'wg99']
 
     units = [
@@ -234,6 +235,8 @@ class NetworkdNetDevTests(unittest.TestCase, Utilities):
         '25-vti6-tunnel.netdev',
         '25-vti-tunnel.netdev',
         '25-vxlan.netdev',
+        '25-wireguard-23-peers.netdev',
+        '25-wireguard-23-peers.network',
         '25-wireguard.netdev',
         '6rd.network',
         'gre.network',
@@ -390,6 +393,16 @@ class NetworkdNetDevTests(unittest.TestCase, Utilities):
             subprocess.call('wg')
 
         self.assertTrue(self.link_exits('wg99'))
+
+    @expectedFailureIfModuleIsNotAvailable('wireguard')
+    def test_wireguard_23_peers(self):
+        self.copy_unit_to_networkd_unit_path('25-wireguard-23-peers.netdev', '25-wireguard-23-peers.network')
+        self.start_networkd()
+
+        if shutil.which('wg'):
+            subprocess.call('wg')
+
+        self.assertTrue(self.link_exits('wg98'))
 
     def test_geneve(self):
         self.copy_unit_to_networkd_unit_path('25-geneve.netdev')
