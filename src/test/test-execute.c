@@ -720,6 +720,7 @@ int main(int argc, char *argv[]) {
         (void) unsetenv("USER");
         (void) unsetenv("LOGNAME");
         (void) unsetenv("SHELL");
+        (void) unsetenv("HOME");
 
         /* It is needed otherwise cgroup creation fails */
         if (getuid() != 0) {
