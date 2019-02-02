@@ -1760,7 +1760,7 @@ static int start_machine(int argc, char *argv[], void *userdata) {
                 if (r < 0)
                         return r;
                 if (r == 0) {
-                        log_error("Machine image '%s' does not exist.", argv[1]);
+                        log_error("Machine image '%s' does not exist.", argv[i]);
                         return -ENXIO;
                 }
 
@@ -1834,7 +1834,7 @@ static int enable_machine(int argc, char *argv[], void *userdata) {
                 if (r < 0)
                         return r;
                 if (r == 0) {
-                        log_error("Machine image '%s' does not exist.", argv[1]);
+                        log_error("Machine image '%s' does not exist.", argv[i]);
                         return -ENXIO;
                 }
 
