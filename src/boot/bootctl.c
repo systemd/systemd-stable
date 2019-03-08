@@ -35,6 +35,7 @@
 #include "pretty-print.h"
 #include "rm-rf.h"
 #include "stat-util.h"
+#include "stdio-util.h"
 #include "string-util.h"
 #include "strv.h"
 #include "terminal-util.h"
@@ -798,21 +799,14 @@ static int remove_variables(sd_id128_t uuid, const char *path, bool in_order) {
         return 0;
 }
 
-static int install_loader_config(const char *esp_path) {
-
+static int install_loader_config(const char *esp_path, sd_id128_t machine_id) {
         char machine_string[SD_ID128_STRING_MAX];
         _cleanup_(unlink_and_freep) char *t = NULL;
         _cleanup_fclose_ FILE *f = NULL;
-        sd_id128_t machine_id;
         const char *p;
         int r, fd;
 
-        r = sd_id128_get_machine(&machine_id);
-        if (r < 0)
-                return log_error_errno(r, "Failed to get machine id: %m");
-
         p = strjoina(esp_path, "/loader/loader.conf");
-
         if (access(p, F_OK) >= 0) /* Silently skip creation if the file already exists (early check) */
                 return 0;
 
@@ -841,8 +835,24 @@ static int install_loader_config(const char *esp_path) {
                 return log_error_errno(r, "Failed to move \"%s\" into place: %m", p);
 
         t = mfree(t);
-
         return 1;
+}
+
+static int install_entries_directories(const char *dollar_boot_path, sd_id128_t machine_id) {
+        int r;
+        char buf[SD_ID128_STRING_MAX];
+
+        assert(dollar_boot_path);
+
+        /* Both /loader/entries and the entry directories themselves should be located on the same
+         * partition. Also create the parent directory for entry directories, so that kernel-install
+         * knows where to put them. */
+
+        r = mkdir_one(dollar_boot_path, "/loader/entries");
+        if (r < 0)
+                return r;
+
+        return mkdir_one(dollar_boot_path, sd_id128_to_string(machine_id, buf));
 }
 
 static int help(int argc, char *argv[], void *userdata) {
@@ -1132,12 +1142,17 @@ static int verb_install(int argc, char *argv[], void *userdata) {
         sd_id128_t uuid = SD_ID128_NULL;
         uint64_t pstart = 0, psize = 0;
         uint32_t part = 0;
+        sd_id128_t machine_id;
         bool install;
         int r;
 
         r = acquire_esp(false, &part, &pstart, &psize, &uuid);
         if (r < 0)
                 return r;
+
+        r = sd_id128_get_machine(&machine_id);
+        if (r < 0)
+                return log_error_errno(r, "Failed to get machine id: %m");
 
         install = streq(argv[0], "install");
 
@@ -1147,7 +1162,11 @@ static int verb_install(int argc, char *argv[], void *userdata) {
                         return r;
 
                 if (install) {
-                        r = install_loader_config(arg_path);
+                        r = install_loader_config(arg_path, machine_id);
+                        if (r < 0)
+                                return r;
+
+                        r = install_entries_directories(arg_path, machine_id);
                         if (r < 0)
                                 return r;
                 }
@@ -1258,7 +1277,7 @@ static int run(int argc, char *argv[]) {
         log_parse_environment();
         log_open();
 
-        /* If we run in a container, automatically turn of EFI file system access */
+        /* If we run in a container, automatically turn off EFI file system access */
         if (detect_container() > 0)
                 arg_touch_variables = false;
 
