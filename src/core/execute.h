@@ -254,6 +254,8 @@ struct ExecContext {
          * don't enter a trigger loop. */
         bool same_pgrp;
 
+        bool restrict_suid_sgid;
+
         unsigned long personality;
         bool lock_personality;
 
