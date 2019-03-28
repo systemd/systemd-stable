@@ -34,7 +34,7 @@ static void test_read_one_char(void) {
         bool need_nl;
         char name[] = "/tmp/test-read_one_char.XXXXXX";
 
-        assert(fmkostemp_safe(name, "r+", &file) == 0);
+        assert_se(fmkostemp_safe(name, "r+", &file) == 0);
 
         assert_se(fputs("c\n", file) >= 0);
         rewind(file);
