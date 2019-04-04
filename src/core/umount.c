@@ -10,9 +10,6 @@
 #include <sys/mount.h>
 #include <sys/swap.h>
 
-/* This needs to be after sys/mount.h :( */
-#include <libmount.h>
-
 #include "sd-device.h"
 
 #include "alloc-util.h"
@@ -22,6 +19,7 @@
 #include "escape.h"
 #include "fd-util.h"
 #include "fstab-util.h"
+#include "libmount-util.h"
 #include "linux-3.13/dm-ioctl.h"
 #include "mount-setup.h"
 #include "mount-util.h"
@@ -34,9 +32,6 @@
 #include "umount.h"
 #include "util.h"
 #include "virt.h"
-
-DEFINE_TRIVIAL_CLEANUP_FUNC(struct libmnt_table*, mnt_free_table);
-DEFINE_TRIVIAL_CLEANUP_FUNC(struct libmnt_iter*, mnt_free_iter);
 
 static void mount_point_free(MountPoint **head, MountPoint *m) {
         assert(head);
