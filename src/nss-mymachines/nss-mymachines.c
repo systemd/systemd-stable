@@ -230,7 +230,7 @@ enum nss_status _nss_mymachines_gethostbyname4_r(
 fail:
         UNPROTECT_ERRNO;
         *errnop = -r;
-        *h_errnop = NO_DATA;
+        *h_errnop = NO_RECOVERY;
         return NSS_STATUS_UNAVAIL;
 }
 
@@ -401,7 +401,7 @@ enum nss_status _nss_mymachines_gethostbyname3_r(
 fail:
         UNPROTECT_ERRNO;
         *errnop = -r;
-        *h_errnop = NO_DATA;
+        *h_errnop = NO_RECOVERY;
         return NSS_STATUS_UNAVAIL;
 }
 
