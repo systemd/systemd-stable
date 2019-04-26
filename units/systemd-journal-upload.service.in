@@ -27,6 +27,7 @@ ProtectKernelTunables=yes
 RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
 RestrictNamespaces=yes
 RestrictRealtime=yes
+RestrictSUIDSGID=yes
 StateDirectory=systemd/journal-upload
 SupplementaryGroups=systemd-journal
 SystemCallArchitectures=native
