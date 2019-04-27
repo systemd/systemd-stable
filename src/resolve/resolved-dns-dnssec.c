@@ -1109,7 +1109,7 @@ int dnssec_has_rrsig(DnsAnswer *a, const DnsResourceKey *key) {
         DnsResourceRecord *rr;
         int r;
 
-        /* Checks whether there's at least one RRSIG in 'a' that proctects RRs of the specified key */
+        /* Checks whether there's at least one RRSIG in 'a' that protects RRs of the specified key */
 
         DNS_ANSWER_FOREACH(rr, a) {
                 r = dnssec_key_match_rrsig(key, rr);
@@ -1988,7 +1988,7 @@ int dnssec_nsec_test(DnsAnswer *answer, DnsResourceKey *key, DnssecNsecResult *r
         if (have_nsec3)
                 return dnssec_test_nsec3(answer, key, result, authenticated, ttl);
 
-        /* No approproate NSEC RR found, report this. */
+        /* No appropriate NSEC RR found, report this. */
         *result = DNSSEC_NSEC_NO_RR;
         return 0;
 }

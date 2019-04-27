@@ -1781,7 +1781,7 @@ static void do_reexecute(
         args[i++] = NULL;
         assert(i <= args_size);
 
-        /* Reenable any blocked signals, especially important if we switch from initial ramdisk to init=... */
+        /* Re-enable any blocked signals, especially important if we switch from initial ramdisk to init=... */
         (void) reset_all_signal_handlers();
         (void) reset_signal_mask();
         (void) rlimit_nofile_safe();
@@ -2020,7 +2020,7 @@ static int initialize_runtime(
                 return 0;
 
         if (arg_system) {
-                /* Make sure we leave a core dump without panicing the kernel. */
+                /* Make sure we leave a core dump without panicking the kernel. */
                 install_crash_handler();
 
                 if (!skip_setup) {
