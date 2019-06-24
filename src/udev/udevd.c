@@ -1074,7 +1074,7 @@ static int on_ctrl_msg(sd_event_source *s, int fd, uint32_t revents, void *userd
                 }
 
                 eq++;
-                if (!isempty(eq)) {
+                if (isempty(eq)) {
                         log_debug("Received udev control message (ENV), unsetting '%s'", key);
 
                         r = hashmap_put(manager->properties, key, NULL);
