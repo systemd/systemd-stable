@@ -241,6 +241,10 @@ int unit_full_printf(Unit *u, const char *format, char **ret) {
          * before or after the relevant configuration setting. Hence: don't add them.
          */
 
+        assert(u);
+        assert(format);
+        assert(ret);
+
         const Specifier table[] = {
                 { 'n', specifier_string,                   u->id },
                 { 'N', specifier_prefix_and_instance,      NULL },
@@ -275,10 +279,6 @@ int unit_full_printf(Unit *u, const char *format, char **ret) {
                 { 'v', specifier_kernel_release,           NULL },
                 {}
         };
-
-        assert(u);
-        assert(format);
-        assert(ret);
 
         return specifier_printf(format, table, u, ret);
 }
