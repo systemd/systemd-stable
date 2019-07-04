@@ -54,7 +54,7 @@ static int append_vlan_info_data(Link *const link, sd_netlink_message *req, uint
         assert(br_vid_bitmap);
         assert(br_untagged_bitmap);
 
-        i = cnt = -1;
+        cnt = 0;
 
         begin = end = UINT16_MAX;
         for (k = 0; k < BRIDGE_VLAN_BITMAP_LEN; k++) {
@@ -130,9 +130,8 @@ static int append_vlan_info_data(Link *const link, sd_netlink_message *req, uint
                         i = j;
                 } while (!done);
         }
-        if (!cnt)
-                return -EINVAL;
 
+        assert(cnt > 0);
         return cnt;
 }
 
