@@ -2507,14 +2507,16 @@ static int service_serialize_exec_command(Unit *u, FILE *f, ExecCommand *command
                         return log_oom();
 
                 n = strlen(e);
-                if (!GREEDY_REALLOC(args, allocated, length + 1 + n + 1))
+                if (!GREEDY_REALLOC(args, allocated, length + 2 + n + 2))
                         return log_oom();
 
                 if (length > 0)
                         args[length++] = ' ';
 
+                args[length++] = '"';
                 memcpy(args + length, e, n);
                 length += n;
+                args[length++] = '"';
         }
 
         if (!GREEDY_REALLOC(args, allocated, length + 1))
@@ -2659,7 +2661,7 @@ static int service_deserialize_exec_command(Unit *u, const char *key, const char
         for (;;) {
                 _cleanup_free_ char *arg = NULL;
 
-                r = extract_first_word(&value, &arg, NULL, EXTRACT_CUNESCAPE);
+                r = extract_first_word(&value, &arg, NULL, EXTRACT_CUNESCAPE | EXTRACT_QUOTES);
                 if (r < 0)
                         return r;
                 if (r == 0)
