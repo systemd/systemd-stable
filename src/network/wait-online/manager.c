@@ -47,10 +47,10 @@ bool manager_all_configured(Manager *m) {
         }
 
         /* wait for all links networkd manages to be in admin state 'configured'
-           and at least one link to gain a carrier */
+         * and at least one link to gain a carrier */
         HASHMAP_FOREACH(l, m->links, i) {
                 if (manager_ignore_link(m, l)) {
-                        log_info("ignoring: %s", l->ifname);
+                        log_debug("ignoring: %s", l->ifname);
                         continue;
                 }
 
