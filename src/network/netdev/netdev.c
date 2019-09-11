@@ -809,7 +809,7 @@ int netdev_load(Manager *manager) {
         STRV_FOREACH_BACKWARDS(f, files) {
                 r = netdev_load_one(manager, *f);
                 if (r < 0)
-                        return r;
+                        log_error_errno(r, "Failed to load %s, ignoring: %m", *f);
         }
 
         return 0;
