@@ -252,6 +252,7 @@ sensor:modalias:acpi:KIOX000A*:dmi:bvnINSYDECorp.:bvrBYT70A.YNCHENG.WIN.007:*:sv
 # Most HP Laptop using the lis3lv02d device have it in the base,
 # mark these sensors as such.
 sensor:modalias:platform:lis3lv02d:dmi:*svn*Hewlett-Packard*:*
+sensor:modalias:platform:lis3lv02d:dmi:*svn*HP*:*
  ACCEL_LOCATION=base
 
 sensor:modalias:acpi:SMO8500*:dmi:*:svnHewlett-Packard:pnHPStream7Tablet:*
