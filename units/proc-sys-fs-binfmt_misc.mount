@@ -17,3 +17,6 @@ DefaultDependencies=no
 What=binfmt_misc
 Where=/proc/sys/fs/binfmt_misc
 Type=binfmt_misc
+
+[Install]
+WantedBy=sysinit.target
