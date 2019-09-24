@@ -533,7 +533,7 @@ static int verify_esp(
         errno = 0;
         r = blkid_probe_lookup_value(b, "PART_ENTRY_NUMBER", &v, NULL);
         if (r != 0)
-                return log_error_errno(errno ?: EIO, "Failed to probe partition number \"%s\": m", p);
+                return log_error_errno(errno ?: EIO, "Failed to probe partition number \"%s\": %m", p);
         r = safe_atou32(v, &part);
         if (r < 0)
                 return log_error_errno(r, "Failed to parse PART_ENTRY_NUMBER field.");
