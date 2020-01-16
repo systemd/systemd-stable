@@ -313,6 +313,10 @@ tests += [
          [],
          []],
 
+        [['src/test/test-sysctl-util.c'],
+         [],
+         []],
+
         [['src/test/test-user-util.c'],
          [],
          []],
