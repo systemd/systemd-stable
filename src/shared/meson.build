@@ -25,6 +25,8 @@ shared_sources = files('''
         bus-unit-util.h
         bus-util.c
         bus-util.h
+        bus-polkit.c
+        bus-polkit.h
         calendarspec.c
         calendarspec.h
         cgroup-show.c

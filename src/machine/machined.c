@@ -8,7 +8,7 @@
 
 #include "alloc-util.h"
 #include "bus-error.h"
-#include "bus-util.h"
+#include "bus-polkit.h"
 #include "cgroup-util.h"
 #include "dirent-util.h"
 #include "fd-util.h"

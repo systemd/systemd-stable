@@ -4,7 +4,7 @@
 #include "sd-daemon.h"
 
 #include "alloc-util.h"
-#include "bus-util.h"
+#include "bus-polkit.h"
 #include "def.h"
 #include "main-func.h"
 #include "portabled-bus.h"
