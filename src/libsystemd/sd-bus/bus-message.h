@@ -211,4 +211,4 @@ int bus_message_remarshal(sd_bus *bus, sd_bus_message **m);
 
 void bus_message_set_sender_driver(sd_bus *bus, sd_bus_message *m);
 void bus_message_set_sender_local(sd_bus *bus, sd_bus_message *m);
-int sd_bus_enqeue_for_read(sd_bus *bus, sd_bus_message *m);
+int sd_bus_enqueue_for_read(sd_bus *bus, sd_bus_message *m);
