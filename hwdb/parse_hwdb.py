@@ -85,7 +85,7 @@ def hwdb_grammar():
              (EMPTYLINE ^ stringEnd()).suppress())
     commentgroup = OneOrMore(COMMENTLINE).suppress() - EMPTYLINE.suppress()
 
-    grammar = OneOrMore(group('GROUPS*') ^ commentgroup) + stringEnd()
+    grammar = OneOrMore(Group(group)('GROUPS*') ^ commentgroup) + stringEnd()
 
     return grammar
 
@@ -126,6 +126,7 @@ def property_grammar():
              ('KEYBOARD_LED_NUMLOCK', Literal('0')),
              ('KEYBOARD_LED_CAPSLOCK', Literal('0')),
              ('ACCEL_MOUNT_MATRIX', mount_matrix),
+             ('ACCEL_LOCATION', Or(('display', 'base'))),
             )
     fixed_props = [Literal(name)('NAME') - Suppress('=') - val('VALUE')
                    for name, val in props]
@@ -194,10 +195,11 @@ def check_one_mount_matrix(prop, value):
 def check_one_keycode(prop, value):
     if value != '!' and ecodes is not None:
         key = 'KEY_' + value.upper()
-        if key not in ecodes:
-            key = value.upper()
-            if key not in ecodes:
-                error('Keycode {} unknown', key)
+        if not (key in ecodes or
+                value.upper() in ecodes or
+                 # new keys added in kernel 5.5
+                'KBD_LCD_MENU' in key):
+            error('Keycode {} unknown', key)
 
 def check_properties(groups):
     grammar = property_grammar()
@@ -220,7 +222,8 @@ def check_properties(groups):
             elif parsed.NAME == 'ACCEL_MOUNT_MATRIX':
                 check_one_mount_matrix(prop, parsed.VALUE)
             elif parsed.NAME.startswith('KEYBOARD_KEY_'):
-                check_one_keycode(prop, parsed.VALUE)
+                val = parsed.VALUE if isinstance(parsed.VALUE, str) else parsed.VALUE[0]
+                check_one_keycode(prop, val)
 
 def print_summary(fname, groups):
     print('{}: {} match groups, {} matches, {} properties'
@@ -230,7 +233,7 @@ def print_summary(fname, groups):
                   sum(len(props) for matches, props in groups)))
 
 if __name__ == '__main__':
-    args = sys.argv[1:] or glob.glob(os.path.dirname(sys.argv[0]) + '/[67]0-*.hwdb')
+    args = sys.argv[1:] or sorted(glob.glob(os.path.dirname(sys.argv[0]) + '/[67][0-9]-*.hwdb'))
 
     for fname in args:
         groups = parse(fname)
