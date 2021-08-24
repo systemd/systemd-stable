@@ -26,6 +26,7 @@ hwdb_files_test = files('''
         60-input-id.hwdb
         60-keyboard.hwdb
         60-sensor.hwdb
+        70-analyzers.hwdb
         70-joystick.hwdb
         70-mouse.hwdb
         70-pointingstick.hwdb
