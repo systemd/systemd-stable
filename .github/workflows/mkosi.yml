@@ -6,13 +6,18 @@ on:
   push:
     branches:
       - main
+      - v[0-9]+-stable
   pull_request:
     branches:
       - main
+      - v[0-9]+-stable
 
 jobs:
   ci:
     runs-on: ubuntu-20.04
+    concurrency:
+      group: ${{ github.workflow }}-${{ matrix.distro }}-${{ github.ref }}
+      cancel-in-progress: true
     strategy:
       fail-fast: false
       matrix:
