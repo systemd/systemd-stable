@@ -156,7 +156,7 @@ static int test_parse_domain(sd_event *e) {
 
 static int test_option(sd_event *e) {
         uint8_t packet[] = {
-                'F', 'O', 'O',
+                'F', 'O', 'O', 'H', 'O', 'G', 'E',
                 0x00, SD_DHCP6_OPTION_ORO, 0x00, 0x07,
                 'A', 'B', 'C', 'D', 'E', 'F', 'G',
                 0x00, SD_DHCP6_OPTION_VENDOR_CLASS, 0x00, 0x09,
@@ -164,53 +164,66 @@ static int test_option(sd_event *e) {
                 'B', 'A', 'R',
         };
         uint8_t result[] = {
-                'F', 'O', 'O',
+                'F', 'O', 'O', 'H', 'O', 'G', 'E',
                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                 'B', 'A', 'R',
         };
+        _cleanup_free_ uint8_t *buf = NULL;
+        size_t offset, pos, optlen, outlen = sizeof(result);
+        const uint8_t *optval;
         uint16_t optcode;
-        size_t optlen;
-        uint8_t *optval, *buf, *out;
-        size_t zero = 0, pos = 3;
-        size_t buflen = sizeof(packet), outlen = sizeof(result);
+        uint8_t *out;
 
         log_debug("/* %s */", __func__);
 
-        assert_se(buflen == outlen);
+        assert_se(sizeof(packet) == sizeof(result));
 
-        assert_se(dhcp6_option_parse(&buf, &zero, &optcode, &optlen,
-                                     &optval) == -ENOMSG);
+        offset = 0;
+        assert_se(dhcp6_option_parse(packet, 0, &offset, &optcode, &optlen, &optval) == -EBADMSG);
 
-        buflen -= 3;
-        buf = &packet[3];
-        outlen -= 3;
-        out = &result[3];
+        offset = 3;
+        assert_se(dhcp6_option_parse(packet, 0, &offset, &optcode, &optlen, &optval) == -EBADMSG);
 
-        assert_se(dhcp6_option_parse(&buf, &buflen, &optcode, &optlen,
-                                     &optval) >= 0);
-        pos += 4 + optlen;
-        assert_se(buf == &packet[pos]);
+        /* Tests for reading unaligned data. */
+        assert_se(buf = new(uint8_t, sizeof(packet)));
+        for (size_t i = 0; i <= 7; i++) {
+                memcpy(buf, packet + i, sizeof(packet) - i);
+                offset = 7 - i;
+                assert_se(dhcp6_option_parse(buf, sizeof(packet), &offset, &optcode, &optlen, &optval) >= 0);
+
+                assert_se(optcode == SD_DHCP6_OPTION_ORO);
+                assert_se(optlen == 7);
+                assert_se(optval == buf + 11 - i);
+        }
+
+        offset = 7;
+        assert_se(dhcp6_option_parse(packet, sizeof(packet), &offset, &optcode, &optlen, &optval) >= 0);
+
         assert_se(optcode == SD_DHCP6_OPTION_ORO);
         assert_se(optlen == 7);
-        assert_se(buflen + pos == sizeof(packet));
+        assert_se(optval == packet + 11);
 
-        assert_se(dhcp6_option_append(&out, &outlen, optcode, optlen,
-                                      optval) >= 0);
+        pos = 7;
+        outlen -= 7;
+        out = &result[pos];
+
+        assert_se(dhcp6_option_append(&out, &outlen, optcode, optlen, optval) >= 0);
+
+        pos += 4 + optlen;
         assert_se(out == &result[pos]);
         assert_se(*out == 0x00);
 
-        assert_se(dhcp6_option_parse(&buf, &buflen, &optcode, &optlen,
-                                     &optval) >= 0);
-        pos += 4 + optlen;
-        assert_se(buf == &packet[pos]);
+        assert_se(dhcp6_option_parse(packet, sizeof(packet), &offset, &optcode, &optlen, &optval) >= 0);
+
         assert_se(optcode == SD_DHCP6_OPTION_VENDOR_CLASS);
         assert_se(optlen == 9);
-        assert_se(buflen + pos == sizeof(packet));
+        assert_se(optval == packet + 22);
 
-        assert_se(dhcp6_option_append(&out, &outlen, optcode, optlen,
-                                      optval) >= 0);
+        assert_se(dhcp6_option_append(&out, &outlen, optcode, optlen, optval) >= 0);
+
+        pos += 4 + optlen;
         assert_se(out == &result[pos]);
         assert_se(*out == 'B');
 
@@ -508,8 +521,7 @@ static int test_advertise_option(sd_event *e) {
 
                 case SD_DHCP6_OPTION_SNTP_SERVERS:
                         assert_se(optlen == 16);
-                        assert_se(dhcp6_lease_set_sntp(lease, optval,
-                                                       optlen) >= 0);
+                        assert_se(dhcp6_lease_add_sntp(lease, optval, optlen) >= 0);
                         break;
 
                 default:
