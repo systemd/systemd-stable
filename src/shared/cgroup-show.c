@@ -87,7 +87,6 @@ static int show_cgroup_one_by_path(
         size_t n = 0, n_allocated = 0;
         _cleanup_free_ pid_t *pids = NULL;
         _cleanup_free_ char *p = NULL;
-        pid_t pid;
         int r;
 
         r = cg_mangle_path(path, &p);
@@ -99,7 +98,18 @@ static int show_cgroup_one_by_path(
         if (!f)
                 return -errno;
 
-        while ((r = cg_read_pid(f, &pid)) > 0) {
+        for (;;) {
+                pid_t pid;
+
+                /* libvirt / qemu uses threaded mode and cgroup.procs cannot be read at the lower levels.
+                 * From https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html#threads,
+                 * “cgroup.procs” in a threaded domain cgroup contains the PIDs of all processes in
+                 * the subtree and is not readable in the subtree proper. */
+                r = cg_read_pid(f, &pid);
+                if (IN_SET(r, 0, -EOPNOTSUPP))
+                        break;
+                if (r < 0)
+                        return r;
 
                 if (!(flags & OUTPUT_KERNEL_THREADS) && is_kernel_thread(pid) > 0)
                         continue;
@@ -110,9 +120,6 @@ static int show_cgroup_one_by_path(
                 assert(n < n_allocated);
                 pids[n++] = pid;
         }
-
-        if (r < 0)
-                return r;
 
         show_pid_array(pids, n, prefix, n_columns, false, more, flags);
 
