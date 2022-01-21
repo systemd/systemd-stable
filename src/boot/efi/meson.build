@@ -99,59 +99,6 @@ if efi_lds == ''
         subdir_done()
 endif
 
-efi_headers = files('''
-        bcd.h
-        console.h
-        cpio.h
-        devicetree.h
-        disk.h
-        drivers.h
-        graphics.h
-        linux.h
-        measure.h
-        missing_efi.h
-        pe.h
-        random-seed.h
-        shim.h
-        splash.h
-        util.h
-        xbootldr.h
-'''.split())
-
-common_sources = '''
-        assert.c
-        devicetree.c
-        disk.c
-        graphics.c
-        measure.c
-        pe.c
-        secure-boot.c
-        util.c
-'''.split()
-
-systemd_boot_sources = '''
-        bcd.c
-        boot.c
-        console.c
-        drivers.c
-        random-seed.c
-        shim.c
-        xbootldr.c
-'''.split()
-
-stub_sources = '''
-        cpio.c
-        initrd.c
-        splash.c
-        stub.c
-'''.split()
-
-if efi_arch[1] in ['ia32', 'x86_64']
-        stub_sources += 'linux_x86.c'
-else
-        stub_sources += 'linux.c'
-endif
-
 conf.set10('HAVE_GNU_EFI', true)
 conf.set_quoted('EFI_MACHINE_TYPE_NAME', efi_arch[0])
 
@@ -247,7 +194,7 @@ efi_cflags += cc.get_supported_arguments({
 if get_option('werror')
         efi_cflags += ['-Werror']
 endif
-if get_option('debug')
+if get_option('debug') and get_option('mode') == 'developer'
         efi_cflags += ['-ggdb', '-DEFI_DEBUG']
 endif
 if get_option('optimization') != '0'
@@ -262,7 +209,19 @@ if get_option('b_lto')
 endif
 
 foreach arg : get_option('c_args')
-        if arg in ['-Werror', '-g', '-ggdb', '-O1', '-O2', '-O3', '-Og', '-Os', '-DNDEBUG', '-flto', '-fno-lto']
+        if arg in [
+                '-DNDEBUG',
+                '-fno-lto',
+                '-O1', '-O2', '-O3', '-Og', '-Os',
+                '-Werror',
+           ] or arg.split('=')[0] in [
+                '-ffile-prefix-map',
+                '-flto',
+           ] or (get_option('mode') == 'developer' and arg in [
+                '-DEFI_DEBUG',
+                '-g', '-ggdb',
+           ])
+
                 message('Using "@0@" from c_args for EFI compiler'.format(arg))
                 efi_cflags += arg
         endif
@@ -332,12 +291,79 @@ if efi_cc_version.contains('clang') and efi_cc_version.split('.')[0].split(' ')[
         efi_ldflags += ['-Wl,-T,' + efi_lds, '-Wno-unused-command-line-argument']
 endif
 
+############################################################
+
+efi_headers = files(
+        'bcd.h',
+        'console.h',
+        'cpio.h',
+        'devicetree.h',
+        'disk.h',
+        'drivers.h',
+        'graphics.h',
+        'linux.h',
+        'measure.h',
+        'missing_efi.h',
+        'pe.h',
+        'random-seed.h',
+        'shim.h',
+        'splash.h',
+        'util.h',
+        'xbootldr.h',
+)
+
+common_sources = files(
+        'assert.c',
+        'devicetree.c',
+        'disk.c',
+        'graphics.c',
+        'measure.c',
+        'pe.c',
+        'secure-boot.c',
+        'util.c',
+)
+
+systemd_boot_sources = files(
+        'boot.c',
+        'console.c',
+        'drivers.c',
+        'random-seed.c',
+        'shim.c',
+        'xbootldr.c',
+)
+
+stub_sources = files(
+        'cpio.c',
+        'initrd.c',
+        'splash.c',
+        'stub.c',
+)
+
+if efi_arch[1] in ['ia32', 'x86_64']
+        stub_sources += files('linux_x86.c')
+else
+        stub_sources += files('linux.c')
+endif
+
+# BCD parser only makes sense on arches that Windows supports.
+if efi_arch[1] in ['ia32', 'x86_64', 'arm', 'aarch64']
+        systemd_boot_sources += files('bcd.c')
+        tests += [
+                [['src/boot/efi/test-bcd.c'],
+                 [],
+                 [libzstd],
+                 [],
+                 'HAVE_ZSTD'],
+        ]
+endif
+
 systemd_boot_objects = []
 stub_objects = []
 foreach file : fundamental_source_paths + common_sources + systemd_boot_sources + stub_sources
-        o_file = custom_target(file.split('/')[-1] + '.o',
+        # FIXME: replace ''.format(file) with fs.name(file) when meson_version requirement is >= 0.59.0
+        o_file = custom_target('@0@.o'.format(file).split('/')[-1],
                                input : file,
-                               output : file.split('/')[-1] + '.o',
+                               output : '@0@.o'.format(file).split('/')[-1],
                                command : [efi_cc, '-c', '@INPUT@', '-o', '@OUTPUT@', efi_cflags],
                                depend_files : efi_headers + fundamental_headers)
         if (fundamental_source_paths + common_sources + systemd_boot_sources).contains(file)
@@ -388,14 +414,6 @@ foreach tuple : [['systemd_boot.so', systemd_boot_efi_name, systemd_boot_objects
 endforeach
 
 ############################################################
-
-tests += [
-        [['src/boot/efi/test-bcd.c'],
-         [],
-         [libzstd],
-         [],
-         'HAVE_ZSTD'],
-]
 
 test_efi_disk_img = custom_target(
         'test-efi-disk.img',
