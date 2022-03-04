@@ -265,7 +265,7 @@ int manager_save(Manager *m) {
                 "# This is private data. Do not parse.\n"
                 "OPER_STATE=%s\n"
                 "CARRIER_STATE=%s\n"
-                "ADDRESS_STATE=%s\n",
+                "ADDRESS_STATE=%s\n"
                 "IPV4_ADDRESS_STATE=%s\n"
                 "IPV6_ADDRESS_STATE=%s\n",
                 operstate_str, carrier_state_str, address_state_str, ipv4_address_state_str, ipv6_address_state_str);
