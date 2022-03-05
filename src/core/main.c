@@ -3088,7 +3088,7 @@ finish:
         if (getpid_cached() == 1) {
                 if (error_message)
                         manager_status_printf(NULL, STATUS_TYPE_EMERGENCY,
-                                              ANSI_HIGHLIGHT_RED "!!!!!!" ANSI_NORMAL,
+                                              ANSI_HIGHLIGHT_RED "!!!!!!!" ANSI_NORMAL,
                                               "%s.", error_message);
                 freeze_or_exit_or_reboot();
         }
