@@ -102,14 +102,12 @@ int bus_image_common_get_metadata(
                 Image *image,
                 sd_bus_error *error) {
 
+        _cleanup_ordered_hashmap_free_ OrderedHashmap *extension_releases = NULL;
         _cleanup_(portable_metadata_unrefp) PortableMetadata *os_release = NULL;
         _cleanup_strv_free_ char **matches = NULL, **extension_images = NULL;
         _cleanup_hashmap_free_ Hashmap *unit_files = NULL;
         _cleanup_(sd_bus_message_unrefp) sd_bus_message *reply = NULL;
         _cleanup_free_ PortableMetadata **sorted = NULL;
-        /* Unused for now, but added to the DBUS methods for future-proofing */
-        uint64_t input_flags = 0;
-        size_t i;
         int r;
 
         assert(name_or_path || image);
@@ -120,8 +118,10 @@ int bus_image_common_get_metadata(
                 m = image->userdata;
         }
 
-        if (sd_bus_message_is_method_call(message, NULL, "GetImageMetadataWithExtensions") ||
-            sd_bus_message_is_method_call(message, NULL, "GetMetadataWithExtensions")) {
+        bool have_exti = sd_bus_message_is_method_call(message, NULL, "GetImageMetadataWithExtensions") ||
+                         sd_bus_message_is_method_call(message, NULL, "GetMetadataWithExtensions");
+
+        if (have_exti) {
                 r = sd_bus_message_read_strv(message, &extension_images);
                 if (r < 0)
                         return r;
@@ -131,13 +131,14 @@ int bus_image_common_get_metadata(
         if (r < 0)
                 return r;
 
-        if (sd_bus_message_is_method_call(message, NULL, "GetImageMetadataWithExtensions") ||
-            sd_bus_message_is_method_call(message, NULL, "GetMetadataWithExtensions")) {
+        if (have_exti) {
+                uint64_t input_flags = 0;
+
                 r = sd_bus_message_read(message, "t", &input_flags);
                 if (r < 0)
                         return r;
-                /* Let clients know that this version doesn't support any flags */
-                if (input_flags != 0)
+
+                if ((input_flags & ~_PORTABLE_MASK_PUBLIC) != 0)
                         return sd_bus_reply_method_errorf(message, SD_BUS_ERROR_INVALID_ARGS,
                                                           "Invalid 'flags' parameter '%" PRIu64 "'",
                                                           input_flags);
@@ -161,6 +162,7 @@ int bus_image_common_get_metadata(
                         matches,
                         extension_images,
                         &os_release,
+                        &extension_releases,
                         &unit_files,
                         NULL,
                         error);
@@ -183,11 +185,45 @@ int bus_image_common_get_metadata(
         if (r < 0)
                 return r;
 
+        /* If it was requested, also send back the extension path and the content
+         * of each extension-release file. Behind a flag, as it's an incompatible
+         * change. */
+        if (have_exti) {
+                PortableMetadata *extension_release;
+
+                r = sd_bus_message_open_container(reply, 'a', "{say}");
+                if (r < 0)
+                        return r;
+
+                ORDERED_HASHMAP_FOREACH(extension_release, extension_releases) {
+
+                        r = sd_bus_message_open_container(reply, 'e', "say");
+                        if (r < 0)
+                                return r;
+
+                        r = sd_bus_message_append(reply, "s", extension_release->image_path);
+                        if (r < 0)
+                                return r;
+
+                        r = append_fd(reply, extension_release);
+                        if (r < 0)
+                                return r;
+
+                        r = sd_bus_message_close_container(reply);
+                        if (r < 0)
+                                return r;
+                }
+
+                r = sd_bus_message_close_container(reply);
+                if (r < 0)
+                        return r;
+        }
+
         r = sd_bus_message_open_container(reply, 'a', "{say}");
         if (r < 0)
                 return r;
 
-        for (i = 0; i < hashmap_size(unit_files); i++) {
+        for (size_t i = 0; i < hashmap_size(unit_files); i++) {
 
                 r = sd_bus_message_open_container(reply, 'e', "say");
                 if (r < 0)
@@ -838,6 +874,7 @@ const sd_bus_vtable image_vtable[] = {
                                             "t", flags),
                                 SD_BUS_RESULT("s", image,
                                               "ay", os_release,
+                                              "a{say}", extensions,
                                               "a{say}", units),
                                 bus_image_method_get_metadata,
                                 SD_BUS_VTABLE_UNPRIVILEGED),
