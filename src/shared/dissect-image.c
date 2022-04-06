@@ -2643,6 +2643,7 @@ static const char *const partition_designator_table[] = {
 };
 
 int verity_dissect_and_mount(
+                int src_fd,
                 const char *src,
                 const char *dest,
                 const MountOptions *options,
@@ -2654,20 +2655,27 @@ int verity_dissect_and_mount(
         _cleanup_(decrypted_image_unrefp) DecryptedImage *decrypted_image = NULL;
         _cleanup_(dissected_image_unrefp) DissectedImage *dissected_image = NULL;
         _cleanup_(verity_settings_done) VeritySettings verity = VERITY_SETTINGS_DEFAULT;
+        char chased_src[STRLEN("/proc/self/fd/") + DECIMAL_STR_MAX(int)];
         DissectImageFlags dissect_image_flags;
         int r;
 
         assert(src);
         assert(dest);
 
+        if (src_fd >= 0)
+                xsprintf(chased_src, "/proc/self/fd/%i", src_fd);
+
+        /* We might get an FD for the image, but we use the original path to look for the dm-verity files */
         r = verity_settings_load(&verity, src, NULL, NULL);
         if (r < 0)
                 return log_debug_errno(r, "Failed to load root hash: %m");
 
         dissect_image_flags = verity.data_path ? DISSECT_IMAGE_NO_PARTITION_TABLE : 0;
 
+        /* Note that we don't use loop_device_make here, as the FD is most likely O_PATH which would not be
+         * accepted by LOOP_CONFIGURE, so just let loop_device_make_by_path reopen it as a regular FD. */
         r = loop_device_make_by_path(
-                        src,
+                        src_fd >= 0 ? chased_src : src,
                         -1,
                         verity.data_path ? 0 : LO_FLAGS_PARTSCAN,
                         &loop_device);
