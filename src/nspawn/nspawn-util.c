@@ -4,7 +4,6 @@
 #include "glob-util.h"
 #include "log.h"
 #include "nspawn-util.h"
-#include "nulstr-util.h"
 #include "parse-util.h"
 #include "path-util.h"
 #include "string-util.h"
@@ -18,15 +17,15 @@ int systemd_installation_has_version(const char *root, const char *minimal_versi
          * is non-standard. False positives should be relatively rare.
          */
 
-        NULSTR_FOREACH(pattern,
+        FOREACH_STRING(pattern,
                        /* /lib works for systems without usr-merge, and for systems with a sane
                         * usr-merge, where /lib is a symlink to /usr/lib. /usr/lib is necessary
                         * for Gentoo which does a merge without making /lib a symlink.
                         */
-                       "lib/systemd/libsystemd-shared-*.so\0"
-                       "lib64/systemd/libsystemd-shared-*.so\0"
-                       "usr/lib/systemd/libsystemd-shared-*.so\0"
-                       "usr/lib64/systemd/libsystemd-shared-*.so\0") {
+                       "/lib/systemd/libsystemd-shared-*.so",
+                       "/lib64/systemd/libsystemd-shared-*.so",
+                       "/usr/lib/systemd/libsystemd-shared-*.so",
+                       "/usr/lib64/systemd/libsystemd-shared-*.so") {
 
                 _cleanup_strv_free_ char **names = NULL;
                 _cleanup_free_ char *path = NULL;

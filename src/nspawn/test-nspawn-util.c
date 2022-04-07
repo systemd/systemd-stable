@@ -6,6 +6,7 @@
 #include "tests.h"
 
 TEST(systemd_installation_has_version) {
+        const char *version;
         int r;
 
         FOREACH_STRING(version, "0", "231", STRINGIFY(PROJECT_VERSION), "999") {
@@ -16,4 +17,7 @@ TEST(systemd_installation_has_version) {
         }
 }
 
+/* This program can be called with a path to an installation root.
+ * For example: build/test-nspawn-util /var/lib/machines/rawhide
+ */
 DEFINE_TEST_MAIN(LOG_DEBUG);
