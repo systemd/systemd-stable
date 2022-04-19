@@ -224,6 +224,7 @@ static char **arg_sysctl = NULL;
 static ConsoleMode arg_console_mode = _CONSOLE_MODE_INVALID;
 static Credential *arg_credentials = NULL;
 static size_t arg_n_credentials = 0;
+static char *arg_settings_filename = NULL;
 
 STATIC_DESTRUCTOR_REGISTER(arg_directory, freep);
 STATIC_DESTRUCTOR_REGISTER(arg_template, freep);
@@ -256,6 +257,7 @@ STATIC_DESTRUCTOR_REGISTER(arg_seccomp, seccomp_releasep);
 #endif
 STATIC_DESTRUCTOR_REGISTER(arg_cpu_set, cpu_set_reset);
 STATIC_DESTRUCTOR_REGISTER(arg_sysctl, strv_freep);
+STATIC_DESTRUCTOR_REGISTER(arg_settings_filename, freep);
 
 static int handle_arg_console(const char *arg) {
         if (streq(arg, "help")) {
@@ -2983,6 +2985,12 @@ static int determine_names(void) {
                 if (!hostname_is_valid(arg_machine, 0))
                         return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Failed to determine machine name automatically, please use -M.");
 
+                /* Copy the machine name before the random suffix is added below, otherwise we won't be able
+                 * to match fixed config file names. */
+                arg_settings_filename = strjoin(arg_machine, ".nspawn");
+                if (!arg_settings_filename)
+                        return log_oom();
+
                 if (arg_ephemeral) {
                         char *b;
 
@@ -2997,6 +3005,10 @@ static int determine_names(void) {
                         free(arg_machine);
                         arg_machine = b;
                 }
+        } else {
+                arg_settings_filename = strjoin(arg_machine, ".nspawn");
+                if (!arg_settings_filename)
+                        return log_oom();
         }
 
         return 0;
@@ -4369,7 +4381,7 @@ static int merge_settings(Settings *settings, const char *path) {
 static int load_settings(void) {
         _cleanup_(settings_freep) Settings *settings = NULL;
         _cleanup_fclose_ FILE *f = NULL;
-        _cleanup_free_ char *p = NULL, *fn = NULL;
+        _cleanup_free_ char *p = NULL;
         const char *i;
         int r;
 
@@ -4381,25 +4393,11 @@ static int load_settings(void) {
         if (FLAGS_SET(arg_settings_mask, _SETTINGS_MASK_ALL))
                 return 0;
 
-        /* In ephemeral mode we append '-' and a random 16 characters string to the image name, so fixed
-         * config files are no longer matched. Ignore the random suffix for the purpose of finding files. */
-        if (arg_ephemeral) {
-                fn = strdup(arg_machine);
-                if (!fn)
-                        return log_oom();
-                assert(strlen(fn) > 17); /* Should end with -XXXXXXXXXXXXXXXX */
-                strcpy(fn + strlen(fn) - 17, ".nspawn");
-        } else {
-                fn = strjoin(arg_machine, ".nspawn");
-                if (!fn)
-                        return log_oom();
-        }
-
         /* We first look in the admin's directories in /etc and /run */
         FOREACH_STRING(i, "/etc/systemd/nspawn", "/run/systemd/nspawn") {
                 _cleanup_free_ char *j = NULL;
 
-                j = path_join(i, fn);
+                j = path_join(i, arg_settings_filename);
                 if (!j)
                         return log_oom();
 
@@ -4423,11 +4421,11 @@ static int load_settings(void) {
                  * actual image we shall boot. */
 
                 if (arg_image) {
-                        p = file_in_same_dir(arg_image, fn);
+                        p = file_in_same_dir(arg_image, arg_settings_filename);
                         if (!p)
                                 return log_oom();
                 } else if (arg_directory && !path_equal(arg_directory, "/")) {
-                        p = file_in_same_dir(arg_directory, fn);
+                        p = file_in_same_dir(arg_directory, arg_settings_filename);
                         if (!p)
                                 return log_oom();
                 }
