@@ -104,8 +104,12 @@ EOF
             # now build the package and run the tests
             rm -rf "$ARTIFACTS_DIR"
             # autopkgtest exits with 2 for "some tests skipped", accept that
+            # boot-smoke will not work on this branch as we pinned the upstream-ci
+            # branch, so we are missing the following fix:
+            # https://salsa.debian.org/systemd-team/systemd/-/commit/5738b62f5544d040550a018dcd02701bac4feec8
             $AUTOPKGTEST_DIR/runner/autopkgtest --env DEB_BUILD_OPTIONS=noudeb \
                                                 --env TEST_UPSTREAM=1 ../systemd_*.dsc \
+                                                --skip boot-smoke \
                                                 -o "$ARTIFACTS_DIR" \
                                                 -- lxc -s $CONTAINER \
                 || [ $? -eq 2 ]
