@@ -1088,6 +1088,9 @@ $ systemd-analyze verify /tmp/source:alias.service
                 <entry>CapabilityBoundingSet_CAP_SYS_TTY_CONFIG</entry>
               </row>
               <row>
+                <entry>CapabilityBoundingSet_CAP_BPF</entry>
+              </row>
+              <row>
                 <entry>UMask</entry>
               </row>
               <row>
