@@ -124,6 +124,13 @@ static int boot_entry_load(
                         continue;
                 }
 
+                if (isempty(p)) {
+                        /* Some fields can reasonably have an empty value. In other cases warn. */
+                        if (!STR_IN_SET(field, "options", "devicetree-overlay"))
+                                log_warning("%s:%u: Field %s without value", tmp.path, line, field);
+                        continue;
+                }
+
                 if (streq(field, "title"))
                         r = free_and_strdup(&tmp.title, p);
                 else if (streq(field, "version"))
