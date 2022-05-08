@@ -1492,12 +1492,13 @@ _printf_(2, 0)
 static int log_with_wall_message(Manager *m, const char *d, const char *p, const char *q) {
         assert(m);
 
-        if (isempty(m->wall_message))
+        if (isempty(m->wall_message)) {
                 p = strjoina(p, ".");
-        else
-                p = strjoina(p, " (", m->wall_message, ").");
-
-        return log_struct(LOG_NOTICE, d, p, q);
+                return log_struct(LOG_NOTICE, d, p, q);
+        } else {
+                p = strjoina(p, " (%s).");
+                return log_struct(LOG_NOTICE, d, p, m->wall_message, q);
+        }
 }
 
 static int bus_manager_log_shutdown(
