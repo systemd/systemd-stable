@@ -1871,9 +1871,7 @@ int json_variant_filter(JsonVariant **v, char **to_remove) {
                 return r;
 
         json_variant_propagate_sensitive(*v, w);
-
-        json_variant_unref(*v);
-        *v = TAKE_PTR(w);
+        JSON_VARIANT_REPLACE(*v, TAKE_PTR(w));
 
         return (int) n;
 }
@@ -1942,9 +1940,7 @@ int json_variant_set_field(JsonVariant **v, const char *field, JsonVariant *valu
                 return r;
 
         json_variant_propagate_sensitive(*v, w);
-
-        json_variant_unref(*v);
-        *v = TAKE_PTR(w);
+        JSON_VARIANT_REPLACE(*v, TAKE_PTR(w));
 
         return 1;
 }
@@ -2025,8 +2021,7 @@ int json_variant_merge(JsonVariant **v, JsonVariant *m) {
                 return 0; /* nothing to do */
 
         if (v_blank) {
-                json_variant_unref(*v);
-                *v = json_variant_ref(m);
+                JSON_VARIANT_REPLACE(*v, json_variant_ref(m));
                 return 1;
         }
 
@@ -2063,9 +2058,7 @@ int json_variant_merge(JsonVariant **v, JsonVariant *m) {
 
         json_variant_propagate_sensitive(*v, w);
         json_variant_propagate_sensitive(m, w);
-
-        json_variant_unref(*v);
-        *v = TAKE_PTR(w);
+        JSON_VARIANT_REPLACE(*v, TAKE_PTR(w));
 
         return 1;
 }
@@ -2107,9 +2100,7 @@ int json_variant_append_array(JsonVariant **v, JsonVariant *element) {
                 return r;
 
         json_variant_propagate_sensitive(*v, nv);
-
-        json_variant_unref(*v);
-        *v = TAKE_PTR(nv);
+        JSON_VARIANT_REPLACE(*v, TAKE_PTR(nv));
 
         return 0;
 }
@@ -2323,8 +2314,7 @@ static int json_variant_set_source(JsonVariant **v, JsonSource *source, unsigned
         w->line = line;
         w->column = column;
 
-        json_variant_unref(*v);
-        *v = w;
+        JSON_VARIANT_REPLACE(*v, w);
 
         return 1;
 }
@@ -4524,14 +4514,10 @@ int json_dispatch_strv(const char *name, JsonVariant *variant, JsonDispatchFlags
 }
 
 int json_dispatch_variant(const char *name, JsonVariant *variant, JsonDispatchFlags flags, void *userdata) {
-        JsonVariant **p = userdata;
-
+        JsonVariant **p = ASSERT_PTR(userdata);
         assert(variant);
-        assert(p);
 
-        json_variant_unref(*p);
-        *p = json_variant_ref(variant);
-
+        JSON_VARIANT_REPLACE(*p, json_variant_ref(variant));
         return 0;
 }
 
@@ -4653,8 +4639,7 @@ int json_variant_sort(JsonVariant **v) {
         if (!n->sorted) /* Check if this worked. This will fail if there are multiple identical keys used. */
                 return -ENOTUNIQ;
 
-        json_variant_unref(*v);
-        *v = n;
+        JSON_VARIANT_REPLACE(*v, n);
 
         return 1;
 }
@@ -4709,8 +4694,7 @@ int json_variant_normalize(JsonVariant **v) {
                 goto finish;
         }
 
-        json_variant_unref(*v);
-        *v = n;
+        JSON_VARIANT_REPLACE(*v, n);
 
         r = 1;
 
