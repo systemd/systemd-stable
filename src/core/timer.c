@@ -135,6 +135,7 @@ static int timer_add_trigger_dependencies(Timer *t) {
 }
 
 static int timer_setup_persistent(Timer *t) {
+        _cleanup_free_ char *stamp_path = NULL;
         int r;
 
         assert(t);
@@ -148,13 +149,13 @@ static int timer_setup_persistent(Timer *t) {
                 if (r < 0)
                         return r;
 
-                t->stamp_path = strjoin("/var/lib/systemd/timers/stamp-", UNIT(t)->id);
+                stamp_path = strjoin("/var/lib/systemd/timers/stamp-", UNIT(t)->id);
         } else {
                 const char *e;
 
                 e = getenv("XDG_DATA_HOME");
                 if (e)
-                        t->stamp_path = strjoin(e, "/systemd/timers/stamp-", UNIT(t)->id);
+                        stamp_path = strjoin(e, "/systemd/timers/stamp-", UNIT(t)->id);
                 else {
 
                         _cleanup_free_ char *h = NULL;
@@ -163,14 +164,14 @@ static int timer_setup_persistent(Timer *t) {
                         if (r < 0)
                                 return log_unit_error_errno(UNIT(t), r, "Failed to determine home directory: %m");
 
-                        t->stamp_path = strjoin(h, "/.local/share/systemd/timers/stamp-", UNIT(t)->id);
+                        stamp_path = strjoin(h, "/.local/share/systemd/timers/stamp-", UNIT(t)->id);
                 }
         }
 
-        if (!t->stamp_path)
+        if (!stamp_path)
                 return log_oom();
 
-        return 0;
+        return free_and_replace(t->stamp_path, stamp_path);
 }
 
 static uint64_t timer_get_fixed_delay_hash(Timer *t) {
