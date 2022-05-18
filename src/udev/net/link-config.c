@@ -680,7 +680,7 @@ int config_parse_ifalias(
         assert(rvalue);
         assert(data);
 
-        if (!isempty(rvalue)) {
+        if (isempty(rvalue)) {
                 *s = mfree(*s);
                 return 0;
         }
