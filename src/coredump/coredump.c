@@ -388,8 +388,8 @@ static int save_external_coredump(
         *ret_truncated = r == 1;
         if (*ret_truncated)
                 log_struct(LOG_INFO,
-                           LOG_MESSAGE("Core file was truncated to %zu bytes.", max_size),
-                           "SIZE_LIMIT=%zu", max_size,
+                           LOG_MESSAGE("Core file was truncated to %"PRIu64" bytes.", max_size),
+                           "SIZE_LIMIT=%"PRIu64, max_size,
                            "MESSAGE_ID=" SD_MESSAGE_TRUNCATED_CORE_STR);
 
         if (fstat(fd, &st) < 0) {
