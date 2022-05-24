@@ -1852,13 +1852,16 @@ static int verb_install(int argc, char *argv[], void *userdata) {
 
         (void) sync_everything();
 
-        if (arg_touch_variables)
-                r = install_variables(arg_esp_path,
-                                      part, pstart, psize, uuid,
-                                      "/EFI/systemd/systemd-boot" EFI_MACHINE_TYPE_NAME ".efi",
-                                      install);
+        if (!arg_touch_variables)
+                return 0;
 
-        return r;
+        r = install_variables(arg_esp_path, part, pstart, psize, uuid,
+                              "/EFI/systemd/systemd-boot" EFI_MACHINE_TYPE_NAME ".efi",
+                              install);
+        if (r < 0)
+                return r;
+
+        return 0;
 }
 
 static int verb_remove(int argc, char *argv[], void *userdata) {
