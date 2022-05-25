@@ -448,10 +448,11 @@ static int link_update(sd_device *dev, const char *slink_in, bool add) {
                 struct stat st1 = {}, st2 = {};
 
                 if (i > 0) {
+                        char buf[FORMAT_TIMESPAN_MAX];
                         usec_t delay = MIN_RANDOM_DELAY + random_u64_range(MAX_RANDOM_DELAY - MIN_RANDOM_DELAY);
 
                         log_device_debug(dev, "Directory %s was updated, retrying to update devlink %s after %s.",
-                                         dirname, slink, FORMAT_TIMESPAN(delay, USEC_PER_MSEC));
+                                         dirname, slink, format_timespan(buf, sizeof(buf), delay, USEC_PER_MSEC));
                         (void) usleep(delay);
                 }
 
