@@ -299,7 +299,7 @@ int check_permissions(struct MHD_Connection *connection, int *code, char **hostn
 }
 
 #else
-int check_permissions(struct MHD_Connection *connection, int *code, char **hostname) {
+_noreturn_ int check_permissions(struct MHD_Connection *connection, int *code, char **hostname) {
         assert_not_reached();
 }
 
