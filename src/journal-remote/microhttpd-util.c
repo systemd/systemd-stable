@@ -300,7 +300,7 @@ int check_permissions(struct MHD_Connection *connection, int *code, char **hostn
 
 #else
 _noreturn_ int check_permissions(struct MHD_Connection *connection, int *code, char **hostname) {
-        assert_not_reached();
+        assert_not_reached("gnutls not available");
 }
 
 int setup_gnutls_logger(char **categories) {
