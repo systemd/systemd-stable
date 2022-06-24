@@ -1693,7 +1693,7 @@ static int udev_rule_apply_token_to_event(
                 return token->op == (match ? OP_MATCH : OP_NOMATCH);
         }
         case TK_M_PROGRAM: {
-                char buf[UDEV_PATH_SIZE], result[UDEV_LINE_SIZE];
+                char buf[UDEV_LINE_SIZE], result[UDEV_LINE_SIZE];
                 size_t count;
 
                 event->program_result = mfree(event->program_result);
@@ -1767,7 +1767,7 @@ static int udev_rule_apply_token_to_event(
         }
         case TK_M_IMPORT_PROGRAM: {
                 _cleanup_strv_free_ char **lines = NULL;
-                char buf[UDEV_PATH_SIZE], result[UDEV_LINE_SIZE], **line;
+                char buf[UDEV_LINE_SIZE], result[UDEV_LINE_SIZE], **line;
 
                 (void) udev_event_apply_format(event, token->value, buf, sizeof(buf), false);
                 log_rule_debug(dev, rules, "Importing properties from results of '%s'", buf);
@@ -1812,7 +1812,7 @@ static int udev_rule_apply_token_to_event(
                 UdevBuiltinCommand cmd = PTR_TO_UDEV_BUILTIN_CMD(token->data);
                 assert(cmd >= 0 && cmd < _UDEV_BUILTIN_MAX);
                 unsigned mask = 1U << (int) cmd;
-                char buf[UDEV_PATH_SIZE];
+                char buf[UDEV_LINE_SIZE];
 
                 if (udev_builtin_run_once(cmd)) {
                         /* check if we ran already */
@@ -2202,7 +2202,7 @@ static int udev_rule_apply_token_to_event(
         case TK_A_RUN_BUILTIN:
         case TK_A_RUN_PROGRAM: {
                 _cleanup_free_ char *cmd = NULL;
-                char buf[UDEV_PATH_SIZE];
+                char buf[UDEV_LINE_SIZE];
 
                 if (event->run_final)
                         break;
