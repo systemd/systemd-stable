@@ -28,6 +28,8 @@ libnspawn_core_sources = files(
         'nspawn-setuid.h',
         'nspawn-stub-pid1.c',
         'nspawn-stub-pid1.h',
+        'nspawn-util.c',
+        'nspawn-util.h',
         'nspawn.h',
 )
 
@@ -54,6 +56,11 @@ systemd_nspawn_sources = files('nspawn.c')
 
 tests += [
         [['src/nspawn/test-nspawn-tables.c'],
+         [libnspawn_core,
+          libshared],
+         [libseccomp]],
+
+        [['src/nspawn/test-nspawn-util.c'],
          [libnspawn_core,
           libshared],
          [libseccomp]],
