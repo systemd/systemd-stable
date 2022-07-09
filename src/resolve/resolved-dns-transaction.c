@@ -866,7 +866,7 @@ static int dns_transaction_dnssec_ready(DnsTransaction *t) {
 
                 case DNS_TRANSACTION_RCODE_FAILURE:
                         if (!IN_SET(dt->answer_rcode, DNS_RCODE_NXDOMAIN, DNS_RCODE_SERVFAIL)) {
-                                log_debug("Auxiliary DNSSEC RR query failed with rcode=%s.", dns_rcode_to_string(dt->answer_rcode));
+                                log_debug("Auxiliary DNSSEC RR query failed with rcode=%s.", FORMAT_DNS_RCODE(dt->answer_rcode));
                                 goto fail;
                         }
 
@@ -1051,7 +1051,7 @@ void dns_transaction_process_reply(DnsTransaction *t, DnsPacket *p, bool encrypt
 
         log_debug("Processing incoming packet of size %zu on transaction %" PRIu16" (rcode=%s).",
                   p->size,
-                  t->id, dns_rcode_to_string(DNS_PACKET_RCODE(p)));
+                  t->id, FORMAT_DNS_RCODE(DNS_PACKET_RCODE(p)));
 
         switch (t->scope->protocol) {
 
@@ -1139,7 +1139,7 @@ void dns_transaction_process_reply(DnsTransaction *t, DnsPacket *p, bool encrypt
                                         return;
 
                                 /* Give up, accept the rcode */
-                                log_debug("Server returned error: %s", dns_rcode_to_string(DNS_PACKET_RCODE(p)));
+                                log_debug("Server returned error: %s", FORMAT_DNS_RCODE(DNS_PACKET_RCODE(p)));
                                 break;
                         }
 
@@ -1153,7 +1153,7 @@ void dns_transaction_process_reply(DnsTransaction *t, DnsPacket *p, bool encrypt
                             t->clamp_feature_level_servfail < 0) {
                                 t->clamp_feature_level_servfail = t->current_feature_level;
                                 log_debug("Server returned error %s, retrying transaction.",
-                                          dns_rcode_to_string(DNS_PACKET_RCODE(p)));
+                                          FORMAT_DNS_RCODE(DNS_PACKET_RCODE(p)));
                         } else {
                                 /* Reduce this feature level by one and try again. */
                                 switch (t->current_feature_level) {
@@ -1169,7 +1169,7 @@ void dns_transaction_process_reply(DnsTransaction *t, DnsPacket *p, bool encrypt
                                 }
 
                                 log_debug("Server returned error %s, retrying transaction with reduced feature level %s.",
-                                          dns_rcode_to_string(DNS_PACKET_RCODE(p)),
+                                          FORMAT_DNS_RCODE(DNS_PACKET_RCODE(p)),
                                           dns_server_feature_level_to_string(t->clamp_feature_level_servfail));
                         }
 
@@ -1310,7 +1310,7 @@ void dns_transaction_process_reply(DnsTransaction *t, DnsPacket *p, bool encrypt
                 t->clamp_feature_level_nxdomain = DNS_SERVER_FEATURE_LEVEL_UDP;
 
                 log_debug("Server returned error %s in EDNS0 mode, retrying transaction with reduced feature level %s (DVE-2018-0001 mitigation)",
-                          dns_rcode_to_string(DNS_PACKET_RCODE(p)),
+                          FORMAT_DNS_RCODE(DNS_PACKET_RCODE(p)),
                           dns_server_feature_level_to_string(t->clamp_feature_level_nxdomain));
 
                 dns_transaction_retry(t, false /* use the same server */);
