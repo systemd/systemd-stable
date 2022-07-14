@@ -223,7 +223,7 @@ static int run(int argc, char *argv[]) {
 
         r = maybe_resize_underlying_device(arg_target, devno);
         if (r < 0)
-                return r;
+                log_warning_errno(r, "Unable to resize underlying device of \"%s\", proceeding anyway: %m", arg_target);
 
         mountfd = open(arg_target, O_RDONLY|O_CLOEXEC);
         if (mountfd < 0)
