@@ -847,7 +847,7 @@ int locale_gen_enable_locale(const char *locale) {
                         return r;
                 r = copy_xattr(fileno(fr), fileno(fw));
                 if (r < 0)
-                        return r;
+                        log_debug_errno(r, "Failed to copy all xattrs from old to new /etc/locale.gen file, ignoring: %m");
         }
 
         if (!write_new) {
