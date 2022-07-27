@@ -2073,7 +2073,7 @@ public_programs += executable(
                         libmount,
                         libblkid],
         install_rpath : rootlibexecdir,
-        install : conf.get('ENABLE_ANALYZE'))
+        install : conf.get('ENABLE_ANALYZE') == 1)
 
 executable(
         'systemd-journald',
