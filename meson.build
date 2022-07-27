@@ -2184,7 +2184,7 @@ public_programs += executable(
         dependencies : [versiondep,
                         libseccomp],
         install_rpath : rootlibexecdir,
-        install : conf.get('ENABLE_ANALYZE'))
+        install : conf.get('ENABLE_ANALYZE') == 1)
 
 executable(
         'systemd-journald',
