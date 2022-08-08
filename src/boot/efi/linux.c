@@ -146,7 +146,7 @@ EFI_STATUS linux_exec(
         */
         /* allocate SizeOfImage + SectionAlignment because the new_buffer can move up to Alignment-1 bytes */
         kernel.num = EFI_SIZE_TO_PAGES(ALIGN_TO(kernel_size_of_image, kernel_alignment) + kernel_alignment);
-        err = BS->AllocatePages(AllocateAnyPages, EfiLoaderData, kernel.num, &kernel.addr);
+        err = BS->AllocatePages(AllocateAnyPages, EfiLoaderCode, kernel.num, &kernel.addr);
         if (EFI_ERROR(err))
                 return EFI_OUT_OF_RESOURCES;
         new_buffer = PHYSICAL_ADDRESS_TO_POINTER(ALIGN_TO(kernel.addr, kernel_alignment));
