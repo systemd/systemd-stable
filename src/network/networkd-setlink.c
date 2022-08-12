@@ -317,7 +317,7 @@ static int link_configure(
                         return log_link_debug_errno(link, r, "Could not open IFLA_PROTINFO container: %m");
 
                 if (link->network->use_bpdu >= 0) {
-                        r = sd_netlink_message_append_u8(req, IFLA_BRPORT_GUARD, link->network->use_bpdu);
+                        r = sd_netlink_message_append_u8(req, IFLA_BRPORT_GUARD, !link->network->use_bpdu);
                         if (r < 0)
                                 return log_link_debug_errno(link, r, "Could not append IFLA_BRPORT_GUARD attribute: %m");
                 }
@@ -335,7 +335,7 @@ static int link_configure(
                 }
 
                 if (link->network->allow_port_to_be_root >= 0) {
-                        r = sd_netlink_message_append_u8(req, IFLA_BRPORT_PROTECT, link->network->allow_port_to_be_root);
+                        r = sd_netlink_message_append_u8(req, IFLA_BRPORT_PROTECT, !link->network->allow_port_to_be_root);
                         if (r < 0)
                                 return log_link_debug_errno(link, r, "Could not append IFLA_BRPORT_PROTECT attribute: %m");
                 }
