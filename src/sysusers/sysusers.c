@@ -468,7 +468,7 @@ static int write_temporary_passwd(const char *passwd_path, FILE **tmpfile, char 
                         break;
         }
 
-        r = fflush_and_check(passwd);
+        r = fflush_sync_and_check(passwd);
         if (r < 0)
                 return r;
 
