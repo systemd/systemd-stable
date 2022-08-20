@@ -1191,7 +1191,7 @@ static int resize_buckets(HashmapBase *h, unsigned entries_add) {
                 } while (rehash_next);
         }
 
-        assert(n_rehashed == n_entries(h));
+        assert_se(n_rehashed == n_entries(h));
 
         return 1;
 }
