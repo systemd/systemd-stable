@@ -163,6 +163,7 @@ static int detect_vm_dmi(void) {
                 /* https://wiki.freebsd.org/bhyve */
                 { "BHYVE",               VIRTUALIZATION_BHYVE     },
                 { "Hyper-V",             VIRTUALIZATION_MICROSOFT },
+                { "Apple Virtualization", VIRTUALIZATION_APPLE },
         };
         int r;
 
@@ -931,6 +932,7 @@ static const char *const virtualization_table[_VIRTUALIZATION_MAX] = {
         [VIRTUALIZATION_QNX] = "qnx",
         [VIRTUALIZATION_ACRN] = "acrn",
         [VIRTUALIZATION_POWERVM] = "powervm",
+        [VIRTUALIZATION_APPLE] = "apple",
         [VIRTUALIZATION_VM_OTHER] = "vm-other",
 
         [VIRTUALIZATION_SYSTEMD_NSPAWN] = "systemd-nspawn",
