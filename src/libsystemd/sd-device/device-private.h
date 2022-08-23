@@ -18,6 +18,8 @@ static inline int device_new_from_watch_handle(sd_device **ret, int wd) {
 }
 
 int device_get_property_bool(sd_device *device, const char *key);
+int device_get_sysattr_unsigned(sd_device *device, const char *sysattr, unsigned *ret_value);
+int device_get_sysattr_bool(sd_device *device, const char *sysattr);
 int device_get_device_id(sd_device *device, const char **ret);
 int device_get_devlink_priority(sd_device *device, int *ret);
 int device_get_watch_handle(sd_device *device);
