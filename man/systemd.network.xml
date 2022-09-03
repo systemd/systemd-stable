@@ -4526,6 +4526,11 @@ DHCPPrefixDelegation=yes</programlisting>
     <example>
       <title>A bridge with two enslaved links</title>
 
+      <programlisting># /etc/systemd/network/25-bridge-static.netdev
+[NetDev]
+Name=bridge0
+Kind=bridge</programlisting>
+
       <programlisting># /etc/systemd/network/25-bridge-static.network
 [Match]
 Name=bridge0
