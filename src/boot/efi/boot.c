@@ -16,6 +16,7 @@
 #include "linux.h"
 #include "measure.h"
 #include "pe.h"
+#include "vmm.h"
 #include "random-seed.h"
 #include "secure-boot.h"
 #include "shim.h"
