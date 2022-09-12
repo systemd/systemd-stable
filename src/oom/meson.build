@@ -28,5 +28,7 @@ endif
 tests += [
         [['src/oom/test-oomd-util.c',
           'src/oom/oomd-util.c',
-          'src/oom/oomd-util.h']],
+          'src/oom/oomd-util.h'],
+	 [],
+	 [libatomic]],
 ]
