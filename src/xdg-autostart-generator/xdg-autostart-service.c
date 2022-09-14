@@ -19,6 +19,7 @@
 #include "strv.h"
 #include "user-util.h"
 #include "unit-name.h"
+#include "user-util.h"
 
 XdgAutostartService* xdg_autostart_service_free(XdgAutostartService *s) {
         if (!s)
