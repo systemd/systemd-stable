@@ -17,6 +17,7 @@
 #include "string-util.h"
 #include "nulstr-util.h"
 #include "strv.h"
+#include "user-util.h"
 
 XdgAutostartService* xdg_autostart_service_free(XdgAutostartService *s) {
         if (!s)
@@ -396,7 +397,7 @@ int xdg_autostart_format_exec_start(
 
         first_arg = true;
         for (i = n = 0; exec_split[i]; i++) {
-                _cleanup_free_ char *c = NULL, *raw = NULL, *percent = NULL;
+                _cleanup_free_ char *c = NULL, *raw = NULL, *percent = NULL, *tilde_expanded = NULL;
                 ssize_t l;
 
                 l = cunescape(exec_split[i], 0, &c);
@@ -445,7 +446,22 @@ int xdg_autostart_format_exec_start(
                 if (!percent)
                         return log_oom();
 
-                free_and_replace(exec_split[n++], percent);
+                /*
+                 * Expand ~ if it comes at the beginning of an argument to form a path
+                 */
+                if (percent[0] == '~' && (isempty(percent + 1) || path_is_absolute(percent + 1))) {
+                        _cleanup_free_ char *home = NULL;
+
+                        r = get_home_dir(&home);
+                        if (r < 0)
+                                return r;
+
+                        tilde_expanded = strjoin(home, &percent[1]);
+                        if (!tilde_expanded)
+                                return log_oom();
+                        free_and_replace(exec_split[n++], tilde_expanded);
+                } else
+                        free_and_replace(exec_split[n++], percent);
         }
         for (; exec_split[n]; n++)
                 exec_split[n] = mfree(exec_split[n]);

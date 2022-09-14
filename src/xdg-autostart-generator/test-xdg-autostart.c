@@ -7,6 +7,7 @@
 #include "strv.h"
 #include "tests.h"
 #include "tmpfile-util.h"
+#include "user-util.h"
 #include "xdg-autostart-service.h"
 
 TEST(translate_name) {
@@ -25,6 +26,11 @@ static void test_xdg_format_exec_start_one(const char *exec, const char *expecte
 }
 
 TEST(xdg_format_exec_start) {
+        _cleanup_free_ char *home = NULL;
+        _cleanup_free_ char *expected1, *expected2 = NULL;
+
+        assert_se(get_home_dir(&home) >= 0);
+
         test_xdg_format_exec_start_one("/bin/sleep 100", "/bin/sleep 100");
 
         /* All standardised % identifiers are stripped. */
@@ -34,6 +40,14 @@ TEST(xdg_format_exec_start) {
         test_xdg_format_exec_start_one("/bin/sleep %X \"%Y\"", "/bin/sleep %%X %%Y");
 
         test_xdg_format_exec_start_one("/bin/sleep \";\\\"\"", "/bin/sleep \";\\\"\"");
+
+        /* tilde is expanded only if standalone or at the start of a path */
+        expected1 = strjoin("/bin/ls ", home);
+        test_xdg_format_exec_start_one("/bin/ls ~", expected1);
+        expected2 = strjoin("/bin/ls ", home, "/foo");
+        test_xdg_format_exec_start_one("/bin/ls \"~/foo\"", expected2);
+        test_xdg_format_exec_start_one("/bin/ls ~foo", "/bin/ls ~foo");
+        test_xdg_format_exec_start_one("/bin/ls foo~", "/bin/ls foo~");
 }
 
 static const char* const xdg_desktop_file[] = {
