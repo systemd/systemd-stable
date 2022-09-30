@@ -1025,7 +1025,7 @@ endif
 want_bpf_framework = get_option('bpf-framework')
 bpf_framework_required = want_bpf_framework == 'true'
 
-libbpf = dependency('libbpf', required : bpf_framework_required, version : '>= 0.2')
+libbpf = dependency('libbpf', required : bpf_framework_required, version : '>= 0.1.0')
 conf.set10('HAVE_LIBBPF', libbpf.found())
 
 if want_bpf_framework == 'false' or not libbpf.found() or skip_deps
