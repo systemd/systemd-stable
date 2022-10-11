@@ -3,6 +3,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/seccomp.h>
+/* include missing_syscall_def.h earlier to make __SNR_foo mapped to __NR_foo. */
+#include "missing_syscall_def.h"
 #include <seccomp.h>
 #include <stddef.h>
 #include <sys/mman.h>
