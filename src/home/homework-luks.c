@@ -2669,6 +2669,7 @@ static int prepare_resize_partition(
                 log_debug("Not rewriting partition table, operating on naked device.");
                 *ret_disk_uuid = SD_ID128_NULL;
                 *ret_table = NULL;
+                *ret_partition = NULL;
                 return 0;
         }
 
