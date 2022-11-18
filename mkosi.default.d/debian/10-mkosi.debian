@@ -13,7 +13,7 @@ Packages=
         fdisk
         iproute2
         isc-dhcp-server
-        libbpf0
+        libbpf1
         libfido2-1
         libglib2.0-0
         libgnutls30
