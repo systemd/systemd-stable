@@ -1474,11 +1474,14 @@ if want_tpm2 != 'false' and not skip_deps
         tpm2 = dependency('tss2-esys tss2-rc tss2-mu',
                           required : want_tpm2 == 'true')
         have = tpm2.found()
+        have_esys3 = tpm2.version().version_compare('>= 3.0.0')
 else
         have = false
+        have_esys3 = false
         tpm2 = []
 endif
 conf.set10('HAVE_TPM2', have)
+conf.set10('HAVE_TSS2_ESYS3', have_esys3)
 
 want_elfutils = get_option('elfutils')
 if want_elfutils != 'false' and not skip_deps
@@ -3838,7 +3841,7 @@ exe = custom_target(
         install_dir : bindir)
 public_programs += exe
 
-if want_tests != 'false'
+if want_tests != 'false' and want_kernel_install
         test('test-kernel-install',
              test_kernel_install_sh,
              args : [exe.full_path(), loaderentry_install])

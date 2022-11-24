@@ -1010,19 +1010,13 @@ static int dissect_image(
                 log_debug("No root partition found of the native architecture, falling back to a root "
                           "partition of the secondary architecture.");
 
-                m->partitions[PARTITION_ROOT] = m->partitions[PARTITION_ROOT_SECONDARY];
-                zero(m->partitions[PARTITION_ROOT_SECONDARY]);
-                m->partitions[PARTITION_ROOT_VERITY] = m->partitions[PARTITION_ROOT_SECONDARY_VERITY];
-                zero(m->partitions[PARTITION_ROOT_SECONDARY_VERITY]);
-                m->partitions[PARTITION_ROOT_VERITY_SIG] = m->partitions[PARTITION_ROOT_SECONDARY_VERITY_SIG];
-                zero(m->partitions[PARTITION_ROOT_SECONDARY_VERITY_SIG]);
+                m->partitions[PARTITION_ROOT] = TAKE_PARTITION(m->partitions[PARTITION_ROOT_SECONDARY]);
+                m->partitions[PARTITION_ROOT_VERITY] = TAKE_PARTITION(m->partitions[PARTITION_ROOT_SECONDARY_VERITY]);
+                m->partitions[PARTITION_ROOT_VERITY_SIG] = TAKE_PARTITION(m->partitions[PARTITION_ROOT_SECONDARY_VERITY_SIG]);
 
-                m->partitions[PARTITION_USR] = m->partitions[PARTITION_USR_SECONDARY];
-                zero(m->partitions[PARTITION_USR_SECONDARY]);
-                m->partitions[PARTITION_USR_VERITY] = m->partitions[PARTITION_USR_SECONDARY_VERITY];
-                zero(m->partitions[PARTITION_USR_SECONDARY_VERITY]);
-                m->partitions[PARTITION_USR_VERITY_SIG] = m->partitions[PARTITION_USR_SECONDARY_VERITY_SIG];
-                zero(m->partitions[PARTITION_USR_SECONDARY_VERITY_SIG]);
+                m->partitions[PARTITION_USR] = TAKE_PARTITION(m->partitions[PARTITION_USR_SECONDARY]);
+                m->partitions[PARTITION_USR_VERITY] = TAKE_PARTITION(m->partitions[PARTITION_USR_SECONDARY_VERITY]);
+                m->partitions[PARTITION_USR_VERITY_SIG] = TAKE_PARTITION(m->partitions[PARTITION_USR_SECONDARY_VERITY_SIG]);
 
                 m->partitions[PARTITION_ROOT_OTHER].found = false;
                 m->partitions[PARTITION_ROOT_OTHER_VERITY].found = false;
@@ -1044,19 +1038,13 @@ static int dissect_image(
                           "falling back to a root partition of a non-native architecture (%s).",
                           architecture_to_string(m->partitions[PARTITION_ROOT_OTHER].architecture));
 
-                m->partitions[PARTITION_ROOT] = m->partitions[PARTITION_ROOT_OTHER];
-                zero(m->partitions[PARTITION_ROOT_OTHER]);
-                m->partitions[PARTITION_ROOT_VERITY] = m->partitions[PARTITION_ROOT_OTHER_VERITY];
-                zero(m->partitions[PARTITION_ROOT_OTHER_VERITY]);
-                m->partitions[PARTITION_ROOT_VERITY_SIG] = m->partitions[PARTITION_ROOT_OTHER_VERITY_SIG];
-                zero(m->partitions[PARTITION_ROOT_OTHER_VERITY_SIG]);
+                m->partitions[PARTITION_ROOT] = TAKE_PARTITION(m->partitions[PARTITION_ROOT_OTHER]);
+                m->partitions[PARTITION_ROOT_VERITY] = TAKE_PARTITION(m->partitions[PARTITION_ROOT_OTHER_VERITY]);
+                m->partitions[PARTITION_ROOT_VERITY_SIG] = TAKE_PARTITION(m->partitions[PARTITION_ROOT_OTHER_VERITY_SIG]);
 
-                m->partitions[PARTITION_USR] = m->partitions[PARTITION_USR_OTHER];
-                zero(m->partitions[PARTITION_USR_OTHER]);
-                m->partitions[PARTITION_USR_VERITY] = m->partitions[PARTITION_USR_OTHER_VERITY];
-                zero(m->partitions[PARTITION_USR_OTHER_VERITY]);
-                m->partitions[PARTITION_USR_VERITY_SIG] = m->partitions[PARTITION_USR_OTHER_VERITY_SIG];
-                zero(m->partitions[PARTITION_USR_OTHER_VERITY_SIG]);
+                m->partitions[PARTITION_USR] = TAKE_PARTITION(m->partitions[PARTITION_USR_OTHER]);
+                m->partitions[PARTITION_USR_VERITY] = TAKE_PARTITION(m->partitions[PARTITION_USR_OTHER_VERITY]);
+                m->partitions[PARTITION_USR_VERITY_SIG] = TAKE_PARTITION(m->partitions[PARTITION_USR_OTHER_VERITY_SIG]);
         }
 
         /* Hmm, we found a signature partition but no Verity data? Something is off. */
@@ -1083,12 +1071,9 @@ static int dissect_image(
                           "partition of the secondary architecture.");
 
                 /* Upgrade secondary arch to primary */
-                m->partitions[PARTITION_USR] = m->partitions[PARTITION_USR_SECONDARY];
-                zero(m->partitions[PARTITION_USR_SECONDARY]);
-                m->partitions[PARTITION_USR_VERITY] = m->partitions[PARTITION_USR_SECONDARY_VERITY];
-                zero(m->partitions[PARTITION_USR_SECONDARY_VERITY]);
-                m->partitions[PARTITION_USR_VERITY_SIG] = m->partitions[PARTITION_USR_SECONDARY_VERITY_SIG];
-                zero(m->partitions[PARTITION_USR_SECONDARY_VERITY_SIG]);
+                m->partitions[PARTITION_USR] = TAKE_PARTITION(m->partitions[PARTITION_USR_SECONDARY]);
+                m->partitions[PARTITION_USR_VERITY] = TAKE_PARTITION(m->partitions[PARTITION_USR_SECONDARY_VERITY]);
+                m->partitions[PARTITION_USR_VERITY_SIG] = TAKE_PARTITION(m->partitions[PARTITION_USR_SECONDARY_VERITY_SIG]);
 
                 m->partitions[PARTITION_USR_OTHER].found = false;
                 m->partitions[PARTITION_USR_OTHER_VERITY].found = false;
@@ -1105,12 +1090,9 @@ static int dissect_image(
                           architecture_to_string(m->partitions[PARTITION_ROOT_OTHER].architecture));
 
                 /* Upgrade other arch to primary */
-                m->partitions[PARTITION_USR] = m->partitions[PARTITION_USR_OTHER];
-                zero(m->partitions[PARTITION_USR_OTHER]);
-                m->partitions[PARTITION_USR_VERITY] = m->partitions[PARTITION_USR_OTHER_VERITY];
-                zero(m->partitions[PARTITION_USR_OTHER_VERITY]);
-                m->partitions[PARTITION_USR_VERITY_SIG] = m->partitions[PARTITION_USR_OTHER_VERITY_SIG];
-                zero(m->partitions[PARTITION_USR_OTHER_VERITY_SIG]);
+                m->partitions[PARTITION_USR] = TAKE_PARTITION(m->partitions[PARTITION_USR_OTHER]);
+                m->partitions[PARTITION_USR_VERITY] = TAKE_PARTITION(m->partitions[PARTITION_USR_OTHER_VERITY]);
+                m->partitions[PARTITION_USR_VERITY_SIG] = TAKE_PARTITION(m->partitions[PARTITION_USR_OTHER_VERITY_SIG]);
         }
 
         /* Hmm, we found a signature partition but no Verity data? Something is off. */
@@ -1327,11 +1309,11 @@ static int is_loop_device(const char *path) {
         return true;
 }
 
-static int run_fsck(const char *node, const char *fstype) {
+static int run_fsck(int node_fd, const char *fstype) {
         int r, exit_status;
         pid_t pid;
 
-        assert(node);
+        assert(node_fd >= 0);
         assert(fstype);
 
         r = fsck_exists_for_fstype(fstype);
@@ -1340,16 +1322,20 @@ static int run_fsck(const char *node, const char *fstype) {
                 return 0;
         }
         if (r == 0) {
-                log_debug("Not checking partition %s, as fsck for %s does not exist.", node, fstype);
+                log_debug("Not checking partition %s, as fsck for %s does not exist.", FORMAT_PROC_FD_PATH(node_fd), fstype);
                 return 0;
         }
 
-        r = safe_fork("(fsck)", FORK_RESET_SIGNALS|FORK_CLOSE_ALL_FDS|FORK_RLIMIT_NOFILE_SAFE|FORK_DEATHSIG|FORK_NULL_STDIO, &pid);
+        r = safe_fork_full(
+                        "(fsck)",
+                        &node_fd, 1, /* Leave the node fd open */
+                        FORK_RESET_SIGNALS|FORK_CLOSE_ALL_FDS|FORK_RLIMIT_NOFILE_SAFE|FORK_DEATHSIG|FORK_NULL_STDIO|FORK_CLOEXEC_OFF,
+                        &pid);
         if (r < 0)
                 return log_debug_errno(r, "Failed to fork off fsck: %m");
         if (r == 0) {
                 /* Child */
-                execl("/sbin/fsck", "/sbin/fsck", "-aT", node, NULL);
+                execl("/sbin/fsck", "/sbin/fsck", "-aT", FORMAT_PROC_FD_PATH(node_fd), NULL);
                 log_open();
                 log_debug_errno(errno, "Failed to execl() fsck: %m");
                 _exit(FSCK_OPERATIONAL_ERROR);
@@ -1439,7 +1425,7 @@ static int mount_partition(
         rw = m->rw && !(flags & DISSECT_IMAGE_MOUNT_READ_ONLY);
 
         if (FLAGS_SET(flags, DISSECT_IMAGE_FSCK) && rw) {
-                r = run_fsck(node, fstype);
+                r = run_fsck(m->mount_node_fd, fstype);
                 if (r < 0)
                         return r;
         }
