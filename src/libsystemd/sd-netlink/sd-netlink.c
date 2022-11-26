@@ -701,7 +701,8 @@ int sd_netlink_read(
                                 return r;
 
                         if (type == NLMSG_DONE) {
-                                *ret = NULL;
+                                if (ret)
+                                        *ret = NULL;
                                 return 0;
                         }
 
