@@ -201,6 +201,10 @@ static EFI_STATUS find_device(EFI_HANDLE *device, EFI_DEVICE_PATH **ret_device_p
         if (err != EFI_SUCCESS)
                 return err;
 
+        /* The drivers for other partitions on this drive may not be initialized on fastboot firmware, so we
+         * have to ask the firmware to do just that. */
+        (void) BS->ConnectController(disk_handle, NULL, NULL, true);
+
         err = BS->HandleProtocol(disk_handle, &BlockIoProtocol, (void **)&block_io);
         if (err != EFI_SUCCESS)
                 return err;
