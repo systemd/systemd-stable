@@ -2655,12 +2655,6 @@ EFI_STATUS efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *sys_table) {
         /* Uncomment the next line if you need to wait for debugger. */
         // debug_break();
 
-        /* The firmware may skip initializing some devices for the sake of a faster boot. This is especially
-         * true for fastboot enabled firmwares. But this means that things we use like input devices or the
-         * xbootldr partition may not be available yet. Reconnect all drivers should hopefully make the
-         * firmware initialize everything we need. */
-        (void) reconnect_all_drivers();
-
         err = BS->OpenProtocol(image,
                         &LoadedImageProtocol,
                         (void **)&loaded_image,
@@ -2673,6 +2667,13 @@ EFI_STATUS efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *sys_table) {
         (void) device_path_to_str(loaded_image->FilePath, &loaded_image_path);
 
         export_variables(loaded_image, loaded_image_path, init_usec);
+
+        /* The firmware may skip initializing some devices for the sake of a faster boot. This is especially
+         * true for fastboot enabled firmwares. But this means that things we use like input devices or the
+         * xbootldr partition may not be available yet. Reconnect all drivers should hopefully make the
+         * firmware initialize everything we need. */
+        if (is_direct_boot(loaded_image->DeviceHandle))
+                (void) reconnect_all_drivers();
 
         err = open_volume(loaded_image->DeviceHandle, &root_dir);
         if (err != EFI_SUCCESS)
