@@ -164,8 +164,7 @@ static int verify_dhcp6_address(Link *link, const Address *address) {
 
         (void) in6_addr_to_string(&address->in_addr.in6, &buffer);
 
-        if (address_get(link, address, &existing) < 0 &&
-            link_get_address(link, AF_INET6, &address->in_addr, 0, &existing) < 0) {
+        if (address_get(link, address, &existing) < 0) {
                 /* New address. */
                 log_level = LOG_INFO;
                 goto simple_log;
