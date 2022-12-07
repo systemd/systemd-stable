@@ -3710,7 +3710,7 @@ class NetworkdBondTests(unittest.TestCase, Utilities):
 
         output = check_output('ip -d link show bond199')
         print(output)
-        self.assertRegex(output, 'active_slave dummy98')
+        self.assertIn('active_slave dummy98', output)
 
     def test_bond_primary_slave(self):
         copy_unit_to_networkd_unit_path('23-primary-slave.network', '23-bond199.network', '25-bond-active-backup-slave.netdev', '12-dummy.netdev')
@@ -3719,8 +3719,20 @@ class NetworkdBondTests(unittest.TestCase, Utilities):
 
         output = check_output('ip -d link show bond199')
         print(output)
-        self.assertRegex(output, 'primary dummy98')
-        self.assertIn('link/ether 00:11:22:33:44:55', output)
+        self.assertIn('primary dummy98', output)
+
+        # for issue #25627
+        mkdir_p(os.path.join(network_unit_dir, '23-bond199.network.d'))
+        for mac in ['00:11:22:33:44:55', '00:11:22:33:44:56']:
+            with open(os.path.join(network_unit_dir, '23-bond199.network.d/mac.conf'), mode='w', encoding='utf-8') as f:
+                f.write(f'[Link]\nMACAddress={mac}\n')
+
+            networkctl_reload()
+            self.wait_online(['dummy98:enslaved', 'bond199:degraded'])
+
+            output = check_output('ip -d link show bond199')
+            print(output)
+            self.assertIn(f'link/ether {mac}', output)
 
     def test_bond_operstate(self):
         copy_unit_to_networkd_unit_path('25-bond.netdev', '11-dummy.netdev', '12-dummy.netdev',
