@@ -5811,7 +5811,7 @@ void unit_frozen(Unit *u) {
 
         u->freezer_state = FREEZER_FROZEN;
 
-        bus_unit_send_pending_freezer_message(u);
+        bus_unit_send_pending_freezer_message(u, false);
 }
 
 void unit_thawed(Unit *u) {
@@ -5819,7 +5819,7 @@ void unit_thawed(Unit *u) {
 
         u->freezer_state = FREEZER_RUNNING;
 
-        bus_unit_send_pending_freezer_message(u);
+        bus_unit_send_pending_freezer_message(u, false);
 }
 
 static int unit_freezer_action(Unit *u, FreezerAction action) {
@@ -5844,7 +5844,8 @@ static int unit_freezer_action(Unit *u, FreezerAction action) {
         if (s != UNIT_ACTIVE)
                 return -EHOSTDOWN;
 
-        if (IN_SET(u->freezer_state, FREEZER_FREEZING, FREEZER_THAWING))
+        if ((IN_SET(u->freezer_state, FREEZER_FREEZING, FREEZER_THAWING) && action == FREEZER_FREEZE) ||
+            (u->freezer_state == FREEZER_THAWING && action == FREEZER_THAW))
                 return -EALREADY;
 
         r = method(u);
