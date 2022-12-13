@@ -15,6 +15,7 @@
 #include "bus-util.h"
 #include "compress.h"
 #include "def.h"
+#include "escape.h"
 #include "fd-util.h"
 #include "format-table.h"
 #include "fs-util.h"
@@ -731,9 +732,10 @@ static int print_info(FILE *file, sd_journal *j, bool need_space) {
                 _cleanup_(json_variant_unrefp) JsonVariant *v = NULL;
 
                 r = json_parse(pkgmeta_json, 0, &v, NULL, NULL);
-                if (r < 0)
-                        log_warning_errno(r, "json_parse on %s failed, ignoring: %m", pkgmeta_json);
-                else {
+                if (r < 0) {
+                        _cleanup_free_ char *esc = cescape(pkgmeta_json);
+                        log_warning_errno(r, "json_parse on \"%s\" failed, ignoring: %m", strnull(esc));
+                } else {
                         const char *module_name;
                         JsonVariant *module_json;
 
