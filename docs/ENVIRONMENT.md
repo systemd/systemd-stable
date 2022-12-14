@@ -268,6 +268,13 @@ All tools:
   it is either set to `system` or `user` depending on whether the NSS/PAM
   module is called by systemd in `--system` or `--user` mode.
 
+* `$SYSTEMD_DEFAULT_MOUNT_RATE_LIMIT_BURST` — can be set to override the mount
+  units burst rate limit for parsing `/proc/self/mountinfo`. On a system with
+  few resources but many mounts the rate limit may be hit, which will cause the
+  processing of mount units to stall. The burst limit may be adjusted when the
+  default is not appropriate for a given system. Defaults to `5`, accepts
+  positive integers.
+
 `systemd-remount-fs`:
 
 * `$SYSTEMD_REMOUNT_ROOT_RW=1` — if set and no entry for the root directory
