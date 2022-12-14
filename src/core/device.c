@@ -115,6 +115,7 @@ static void device_done(Unit *u) {
         assert(d);
 
         device_unset_sysfs(d);
+        d->deserialized_sysfs = mfree(d->deserialized_sysfs);
         d->wants_property = strv_free(d->wants_property);
 }
 
@@ -206,6 +207,19 @@ static int device_coldplug(Unit *u) {
                 found &= ~DEVICE_FOUND_UDEV; /* ignore DEVICE_FOUND_UDEV bit */
                 if (state == DEVICE_PLUGGED)
                         state = DEVICE_TENTATIVE; /* downgrade state */
+
+                /* Also check the validity of the device syspath. Without this check, if the device was
+                 * removed while switching root, it would never go to inactive state, as both Device.found
+                 * and Device.enumerated_found do not have the DEVICE_FOUND_UDEV flag, so device_catchup() in
+                 * device_update_found_one() does nothing in most cases. See issue #25106. Note that the
+                 * syspath field is only serialized when systemd is sufficiently new and the device has been
+                 * already processed by udevd. */
+                if (d->deserialized_sysfs) {
+                        _cleanup_(sd_device_unrefp) sd_device *dev = NULL;
+
+                        if (sd_device_new_from_syspath(&dev, d->deserialized_sysfs) < 0)
+                                state = DEVICE_DEAD;
+                }
         }
 
         if (d->found == found && d->state == state)
@@ -294,6 +308,9 @@ static int device_serialize(Unit *u, FILE *f, FDSet *fds) {
         assert(f);
         assert(fds);
 
+        if (d->sysfs)
+                (void) serialize_item(f, "sysfs", d->sysfs);
+
         (void) serialize_item(f, "state", device_state_to_string(d->state));
 
         if (device_found_to_string_many(d->found, &s) >= 0)
@@ -312,7 +329,14 @@ static int device_deserialize_item(Unit *u, const char *key, const char *value, 
         assert(value);
         assert(fds);
 
-        if (streq(key, "state")) {
+        if (streq(key, "sysfs")) {
+                if (!d->deserialized_sysfs) {
+                        d->deserialized_sysfs = strdup(value);
+                        if (!d->deserialized_sysfs)
+                                log_oom_debug();
+                }
+
+        } else if (streq(key, "state")) {
                 DeviceState state;
 
                 state = device_state_from_string(value);

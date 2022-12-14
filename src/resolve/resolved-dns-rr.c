@@ -1137,12 +1137,15 @@ const char *dns_resource_record_to_string(DnsResourceRecord *rr) {
                 break;
 
         default:
-                t = hexmem(rr->generic.data, rr->generic.data_size);
-                if (!t)
-                        return NULL;
-
                 /* Format as documented in RFC 3597, Section 5 */
-                r = asprintf(&s, "%s \\# %zu %s", k, rr->generic.data_size, t);
+                if (rr->generic.data_size == 0)
+                        r = asprintf(&s, "%s \\# 0", k);
+                else {
+                        t = hexmem(rr->generic.data, rr->generic.data_size);
+                        if (!t)
+                                return NULL;
+                        r = asprintf(&s, "%s \\# %zu %s", k, rr->generic.data_size, t);
+                }
                 if (r < 0)
                         return NULL;
                 break;
@@ -1765,36 +1768,30 @@ int dns_resource_record_get_cname_target(DnsResourceKey *key, DnsResourceRecord 
         return 0;
 }
 
-DnsTxtItem *dns_txt_item_free_all(DnsTxtItem *i) {
-        DnsTxtItem *n;
+DnsTxtItem *dns_txt_item_free_all(DnsTxtItem *first) {
+        LIST_FOREACH(items, i, first)
+                free(i);
 
-        if (!i)
-                return NULL;
-
-        n = i->items_next;
-
-        free(i);
-        return dns_txt_item_free_all(n);
+        return NULL;
 }
 
 bool dns_txt_item_equal(DnsTxtItem *a, DnsTxtItem *b) {
+        DnsTxtItem *bb = b;
 
         if (a == b)
                 return true;
 
-        if (!a != !b)
-                return false;
+        LIST_FOREACH(items, aa, a) {
+                if (!bb)
+                        return false;
 
-        if (!a)
-                return true;
+                if (memcmp_nn(aa->data, aa->length, bb->data, bb->length) != 0)
+                        return false;
 
-        if (a->length != b->length)
-                return false;
+                bb = bb->items_next;
+        }
 
-        if (memcmp(a->data, b->data, a->length) != 0)
-                return false;
-
-        return dns_txt_item_equal(a->items_next, b->items_next);
+        return !bb;
 }
 
 DnsTxtItem *dns_txt_item_copy(DnsTxtItem *first) {

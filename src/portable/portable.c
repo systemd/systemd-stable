@@ -1111,7 +1111,7 @@ static int attach_unit_file(
         (void) mkdir_parents(where, 0755);
         if (mkdir(where, 0755) < 0) {
                 if (errno != EEXIST)
-                        return -errno;
+                        return log_debug_errno(errno, "Failed to create attach directory %s: %m", where);
         } else
                 (void) portable_changes_add(changes, n_changes, PORTABLE_MKDIR, where, NULL);
 
@@ -1122,7 +1122,7 @@ static int attach_unit_file(
 
         if (mkdir(dropin_dir, 0755) < 0) {
                 if (errno != EEXIST)
-                        return -errno;
+                        return log_debug_errno(errno, "Failed to create drop-in directory %s: %m", dropin_dir);
         } else
                 (void) portable_changes_add(changes, n_changes, PORTABLE_MKDIR, dropin_dir, NULL);
 
@@ -1367,7 +1367,7 @@ int portable_attach(
                 r = attach_unit_file(&paths, image->path, image->type, extension_images,
                                      item, profile, flags, changes, n_changes);
                 if (r < 0)
-                        return r;
+                        return sd_bus_error_set_errnof(error, r, "Failed to attach unit '%s': %m", item->name);
         }
 
         /* We don't care too much for the image symlink, it's just a convenience thing, it's not necessary for proper

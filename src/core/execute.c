@@ -2671,6 +2671,7 @@ static int load_credential(
         assert(id);
         assert(path);
         assert(unit);
+        assert(read_dfd >= 0 || read_dfd == AT_FDCWD);
         assert(write_dfd >= 0);
         assert(left);
 
@@ -2897,7 +2898,7 @@ static int acquire_credentials(
                                         lc->path,
                                         lc->encrypted,
                                         unit,
-                                        -1,
+                                        AT_FDCWD,
                                         dfd,
                                         uid,
                                         ownership_ok,

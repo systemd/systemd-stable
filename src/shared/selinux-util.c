@@ -305,7 +305,7 @@ int mac_selinux_fix_container_fd(int fd, const char *path, const char *inside_pa
                 r = -errno;
 
                 /* If the old label is identical to the new one, suppress any kind of error */
-                if (getfilecon_raw(FORMAT_PROC_FD_PATH(fd), &oldcon) >= 0 && streq(fcon, oldcon))
+                if (getfilecon_raw(FORMAT_PROC_FD_PATH(fd), &oldcon) >= 0 && streq_ptr(fcon, oldcon))
                         return 0;
 
                 goto fail;
@@ -367,10 +367,14 @@ int mac_selinux_get_create_label_from_exe(const char *exe, char **label) {
         r = getcon_raw(&mycon);
         if (r < 0)
                 return -errno;
+        if (!mycon)
+                return -EOPNOTSUPP;
 
         r = getfilecon_raw(exe, &fcon);
         if (r < 0)
                 return -errno;
+        if (!fcon)
+                return -EOPNOTSUPP;
 
         sclass = string_to_security_class("process");
         if (sclass == 0)
@@ -382,14 +386,21 @@ int mac_selinux_get_create_label_from_exe(const char *exe, char **label) {
 #endif
 }
 
-int mac_selinux_get_our_label(char **label) {
-#if HAVE_SELINUX
-        assert(label);
+int mac_selinux_get_our_label(char **ret) {
+        assert(ret);
 
+#if HAVE_SELINUX
         if (!mac_selinux_use())
                 return -EOPNOTSUPP;
 
-        return RET_NERRNO(getcon_raw(label));
+        _cleanup_freecon_ char *con = NULL;
+        if (getcon_raw(&con) < 0)
+                return -errno;
+        if (!con)
+                return -EOPNOTSUPP;
+
+        *ret = TAKE_PTR(con);
+        return 0;
 #else
         return -EOPNOTSUPP;
 #endif
@@ -413,17 +424,20 @@ int mac_selinux_get_child_mls_label(int socket_fd, const char *exe, const char *
         r = getcon_raw(&mycon);
         if (r < 0)
                 return -errno;
+        if (!mycon)
+                return -EOPNOTSUPP;
 
         r = getpeercon_raw(socket_fd, &peercon);
         if (r < 0)
                 return -errno;
+        if (!peercon)
+                return -EOPNOTSUPP;
 
-        if (!exec_label) {
-                /* If there is no context set for next exec let's use context
-                   of target executable */
-                r = getfilecon_raw(exe, &fcon);
-                if (r < 0)
+        if (!exec_label) { /* If there is no context set for next exec let's use context of target executable */
+                if (getfilecon_raw(exe, &fcon) < 0)
                         return -errno;
+                if (!fcon)
+                        return -EOPNOTSUPP;
         }
 
         bcon = context_new(mycon);
