@@ -54,6 +54,13 @@ jobs:
     - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
     - uses: systemd/mkosi@792cbc60eb2dc4a58d66bb3c212bf92f8d50f6ea
 
+    # FIXME: temporary workaround for a file conflict between systemd (C9S) and
+    # systemd-boot (EPEL9). Drop this once systemd in C9S is updated to v252
+    # (should be done by the end of 2022).
+    - name: Fix C9S/EPEL9
+      if: ${{ matrix.release == '9-stream' }}
+      run: sudo sed -i '/add_packages/s/systemd-boot/systemd/g' /usr/local/lib/python3.10/dist-packages/mkosi/__init__.py
+
     - name: Install
       run: sudo apt-get update && sudo apt-get install --no-install-recommends python3-pexpect python3-jinja2
 
