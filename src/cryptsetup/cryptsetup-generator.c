@@ -277,7 +277,7 @@ static int print_dependencies(FILE *f, const char* device_path) {
 static int create_disk(
                 const char *name,
                 const char *device,
-                const char *key_file,
+                const char *password,
                 const char *keydev,
                 const char *headerdev,
                 const char *options,
@@ -285,7 +285,7 @@ static int create_disk(
 
         _cleanup_free_ char *n = NULL, *d = NULL, *u = NULL, *e = NULL,
                 *keydev_mount = NULL, *keyfile_timeout_value = NULL,
-                *filtered = NULL, *u_escaped = NULL, *name_escaped = NULL, *header_path = NULL, *key_file_buffer = NULL,
+                *filtered = NULL, *u_escaped = NULL, *name_escaped = NULL, *header_path = NULL, *password_buffer = NULL,
                 *tmp_fstype = NULL, *filtered_header = NULL, *headerdev_mount = NULL;
         _cleanup_fclose_ FILE *f = NULL;
         const char *dmname;
@@ -350,9 +350,9 @@ static int create_disk(
         if (r < 0)
                 return log_error_errno(r, "Failed to generate unit name: %m");
 
-        if (keydev && !key_file)
+        if (keydev && !password)
                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
-                                       "Key device is specified, but path to the key file is missing.");
+                                       "Key device is specified, but path to the password file is missing.");
 
         r = generator_open_unit_file(arg_dest, NULL, n, &f);
         if (r < 0)
@@ -388,11 +388,11 @@ static int create_disk(
                 if (r < 0)
                         return log_error_errno(r, "Failed to generate keydev umount unit: %m");
 
-                key_file_buffer = path_join(keydev_mount, key_file);
-                if (!key_file_buffer)
+                password_buffer = path_join(keydev_mount, password);
+                if (!password_buffer)
                         return log_oom();
 
-                key_file = key_file_buffer;
+                password = password_buffer;
 
                 fprintf(f, "After=%s\n", unit);
                 if (keyfile_can_timeout > 0)
@@ -462,8 +462,8 @@ static int create_disk(
                         "Before=%s\n",
                         netdev ? "remote-cryptsetup.target" : "cryptsetup.target");
 
-        if (key_file && !keydev) {
-                r = print_dependencies(f, key_file);
+        if (password && !keydev) {
+                r = print_dependencies(f, password);
                 if (r < 0)
                         return r;
         }
@@ -495,7 +495,7 @@ static int create_disk(
         if (r < 0)
                 log_warning_errno(r, "Failed to write device timeout drop-in: %m");
 
-        r = generator_write_cryptsetup_service_section(f, name, u, key_file, filtered);
+        r = generator_write_cryptsetup_service_section(f, name, u, password, filtered);
         if (r < 0)
                 return r;
 
