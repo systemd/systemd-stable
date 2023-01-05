@@ -117,6 +117,7 @@ char16_t *xstr8_to_path(const char *stra);
 void mangle_stub_cmdline(char16_t *cmdline);
 
 EFI_STATUS file_read(EFI_FILE *dir, const char16_t *name, UINTN off, UINTN size, char **content, UINTN *content_size);
+EFI_STATUS chunked_read(EFI_FILE *file, size_t *size, void *buf);
 
 static inline void file_closep(EFI_FILE **handle) {
         if (!*handle)
