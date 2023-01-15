@@ -47,6 +47,7 @@ MemoryMax=
 MemoryMin=
 MemorySwapMax=
 NetClass=
+OOMPolicy=
 RestartKillSignal=
 RestrictNetworkInterfaces=
 RuntimeMaxSec=
