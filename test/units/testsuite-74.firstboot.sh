@@ -9,7 +9,7 @@ if ! command -v systemd-firstboot >/dev/null; then
 fi
 
 at_exit() {
-    if [[ -v ROOT && -n "$ROOT" ]]; then
+    if [[ -n "${ROOT:-}" ]]; then
         ls -lR "$ROOT"
         rm -fr "$ROOT"
     fi
@@ -24,6 +24,12 @@ ROOT_HASHED_PASSWORD1='$6$foobarsalt$YbwdaATX6IsFxvWbY3QcZj2gB31R/LFRFrjlFrJtTTq
 # shellcheck disable=SC2016
 ROOT_HASHED_PASSWORD2='$6$foobarsalt$q.P2932zYMLbKnjFwIxPI8y3iuxeuJ2BgE372LcZMMnj3Gcg/9mJg2LPKUl.ha0TG/.fRNNnRQcLfzM0SNot3.'
 
+# Debian and Ubuntu use /etc/default/locale instead of /etc/locale.conf. Make
+# sure we use the appropriate path for locale configuration.
+LOCALE_PATH="/etc/locale.conf"
+[ -e "$LOCALE_PATH" ] || LOCALE_PATH="/etc/default/locale"
+[ -e "$LOCALE_PATH" ] || systemd-firstboot --locale=C.UTF-8
+
 # Create a minimal root so we don't modify the testbed
 ROOT=test-root
 mkdir -p "$ROOT/bin"
@@ -31,15 +37,14 @@ mkdir -p "$ROOT/bin"
 touch "$ROOT/bin/fooshell" "$ROOT/bin/barshell"
 
 systemd-firstboot --root="$ROOT" --locale=foo
-grep -q "LANG=foo" "$ROOT/etc/locale.conf"
-rm -fv "$ROOT/etc/locale.conf"
-# FIXME: https://github.com/systemd/systemd/issues/25249
-#systemd-firstboot --root="$ROOT" --locale-messages=foo
-#grep -q "LC_MESSAGES=foo" "$ROOT/etc/locale.conf"
-#rm -fv "$ROOT/etc/locale.conf"
+grep -q "LANG=foo" "$ROOT$LOCALE_PATH"
+rm -fv "$ROOT$LOCALE_PATH"
+systemd-firstboot --root="$ROOT" --locale-messages=foo
+grep -q "LC_MESSAGES=foo" "$ROOT$LOCALE_PATH"
+rm -fv "$ROOT$LOCALE_PATH"
 systemd-firstboot --root="$ROOT" --locale=foo --locale-messages=bar
-grep -q "LANG=foo" "$ROOT/etc/locale.conf"
-grep -q "LC_MESSAGES=bar" "$ROOT/etc/locale.conf"
+grep -q "LANG=foo" "$ROOT$LOCALE_PATH"
+grep -q "LC_MESSAGES=bar" "$ROOT$LOCALE_PATH"
 
 systemd-firstboot --root="$ROOT" --keymap=foo
 grep -q "KEYMAP=foo" "$ROOT/etc/vconsole.conf"
@@ -83,8 +88,8 @@ systemd-firstboot --root="$ROOT" \
                   --root-password-hashed="$ROOT_HASHED_PASSWORD2" \
                   --root-shell=/bin/barshell \
                   --kernel-command-line="hello.world=0"
-grep -q "LANG=foo" "$ROOT/etc/locale.conf"
-grep -q "LC_MESSAGES=bar" "$ROOT/etc/locale.conf"
+grep -q "LANG=foo" "$ROOT$LOCALE_PATH"
+grep -q "LC_MESSAGES=bar" "$ROOT$LOCALE_PATH"
 grep -q "KEYMAP=foo" "$ROOT/etc/vconsole.conf"
 readlink "$ROOT/etc/localtime" | grep -q "Europe/Berlin$"
 grep -q "foobar" "$ROOT/etc/hostname"
@@ -104,8 +109,8 @@ systemd-firstboot --root="$ROOT" --force \
                   --root-password-hashed="$ROOT_HASHED_PASSWORD2" \
                   --root-shell=/bin/barshell \
                   --kernel-command-line="hello.world=0"
-grep -q "LANG=locale-overwrite" "$ROOT/etc/locale.conf"
-grep -q "LC_MESSAGES=messages-overwrite" "$ROOT/etc/locale.conf"
+grep -q "LANG=locale-overwrite" "$ROOT$LOCALE_PATH"
+grep -q "LC_MESSAGES=messages-overwrite" "$ROOT$LOCALE_PATH"
 grep -q "KEYMAP=keymap-overwrite" "$ROOT/etc/vconsole.conf"
 readlink "$ROOT/etc/localtime" | grep -q "/CET$"
 grep -q "hostname-overwrite" "$ROOT/etc/hostname"
@@ -119,7 +124,7 @@ rm -fr "$ROOT"
 mkdir "$ROOT"
 # Copy everything at once (--copy)
 systemd-firstboot --root="$ROOT" --copy
-diff /etc/locale.conf "$ROOT/etc/locale.conf"
+diff $LOCALE_PATH "$ROOT$LOCALE_PATH"
 diff <(awk -F: '/^root/ { print $7; }' /etc/passwd) <(awk -F: '/^root/ { print $7; }' "$ROOT/etc/passwd")
 diff <(awk -F: '/^root/ { print $2; }' /etc/shadow) <(awk -F: '/^root/ { print $2; }' "$ROOT/etc/shadow")
 [[ -e /etc/vconsole.conf ]] && diff /etc/vconsole.conf "$ROOT/etc/vconsole.conf"
@@ -128,11 +133,35 @@ rm -fr "$ROOT"
 mkdir "$ROOT"
 # Copy everything at once, but now by using separate switches
 systemd-firstboot --root="$ROOT" --copy-locale --copy-keymap --copy-timezone --copy-root-password --copy-root-shell
-diff /etc/locale.conf "$ROOT/etc/locale.conf"
+diff $LOCALE_PATH "$ROOT$LOCALE_PATH"
 diff <(awk -F: '/^root/ { print $7; }' /etc/passwd) <(awk -F: '/^root/ { print $7; }' "$ROOT/etc/passwd")
 diff <(awk -F: '/^root/ { print $2; }' /etc/shadow) <(awk -F: '/^root/ { print $2; }' "$ROOT/etc/shadow")
 [[ -e /etc/vconsole.conf ]] && diff /etc/vconsole.conf "$ROOT/etc/vconsole.conf"
 [[ -e /etc/localtime ]] && diff <(readlink /etc/localtime) <(readlink "$ROOT/etc/localtime")
+
+# --prompt-* options
+rm -fr "$ROOT"
+mkdir -p "$ROOT/bin"
+touch "$ROOT/bin/fooshell" "$ROOT/bin/barshell"
+# We can do only limited testing here, since it's all an interactive stuff,
+# so --prompt and --prompt-root-password are skipped on purpose
+echo -ne "\nfoo\nbar\n" | systemd-firstboot --root="$ROOT" --prompt-locale
+grep -q "LANG=foo" "$ROOT$LOCALE_PATH"
+grep -q "LC_MESSAGES=bar" "$ROOT$LOCALE_PATH"
+echo -ne "\nfoo\n" | systemd-firstboot --root="$ROOT" --prompt-keymap
+grep -q "KEYMAP=foo" "$ROOT/etc/vconsole.conf"
+echo -ne "\nEurope/Berlin\n" | systemd-firstboot --root="$ROOT" --prompt-timezone
+readlink "$ROOT/etc/localtime" | grep -q "Europe/Berlin$"
+echo -ne "\nfoobar\n" | systemd-firstboot --root="$ROOT" --prompt-hostname
+grep -q "foobar" "$ROOT/etc/hostname"
+echo -ne "\n/bin/fooshell\n" | systemd-firstboot --root="$ROOT" --prompt-root-shell
+grep -q "^root:.*:0:0:.*:/bin/fooshell$" "$ROOT/etc/passwd"
+# Existing files should not get overwritten
+echo -ne "\n/bin/barshell\n" | systemd-firstboot --root="$ROOT" --prompt-root-shell
+grep -q "^root:.*:0:0:.*:/bin/fooshell$" "$ROOT/etc/passwd"
+# Now without the welcome screen but with force
+echo -ne "/bin/barshell\n" | systemd-firstboot --root="$ROOT" --force --prompt-root-shell --welcome=no
+grep -q "^root:.*:0:0:.*:/bin/barshell$" "$ROOT/etc/passwd"
 
 # Assorted tests
 rm -fr "$ROOT"
@@ -143,3 +172,7 @@ grep -E "[a-z0-9]{32}" "$ROOT/etc/machine-id"
 
 systemd-firstboot --root="$ROOT" --delete-root-password
 diff <(echo) <(awk -F: '/^root/ { print $2; }' "$ROOT/etc/shadow")
+
+(! systemd-firstboot --root="$ROOT" --root-shell=/bin/nonexistentshell)
+(! systemd-firstboot --root="$ROOT" --machine-id=invalidmachineid)
+(! systemd-firstboot --root="$ROOT" --timezone=Foo/Bar)

@@ -87,9 +87,13 @@
         _Pragma("GCC diagnostic push")
 #endif
 
-#define DISABLE_WARNING_TYPE_LIMITS \
+#define DISABLE_WARNING_TYPE_LIMITS                                     \
         _Pragma("GCC diagnostic push");                                 \
         _Pragma("GCC diagnostic ignored \"-Wtype-limits\"")
+
+#define DISABLE_WARNING_ADDRESS                                         \
+        _Pragma("GCC diagnostic push");                                 \
+        _Pragma("GCC diagnostic ignored \"-Waddress\"")
 
 #define REENABLE_WARNING                                                \
         _Pragma("GCC diagnostic pop")
@@ -194,12 +198,12 @@ static inline int __coverity_check_and_return__(int condition) {
 #define assert_message_se(expr, message)                                \
         do {                                                            \
                 if (_unlikely_(!(expr)))                                \
-                        log_assert_failed(message, PROJECT_FILE, __LINE__, __PRETTY_FUNCTION__); \
+                        log_assert_failed(message, PROJECT_FILE, __LINE__, __func__); \
         } while (false)
 
 #define assert_log(expr, message) ((_likely_(expr))                     \
         ? (true)                                                        \
-        : (log_assert_failed_return(message, PROJECT_FILE, __LINE__, __PRETTY_FUNCTION__), false))
+        : (log_assert_failed_return(message, PROJECT_FILE, __LINE__, __func__), false))
 
 #endif  /* __COVERITY__ */
 
@@ -214,7 +218,7 @@ static inline int __coverity_check_and_return__(int condition) {
 #endif
 
 #define assert_not_reached()                                            \
-        log_assert_failed_unreachable(PROJECT_FILE, __LINE__, __PRETTY_FUNCTION__)
+        log_assert_failed_unreachable(PROJECT_FILE, __LINE__, __func__)
 
 #define assert_return(expr, r)                                          \
         do {                                                            \
@@ -341,10 +345,14 @@ static inline int __coverity_check_and_return__(int condition) {
                         *p = func(*p);                          \
         }
 
-/* When func() doesn't return the appropriate type, set variable to empty afterwards */
+/* When func() doesn't return the appropriate type, set variable to empty afterwards.
+ * The func() may be provided by a dynamically loaded shared library, hence add an assertion. */
 #define DEFINE_TRIVIAL_CLEANUP_FUNC_FULL(type, func, empty)     \
         static inline void func##p(type *p) {                   \
                 if (*p != (empty)) {                            \
+                        DISABLE_WARNING_ADDRESS;                \
+                        assert(func);                           \
+                        REENABLE_WARNING;                       \
                         func(*p);                               \
                         *p = (empty);                           \
                 }                                               \
