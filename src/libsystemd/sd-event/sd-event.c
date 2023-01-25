@@ -658,7 +658,9 @@ static int event_make_signal_data(
         ss_copy = d->sigset;
         assert_se(sigaddset(&ss_copy, sig) >= 0);
 
-        r = signalfd(d->fd, &ss_copy, SFD_NONBLOCK|SFD_CLOEXEC);
+        r = signalfd(d->fd >= 0 ? d->fd : -1,   /* the first arg must be -1 or a valid signalfd */
+                     &ss_copy,
+                     SFD_NONBLOCK|SFD_CLOEXEC);
         if (r < 0) {
                 r = -errno;
                 goto fail;
@@ -2722,6 +2724,9 @@ _public_ int sd_event_source_set_time_relative(sd_event_source *s, uint64_t usec
 
         assert_return(s, -EINVAL);
         assert_return(EVENT_SOURCE_IS_TIME(s->type), -EDOM);
+
+        if (usec == USEC_INFINITY)
+                return sd_event_source_set_time(s, USEC_INFINITY);
 
         r = sd_event_now(s->event, event_source_type_to_clock(s->type), &t);
         if (r < 0)

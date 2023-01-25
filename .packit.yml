@@ -18,7 +18,8 @@ srpm_build_deps: []
 actions:
   post-upstream-clone:
     # Use the Fedora Rawhide specfile
-    - "git clone https://src.fedoraproject.org/rpms/systemd .packit_rpm --depth=1"
+    - "git clone https://src.fedoraproject.org/rpms/systemd .packit_rpm"
+    - "git --git-dir=.packit_rpm/.git reset --hard befb0e11ddeed785cda0ea1188b83334f52feb1f"
     # Drop the "sources" file so rebase-helper doesn't think we're a dist-git
     - "rm -fv .packit_rpm/sources"
     # Drop backported patches from the specfile, but keep the downstream-only ones
