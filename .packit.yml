@@ -34,6 +34,9 @@ actions:
     - 'sed -i "/^CONFIGURE_OPTS=(/a--werror" .packit_rpm/systemd.spec'
     # Ignore unpackages standalone binaries
     - "sed -i 's/assert False,.*/pass/' .packit_rpm/split-files.py"
+    # Remove ukify handling, added in 253
+    - "sed -i '/ukify/d' .packit_rpm/split-files.py"
+    - "sed -i '/%files ukify/d' .packit_rpm/systemd.spec"
 
 jobs:
 - job: copr_build
