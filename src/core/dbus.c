@@ -941,7 +941,7 @@ int bus_init_private(Manager *m) {
         if (fd < 0)
                 return log_error_errno(errno, "Failed to allocate private socket: %m");
 
-        RUN_WITH_UMASK(0077)
+        WITH_UMASK(0077)
                 r = bind(fd, &sa.sa, sa_len);
         if (r < 0)
                 return log_error_errno(errno, "Failed to bind private socket: %m");
@@ -998,8 +998,8 @@ static void destroy_bus(Manager *m, sd_bus **bus) {
                         u->bus_track = sd_bus_track_unref(u->bus_track);
 
                 /* Get rid of pending freezer messages on this bus */
-                if (u->pending_freezer_message && sd_bus_message_get_bus(u->pending_freezer_message) == *bus)
-                        u->pending_freezer_message = sd_bus_message_unref(u->pending_freezer_message);
+                if (u->pending_freezer_invocation && sd_bus_message_get_bus(u->pending_freezer_invocation) == *bus)
+                        u->pending_freezer_invocation = sd_bus_message_unref(u->pending_freezer_invocation);
         }
 
         /* Get rid of queued message on this bus */

@@ -686,7 +686,7 @@ Unit* unit_free(Unit *u) {
         u->match_bus_slot = sd_bus_slot_unref(u->match_bus_slot);
         u->bus_track = sd_bus_track_unref(u->bus_track);
         u->deserialized_refs = strv_free(u->deserialized_refs);
-        u->pending_freezer_message = sd_bus_message_unref(u->pending_freezer_message);
+        u->pending_freezer_invocation = sd_bus_message_unref(u->pending_freezer_invocation);
 
         unit_free_requires_mounts_for(u);
 
@@ -4452,7 +4452,7 @@ int unit_make_transient(Unit *u) {
         /* Let's open the file we'll write the transient settings into. This file is kept open as long as we are
          * creating the transient, and is closed in unit_load(), as soon as we start loading the file. */
 
-        RUN_WITH_UMASK(0022) {
+        WITH_UMASK(0022) {
                 f = fopen(path, "we");
                 if (!f)
                         return -errno;
@@ -5732,6 +5732,7 @@ void unit_destroy_runtime_data(Unit *u, const ExecContext *context) {
                 exec_context_destroy_runtime_directory(context, u->manager->prefix[EXEC_DIRECTORY_RUNTIME]);
 
         exec_context_destroy_credentials(context, u->manager->prefix[EXEC_DIRECTORY_RUNTIME], u->id);
+        exec_context_destroy_mount_ns_dir(u);
 }
 
 int unit_clean(Unit *u, ExecCleanMask mask) {
