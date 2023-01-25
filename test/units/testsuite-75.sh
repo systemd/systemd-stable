@@ -16,17 +16,18 @@ run() {
     "$@" |& tee "$RUN_OUT"
 }
 
-monitor_check_rr() {
-    local match="${1:?}"
+monitor_check_rr() (
+    set +x
+    set +o pipefail
+    local since="${1:?}"
+    local match="${2:?}"
 
     # Wait until the first mention of the specified log message is
     # displayed. We turn off pipefail for this, since we don't care about the
     # lhs of this pipe expression, we only care about the rhs' result to be
     # clean
-    set +o pipefail
-    journalctl -u resmontest.service -f --full | grep -m1 "$match"
-    set -o pipefail
-}
+    journalctl -u resmontest.service --since "$since" -f --full | grep -m1 "$match"
+)
 
 # Test for resolvectl, resolvconf
 systemctl unmask systemd-resolved.service
@@ -126,6 +127,11 @@ resolvectl log-level debug
 
 # Start monitoring queries
 systemd-run -u resmontest.service -p Type=notify resolvectl monitor
+# Wait for the monitoring service to become active
+for _ in {0..9}; do
+    [[ "$(systemctl show -P ActiveState resmontest.service)" == "active" ]] && break
+    sleep .5
+done
 
 # We need to manually propagate the DS records of onlinesign.test. to the parent
 # zone, since they're generated online
@@ -146,9 +152,10 @@ knotc reload
 
 : "--- nss-resolve/nss-myhostname tests"
 # Sanity check
+TIMESTAMP=$(date '+%F %T')
 run getent -s resolve hosts ns1.unsigned.test
 grep -qE "^10\.0\.0\.1\s+ns1\.unsigned\.test" "$RUN_OUT"
-monitor_check_rr "ns1.unsigned.test IN A 10.0.0.1"
+monitor_check_rr "$TIMESTAMP" "ns1.unsigned.test IN A 10.0.0.1"
 
 # Issue: https://github.com/systemd/systemd/issues/18812
 # PR: https://github.com/systemd/systemd/pull/18896
@@ -238,15 +245,16 @@ run delv dupe.signed.test
 grep -qF "; fully validated" "$RUN_OUT"
 
 # Test resolution of CNAME chains
+TIMESTAMP=$(date '+%F %T')
 run resolvectl query -t A cname-chain.signed.test
 grep -qF "follow14.final.signed.test IN A 10.0.0.14" "$RUN_OUT"
 grep -qF "authenticated: yes" "$RUN_OUT"
 
-monitor_check_rr "follow10.so.close.signed.test IN CNAME follow11.yet.so.far.signed.test"
-monitor_check_rr "follow11.yet.so.far.signed.test IN CNAME follow12.getting.hot.signed.test"
-monitor_check_rr "follow12.getting.hot.signed.test IN CNAME follow13.almost.final.signed.test"
-monitor_check_rr "follow13.almost.final.signed.test IN CNAME follow14.final.signed.test"
-monitor_check_rr "follow14.final.signed.test IN A 10.0.0.14"
+monitor_check_rr "$TIMESTAMP" "follow10.so.close.signed.test IN CNAME follow11.yet.so.far.signed.test"
+monitor_check_rr "$TIMESTAMP" "follow11.yet.so.far.signed.test IN CNAME follow12.getting.hot.signed.test"
+monitor_check_rr "$TIMESTAMP" "follow12.getting.hot.signed.test IN CNAME follow13.almost.final.signed.test"
+monitor_check_rr "$TIMESTAMP" "follow13.almost.final.signed.test IN CNAME follow14.final.signed.test"
+monitor_check_rr "$TIMESTAMP" "follow14.final.signed.test IN A 10.0.0.14"
 
 # Non-existing RR + CNAME chain
 run dig +dnssec AAAA cname-chain.signed.test
@@ -284,9 +292,10 @@ grep -qF 'this.should.be.authenticated.wild.onlinesign.test IN TXT "this is an o
 grep -qF "authenticated: yes" "$RUN_OUT"
 
 # Resolve via dbus method
+TIMESTAMP=$(date '+%F %T')
 run busctl call org.freedesktop.resolve1 /org/freedesktop/resolve1 org.freedesktop.resolve1.Manager ResolveHostname 'isit' 0 secondsub.onlinesign.test 0 0
 grep -qF '10 0 0 134 "secondsub.onlinesign.test"' "$RUN_OUT"
-monitor_check_rr "secondsub.onlinesign.test IN A 10.0.0.134"
+monitor_check_rr "$TIMESTAMP" "secondsub.onlinesign.test IN A 10.0.0.134"
 
 : "--- ZONE: untrusted.test (DNSSEC without propagated DS records) ---"
 run dig +short untrusted.test

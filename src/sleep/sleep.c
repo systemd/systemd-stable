@@ -267,12 +267,12 @@ static int execute(
 }
 
 static int custom_timer_suspend(const SleepConfig *sleep_config) {
-        _cleanup_hashmap_free_ Hashmap *last_capacity = NULL, *current_capacity = NULL;
         int r;
 
         assert(sleep_config);
 
         while (battery_is_low() == 0) {
+                _cleanup_hashmap_free_ Hashmap *last_capacity = NULL, *current_capacity = NULL;
                 _cleanup_close_ int tfd = -1;
                 struct itimerspec ts = {};
                 usec_t suspend_interval = sleep_config->hibernate_delay_sec, before_timestamp = 0, after_timestamp = 0, total_suspend_interval;
@@ -327,7 +327,8 @@ static int custom_timer_suspend(const SleepConfig *sleep_config) {
                 }
 
                 after_timestamp = now(CLOCK_BOOTTIME);
-                log_debug("Attempting to estimate battery discharge rate after wakeup from %s sleep", FORMAT_TIMESPAN(after_timestamp - before_timestamp, USEC_PER_HOUR));
+                log_debug("Attempting to estimate battery discharge rate after wakeup from %s sleep",
+                          FORMAT_TIMESPAN(after_timestamp - before_timestamp, USEC_PER_HOUR));
 
                 if (after_timestamp != before_timestamp) {
                         r = estimate_battery_discharge_rate_per_hour(last_capacity, current_capacity, before_timestamp, after_timestamp);
@@ -365,6 +366,9 @@ static int freeze_thaw_user_slice(const char **method) {
         r = bus_connect_system_systemd(&bus);
         if (r < 0)
                 return log_debug_errno(r, "Failed to open connection to systemd: %m");
+
+        /* Wait for 1.5 seconds at maximum for freeze operation */
+        (void) sd_bus_set_method_call_timeout(bus, 1500 * USEC_PER_MSEC);
 
         r = bus_call_method(bus, bus_systemd_mgr, *method, &error, NULL, "s", SPECIAL_USER_SLICE);
         if (r < 0)
