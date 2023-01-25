@@ -1573,7 +1573,7 @@ static EFI_STATUS efivar_get_timeout(const char16_t *var, uint32_t *ret_value) {
 
 static void config_load_defaults(Config *config, EFI_FILE *root_dir) {
         _cleanup_free_ char *content = NULL;
-        UINTN value;
+        UINTN value = 0;  /* avoid false maybe-uninitialized warning */
         EFI_STATUS err;
 
         assert(root_dir);
@@ -2257,7 +2257,7 @@ static void config_load_xbootldr(
                 EFI_HANDLE *device) {
 
         _cleanup_(file_closep) EFI_FILE *root_dir = NULL;
-        EFI_HANDLE new_device;
+        EFI_HANDLE new_device = NULL;  /* avoid false maybe-uninitialized warning */
         EFI_STATUS err;
 
         assert(config);
@@ -2318,6 +2318,9 @@ static EFI_STATUS initrd_prepare(
                 err = get_file_info_harder(handle, &info, NULL);
                 if (err != EFI_SUCCESS)
                         return err;
+
+                if (info->FileSize == 0) /* Automatically skip over empty files */
+                        continue;
 
                 UINTN new_size, read_size = info->FileSize;
                 if (__builtin_add_overflow(size, read_size, &new_size))

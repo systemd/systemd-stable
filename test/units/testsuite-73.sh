@@ -92,6 +92,19 @@ test_locale() {
         return
     fi
 
+    # start with a known default environment and make sure to also give a
+    # default value to LC_CTYPE= since we're about to also set/unset it. We
+    # also reload PID1 configuration to make sure that PID1 environment itself
+    # is updated as it's not always been the case.
+    assert_rc 0 localectl set-locale "LANG=en_US.UTF-8" "LC_CTYPE=C"
+    systemctl daemon-reload
+    output=$(localectl)
+    assert_in "System Locale: LANG=en_US.UTF-8" "$output"
+    assert_in "LC_CTYPE=C" "$output"
+    output=$(systemctl show-environment)
+    assert_in "LANG=en_US.UTF-8" "$output"
+    assert_in "LC_CTYPE=C" "$output"
+
     # warn when kernel command line has locale settings
     output=$(SYSTEMD_PROC_CMDLINE="locale.LANG=C.UTF-8 locale.LC_CTYPE=ja_JP.UTF-8" localectl 2>&1)
     assert_in "Warning:" "$output"
@@ -118,9 +131,7 @@ LC_CTYPE=$i"
 
         assert_rc 0 localectl set-locale "$i"
         if [[ -f /etc/default/locale ]]; then
-            # Debian/Ubuntu patch is buggy, and LC_CTYPE= still exists.
-            assert_eq "$(cat /etc/default/locale)" "LANG=$i
-LC_CTYPE=$i"
+            assert_eq "$(cat /etc/default/locale)" "LANG=$i"
         else
             assert_eq "$(cat /etc/locale.conf)" "LANG=$i"
         fi
