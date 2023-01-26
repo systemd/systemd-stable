@@ -17,8 +17,8 @@ srpm_build_deps: []
 
 actions:
   post-upstream-clone:
-    # Use the Fedora Rawhide specfile
-    - "git clone https://src.fedoraproject.org/rpms/systemd .packit_rpm --depth=1"
+    # Use the Fedora 37 specfile
+    - "git clone --branch f37 https://src.fedoraproject.org/rpms/systemd .packit_rpm --depth=1"
     # Drop the "sources" file so rebase-helper doesn't think we're a dist-git
     - "rm -fv .packit_rpm/sources"
     # Drop backported patches from the specfile, but keep the downstream-only ones
@@ -39,8 +39,8 @@ jobs:
 - job: copr_build
   trigger: pull_request
   targets:
-  - fedora-rawhide-aarch64
-  - fedora-rawhide-i386
-  - fedora-rawhide-ppc64le
-  - fedora-rawhide-s390x
-  - fedora-rawhide-x86_64
+  - fedora-37-aarch64
+  - fedora-37-i386
+  - fedora-37-ppc64le
+  - fedora-37-s390x
+  - fedora-37-x86_64
