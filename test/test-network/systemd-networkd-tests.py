@@ -1063,6 +1063,10 @@ class NetworkctlTests(unittest.TestCase, Utilities):
         self.assertRegex(output, r'Link File: (/usr)?/lib/systemd/network/99-default.link')
         self.assertRegex(output, r'Network File: /run/systemd/network/11-dummy.network')
 
+        # This test may be run on the system that has older udevd than 70f32a260b5ebb68c19ecadf5d69b3844896ba55 (v249).
+        # In that case, the udev DB for the loopback network interface may already have ID_NET_LINK_FILE property.
+        # Let's reprocess the interface and drop the property.
+        check_output(*udevadm_cmd, 'trigger', '--settle', '--action=add', '/sys/class/net/lo')
         output = check_output(*networkctl_cmd, '-n', '0', 'status', 'lo', env=env)
         print(output)
         self.assertRegex(output, r'Link File: n/a')
@@ -3799,7 +3803,7 @@ class NetworkdBondTests(unittest.TestCase, Utilities):
 
         output = check_output('ip -d link show bond199')
         print(output)
-        self.assertRegex(output, 'active_slave dummy98')
+        self.assertIn('active_slave dummy98', output)
 
     def test_bond_primary_slave(self):
         copy_network_unit('23-primary-slave.network', '23-bond199.network', '25-bond-active-backup-slave.netdev', '12-dummy.netdev')
@@ -3808,8 +3812,20 @@ class NetworkdBondTests(unittest.TestCase, Utilities):
 
         output = check_output('ip -d link show bond199')
         print(output)
-        self.assertRegex(output, 'primary dummy98')
-        self.assertIn('link/ether 00:11:22:33:44:55', output)
+        self.assertIn('primary dummy98', output)
+
+        # for issue #25627
+        mkdir_p(os.path.join(network_unit_dir, '23-bond199.network.d'))
+        for mac in ['00:11:22:33:44:55', '00:11:22:33:44:56']:
+            with open(os.path.join(network_unit_dir, '23-bond199.network.d/mac.conf'), mode='w', encoding='utf-8') as f:
+                f.write(f'[Link]\nMACAddress={mac}\n')
+
+            networkctl_reload()
+            self.wait_online(['dummy98:enslaved', 'bond199:degraded'])
+
+            output = check_output('ip -d link show bond199')
+            print(output)
+            self.assertIn(f'link/ether {mac}', output)
 
     def test_bond_operstate(self):
         copy_network_unit('25-bond.netdev', '11-dummy.netdev', '12-dummy.netdev',
