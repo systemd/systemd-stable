@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
         const char *unique;
         int r;
 
-        test_setup_logging(LOG_INFO);
+        test_setup_logging(LOG_DEBUG);
 
         r = sd_event_default(&event);
         assert_se(r >= 0);
@@ -80,6 +80,7 @@ int main(int argc, char *argv[]) {
         assert_se(r >= 0);
 
         r = sd_bus_get_unique_name(b, &unique);
+        log_error("DBG %d %s", r, unique);
         assert_se(r >= 0);
 
         r = sd_bus_track_add_name(x, unique);

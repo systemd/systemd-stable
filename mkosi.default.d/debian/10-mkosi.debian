@@ -63,7 +63,7 @@ BuildPackages=
 
 Packages=
         gdb
-        libbpf0
+        libbpf1
         libfdisk1
         libfido2-1
         libidn2-0
