@@ -10,9 +10,11 @@
 
 #define _align_(x) __attribute__((__aligned__(x)))
 #define _const_ __attribute__((__const__))
+#define _noinline_ __attribute__((noinline))
 #define _pure_ __attribute__((__pure__))
 #define _section_(x) __attribute__((__section__(x)))
 #define _packed_ __attribute__((__packed__))
+#define _returns_nonnull_ __attribute__((__returns_nonnull__))
 #define _retain_ __attribute__((__retain__))
 #define _used_ __attribute__((__used__))
 #define _unused_ __attribute__((__unused__))
