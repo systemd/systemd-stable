@@ -2683,8 +2683,11 @@ static void item_free_contents(Item *i) {
         strv_free(i->xattrs);
 
 #if HAVE_ACL
-        acl_free(i->acl_access);
-        acl_free(i->acl_default);
+        if (i->acl_access)
+                acl_free(i->acl_access);
+
+        if (i->acl_default)
+                acl_free(i->acl_default);
 #endif
 }
 
