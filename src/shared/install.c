@@ -1609,7 +1609,7 @@ static int install_info_traverse(
                 }
 
                 r = install_info_follow(c, i, paths->root_dir, flags, false);
-                if (r == -EXDEV) {
+                if (r == -EXDEV && i->symlink_target) {
                         _cleanup_free_ char *buffer = NULL;
                         const char *bn;
 
