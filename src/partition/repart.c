@@ -3974,11 +3974,12 @@ static int context_open_copy_block_paths(
                 } else if (p->copy_blocks_auto) {
                         _cleanup_(sd_device_unrefp) sd_device *dev = NULL;
                         const char *devname;
-                        dev_t devno;
+                        dev_t devno = 0;  /* Fake initialization to appease gcc. */
 
                         r = resolve_copy_blocks_auto(p->type_uuid, root, restrict_devno, &devno, &uuid);
                         if (r < 0)
                                 return r;
+                        assert(devno != 0);
 
                         r = sd_device_new_from_devnum(&dev, 'b', devno);
                         if (r < 0)
