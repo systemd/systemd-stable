@@ -1,11 +1,34 @@
 # This file is part of systemd.
 #
+# ########################### MATCHING #######################################
+#
 # The lookup keys are composed in:
 #   60-evdev.rules
 #
-# Match string formats:
-# evdev:<modalias>
-# evdev:name:<device name>:dmi:<dmi string>
+# Supported hardware matches are:
+#  - Generic input devices match:
+#      evdev:input:bZZZZvYYYYpXXXXeWWWW-VVVV
+#    This matches on the kernel modalias of the input-device, mainly:
+#    ZZZZ is the bus-id (see /usr/include/linux/input.h BUS_*), YYYY, XXXX and
+#    WWWW are the 4-digit hex uppercase vendor, product and version ID and VVVV
+#    is a variable-length input-modalias describing the device capabilities.
+#    The vendor, product and version ID for a device node "eventX" is listed
+#    in /sys/class/input/eventX/device/id.
+#
+#  - Input driver device name and DMI data match:
+#      evdev:name:<input device name>:dmi:bvn*:bvr*:bd*:svn<vendor>:pn*
+#    <input device name> is the name device specified by the
+#    driver, <vendor> is the firmware-provided string exported
+#    by the kernel DMI modalias, see /sys/class/dmi/id/modalias.
+#
+#  - Extended input driver device name, properties and DMI data match:
+#      evdev:name:<input device name>:phys:<phys>:ev:<ev>:dmi:bvn*:bvr*:bd*:svn<vendor>:pn*
+#    <input device name> is the name device specified by the
+#    driver, <phys> is the physical-device-path, "cat
+#    /sys/class/input/input?/phys", <ev> is the event bitmask, "cat
+#    /sys/class/input/input?/capabilities/ev" and <vendor> is the
+#    firmware-provided string exported by the kernel DMI modalias,
+#    see /sys/class/dmi/id/modalias.
 #
 # To add local entries, create a new file
 #   /etc/udev/hwdb.d/61-evdev-local.hwdb
@@ -237,6 +260,13 @@ evdev:name:Synaptics TM2382-001:dmi:*svnDellInc.:pnInspiron3537:*
  EVDEV_ABS_35=::24
  EVDEV_ABS_36=::34
 
+# Dell Inspiron N4010
+evdev:name:SynPS/2 Synaptics TouchPad:dmi:bvn*:bvr*:bd*:svnDellInc.:pnInspironN4010:*
+ EVDEV_ABS_00=1188:5797:49
+ EVDEV_ABS_01=893:4894:80
+ EVDEV_ABS_35=1188:5797:49
+ EVDEV_ABS_36=893:4894:80
+
 # Dell Inspiron N5040
 evdev:name:AlpsPS/2 ALPS DualPoint TouchPad:dmi:bvn*:bvr*:bd*:svnDellInc.:pnInspironN5040:*
  EVDEV_ABS_00=25:2000:22
@@ -338,6 +368,54 @@ evdev:name:Atmel maXTouch Touch*:dmi:bvn*:bvr*:bd*:svnGOOGLE:pnSamus:*
  EVDEV_ABS_36=::10
 
 #########################################
+# Granite Devices Simucube wheel bases
+#########################################
+
+# Granite Devices Simucube 1
+evdev:input:b0003v16D0p0D5A*
+ EVDEV_ABS_00=:::0:0
+ EVDEV_ABS_01=:::0:0
+ EVDEV_ABS_02=:::0:0
+ EVDEV_ABS_03=:::0:0
+ EVDEV_ABS_04=:::0:0
+ EVDEV_ABS_05=:::0:0
+ EVDEV_ABS_06=:::0:0
+ EVDEV_ABS_07=:::0:0
+
+# Granite Devices Simucube 2 Sport
+evdev:input:b0003v16D0p0D61*
+ EVDEV_ABS_00=:::0:0
+ EVDEV_ABS_01=:::0:0
+ EVDEV_ABS_02=:::0:0
+ EVDEV_ABS_03=:::0:0
+ EVDEV_ABS_04=:::0:0
+ EVDEV_ABS_05=:::0:0
+ EVDEV_ABS_06=:::0:0
+ EVDEV_ABS_07=:::0:0
+
+# Granite Devices Simucube 2 Pro
+evdev:input:b0003v16D0p0D60*
+ EVDEV_ABS_00=:::0:0
+ EVDEV_ABS_01=:::0:0
+ EVDEV_ABS_02=:::0:0
+ EVDEV_ABS_03=:::0:0
+ EVDEV_ABS_04=:::0:0
+ EVDEV_ABS_05=:::0:0
+ EVDEV_ABS_06=:::0:0
+ EVDEV_ABS_07=:::0:0
+
+# Granite Devices Simucube 2 Ultimate
+evdev:input:b0003v16D0p0D5F*
+ EVDEV_ABS_00=:::0:0
+ EVDEV_ABS_01=:::0:0
+ EVDEV_ABS_02=:::0:0
+ EVDEV_ABS_03=:::0:0
+ EVDEV_ABS_04=:::0:0
+ EVDEV_ABS_05=:::0:0
+ EVDEV_ABS_06=:::0:0
+ EVDEV_ABS_07=:::0:0
+
+#########################################
 # HP
 #########################################
 
@@ -384,7 +462,8 @@ evdev:name:SynPS/2 Synaptics TouchPad:dmi:*svnHP:pnHPSpectreNotebook:*
  EVDEV_ABS_36=1083:4808:65
 
 # HP Envy x360
-evdev:name:SynPS/2 Synaptics TouchPad:*svnHP:pnHPENVYx360Convertible15m-cn0xxx:*
+evdev:name:SynPS/2 Synaptics TouchPad:dmi:*svnHP:pnHPENVYx360Convertible15m-cn0xxx:*
+evdev:name:SynPS/2 Synaptics TouchPad:dmi:*svnHP:pnHPENVYx360Convertible15-cn0xxx**
  EVDEV_ABS_00=1302:5640:36
  EVDEV_ABS_01=1119:4741:61
  EVDEV_ABS_35=1302:5640:36
@@ -622,6 +701,13 @@ evdev:name:MSFT0001:02 04F3:304B Touchpad:dmi:*svnLENOVO:*pvrLenovoLegionY9000X2
  EVDEV_ABS_35=::31
  EVDEV_ABS_36=::30
 
+# Lenovo g580
+evdev:name:ETPS/2 Elantech Touchpad:dmi:*svnLENOVO:*pvrLenovoG580**
+ EVDEV_ABS_00=-170:2950:24
+ EVDEV_ABS_01=-591:700:25
+ EVDEV_ABS_35=-170:2950:24
+ EVDEV_ABS_36=-591:700:25
+
 #########################################
 # Microsoft
 #########################################
@@ -648,6 +734,17 @@ evdev:name:Microsoft Surface 045E:09AF Touchpad:dmi:*svnMicrosoftCorporation:*pn
 evdev:input:b0003v6161p4D15*
  EVDEV_ABS_00=::152
  EVDEV_ABS_01=::244
+
+#########################################
+# Packard Bell
+#########################################
+
+# EASYNOTE_TS11HR-200GE
+evdev:name:ETPS/2 Elantech Touchpad:dmi:bvnPackardBell:bvr*:br*:svnPackardBell:pnEasyNoteTS11HR:*
+ EVDEV_ABS_00=0:2472:31
+ EVDEV_ABS_01=-524:528:31
+ EVDEV_ABS_35=0:2472:31
+ EVDEV_ABS_36=-524:528:31
 
 ###########################################################
 # Pine64
