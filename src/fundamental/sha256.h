@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: LGPL-2.1-or-later */
 #pragma once
 
-#include "stdint.h"
+#include <stddef.h>
+#include <stdint.h>
 
 #define SHA256_DIGEST_SIZE 32
 
