@@ -45,8 +45,8 @@
 # subsystem[1]. The default, when unset, is equivalent to:
 #   ACCEL_MOUNT_MATRIX=1, 0, 0; 0, 1, 0; 0, 0, 1
 # eg. the identity matrix,
-# and <value> is an integer value above which an object is considered
-# close by a proximity sensor:
+# and <value> is an integer value above or equal to which an object is
+# considered close by a proximity sensor:
 #   PROXIMITY_NEAR_LEVEL=100
 #
 # [1]: https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=dfc57732ad38f93ae6232a3b4e64fd077383a0f1
@@ -91,6 +91,9 @@ sensor:modalias:acpi:INVN6500*:dmi:*svn*Acer*:*pn*AspireSW5-012:*
 
 sensor:modalias:acpi:BOSC0200*:dmi:*svnAcer*:*TP-SW5-017-17BU:*
  ACCEL_MOUNT_MATRIX=0, 1, 0; 1, 0, 0; 0, 0, -1
+
+sensor:modalias:acpi:BOSC0200*:dmi:*:svnAcer:pnSW5-017:*
+ ACCEL_MOUNT_MATRIX=0, 1, 0; 1, 0, 0; 0, 0, 1
 
 sensor:modalias:acpi:BMA250E*:dmi:*:svnAcer:pnIconiaW1-810:*
  ACCEL_MOUNT_MATRIX=1, 0, 0; 0, -1, 0; 0, 0, 1
@@ -230,6 +233,10 @@ sensor:modalias:acpi:BOSC0200*:dmi:*:svn*CHUWIINNOVATIONANDTECHNOLOGY*:pnHi10pro
 sensor:modalias:acpi:MXC6655*:dmi:*:svnCHUWIInnovationAndTechnology*:pnHi10X:*
  ACCEL_MOUNT_MATRIX=0, 1, 0; 1, 0, 0; 0, 0, 1
 
+# Chuwi Hi10 X (N4120 processor version)
+sensor:modalias:acpi:KIOX000A*:dmi:*:svnCHUWIInnovationAndTechnology*:pnHi10X:*
+ ACCEL_MOUNT_MATRIX=0, -1, 0; -1, 0, 0; 0, 0, 1
+
 # Chuwi Hi10 Go
 sensor:modalias:acpi:MXC6655*:dmi:*:svnCHUWIINNOVATIONLIMITED:pnHi10Go:*
  ACCEL_MOUNT_MATRIX=-1, 0, 0; 0,-1, 0; 0, 0, 1
@@ -279,6 +286,13 @@ sensor:modalias:acpi:BOSC0200*:dmi:*:svnHampoo*:pnC3W6_AP108_4GB:*
 #########################################
 sensor:modalias:acpi:KIOX000A*:dmi:*:svnConnect:pnTablet9:*
  ACCEL_MOUNT_MATRIX=0, 1, 0; 1, 0, 0; 0, 0, 1
+
+#########################################
+# CSL Computer
+#########################################
+# CSL Panther Tab HD
+sensor:modalias:acpi:KIOX000A*:dmi:*:svnCSL*Computer*:pnCSL*Panther*Tab*HD:*
+ ACCEL_MOUNT_MATRIX=0, -1, 0; -1, 0, 0; 0, 0, 1
 
 #########################################
 # Cube
@@ -336,6 +350,11 @@ sensor:modalias:platform:HID-SENSOR-200073:dmi:*svnDell*:sku0B09:*
 sensor:modalias:platform:HID-SENSOR-200073:dmi:*svnDell*:sku0B0B:*
 sensor:modalias:platform:HID-SENSOR-200073:dmi:*svnDell*:sku0B0D:*
 sensor:modalias:platform:HID-SENSOR-200073:dmi:*svnDell*:sku0B11:*
+sensor:modalias:platform:HID-SENSOR-200073:dmi:*svnDell*:sku0C00:*
+sensor:modalias:platform:HID-SENSOR-200073:dmi:*svnDell*:sku0C02:*
+sensor:modalias:platform:HID-SENSOR-200073:dmi:*svnDell*:sku0C40:*
+sensor:modalias:platform:HID-SENSOR-200073:dmi:*svnDell*:sku0C41:*
+sensor:modalias:platform:HID-SENSOR-200073:dmi:*svnDell*:sku0C42:*
  ACCEL_LOCATION=base
 
 # Dell Venue 8 Pro 3845
@@ -350,8 +369,8 @@ sensor:modalias:acpi:INVN6500*:dmi:*svnDell*:pnVenue10Pro5055:*
 # DERE
 #########################################
 
-# DBook D10
-sensor:modalias:acpi:KIOX000A*:dmi:bvnAmericanMegatrendsInternational,LLC.:bvrJP2V1.05:bd04/27/2022:br1.5:efr1.3:svnDefaultstring:*
+# DBook D10 / Juno Tablet
+sensor:modalias:acpi:KIOX000A*:dmi:bvnAmericanMegatrendsInternational,LLC.:bvrJP2V*:svnDefaultstring:*
  ACCEL_MOUNT_MATRIX=1, 0, 0; 0, -1, 0; 0, 0, 1
 
 #########################################
@@ -629,6 +648,10 @@ sensor:modalias:i2c:bmc150_accel:dmi:*:svnLENOVO:*:pvrLenovoYoga300-11IBR:*
  ACCEL_MOUNT_MATRIX=1, 0, 0; 0, 1, 0; 0, 0, -1
  ACCEL_LOCATION=base
 
+# IdeaPad Duet 3 10IGL5 (82AT)
+sensor:modalias:acpi:SMO8B30*:dmi:*:svnLENOVO*:pn82AT:*
+ ACCEL_MOUNT_MATRIX=0, 1, 0; -1, 0, 0; 0, 0, 1
+
 #########################################
 # LINX
 #########################################
@@ -636,6 +659,10 @@ sensor:modalias:i2c:bmc150_accel:dmi:*:svnLENOVO:*:pvrLenovoYoga300-11IBR:*
 # Linx 1010B
 sensor:modalias:acpi:BOSC0200*:dmi:*:svnLINX*:pnLINX1010B:*
  ACCEL_MOUNT_MATRIX=-1, 0, 0; 0, 1, 0; 0, 0, -1
+
+# Linx 1020
+sensor:modalias:acpi:MIRAACC*:dmi:*:svnLINX*:pnLINX1020:*
+ ACCEL_MOUNT_MATRIX=1, 0, 0; 0, -1, 0; 0, 0, -1
 
 # Linx 12X64, 12V64 and Vision 8
 sensor:modalias:acpi:KIOX000A*:dmi:*:svnLINX*:pnLINX12*64:*
@@ -899,6 +926,10 @@ sensor:modalias:acpi:KIOX000A*:dmi:*:svnTECLAST:pnX80Pro:*
 sensor:modalias:acpi:SMO8500*:dmi:*bd12/19/2014:*:rvnTECLAST:rntPAD:*
  ACCEL_MOUNT_MATRIX=1, 0, 0; 0, -1, 0; 0, 0, 1
 
+# Teclast X98 Air 3G (C5J6), "tPAD" is too generic also match on newest BIOS date
+sensor:modalias:acpi:SMO8500*:dmi:*bd05/05/2015:*:rvnTECLAST:rntPAD:*
+ ACCEL_MOUNT_MATRIX=1, 0, 0; 0, -1, 0; 0, 0, 1
+
 # Teclast X98 Plus I (A5C6), generic DMI strings, match entire dmi modalias inc. bios-date
 # '*' in ":*svn" is there because kernels >= 5.8 have inserted a br field there
 sensor:modalias:acpi:KIOX000A*:dmi:bvnAmericanMegatrendsInc.:bvr5.011:bd11/03/2015:*svnTobefilledbyO.E.M.:pnTobefilledbyO.E.M.:pvrTobefilledbyO.E.M.:rvnAMICorporation:rnCherryTrailCR:rvrTobefilledbyO.E.M.:cvnToBeFilledByO.E.M.:ct3:cvrToBeFilledByO.E.M.:*
@@ -974,6 +1005,9 @@ sensor:modalias:acpi:KIOX000A*:dmi:*:svnUMAX:pnVisionBook10WiPro:*
 
 sensor:modalias:acpi:SMO8500*:dmi:*:svnUMAX:pnVisionBook10WiPlus:*
  ACCEL_MOUNT_MATRIX=0, -1, 0; -1, 0, 0; 0, 0, 1
+
+sensor:modalias:acpi:MXC6655*:dmi:*:svnUMAX:pnVisionbook12WrTab:*
+ ACCEL_MOUNT_MATRIX=0, 1, 0; 1, 0, 0; 0, 0, 1
 
 #########################################
 # Voyo
