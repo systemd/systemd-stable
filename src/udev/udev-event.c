@@ -871,7 +871,6 @@ int udev_event_spawn(
 static int rename_netif(UdevEvent *event) {
         const char *oldname;
         sd_device *dev;
-        unsigned flags;
         int ifindex, r;
 
         assert(event);
@@ -905,16 +904,6 @@ static int rename_netif(UdevEvent *event) {
                 return 0;
         }
 
-        r = rtnl_get_link_info(&event->rtnl, ifindex, NULL, &flags, NULL, NULL, NULL);
-        if (r < 0)
-                return log_device_warning_errno(dev, r, "Failed to get link flags: %m");
-
-        if (FLAGS_SET(flags, IFF_UP)) {
-                log_device_info(dev, "Network interface '%s' is already up, refusing to rename to '%s'.",
-                                oldname, event->name);
-                return 0;
-        }
-
         /* Set ID_RENAMING boolean property here, and drop it in the corresponding move uevent later. */
         r = device_add_property(dev, "ID_RENAMING", "1");
         if (r < 0)
@@ -936,6 +925,11 @@ static int rename_netif(UdevEvent *event) {
                 return log_device_debug_errno(event->dev_db_clone, r, "Failed to update database under /run/udev/data/: %m");
 
         r = rtnl_set_link_name(&event->rtnl, ifindex, event->name);
+        if (r == -EBUSY) {
+                log_device_info(dev, "Network interface '%s' is already up, cannot rename to '%s'.",
+                                oldname, event->name);
+                return 0;
+        }
         if (r < 0)
                 return log_device_error_errno(dev, r, "Failed to rename network interface %i from '%s' to '%s': %m",
                                               ifindex, oldname, event->name);
