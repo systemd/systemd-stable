@@ -139,7 +139,7 @@ EFI_STATUS tpm_log_event(UINT32 pcrindex, const EFI_PHYSICAL_ADDRESS buffer, UIN
         EFI_TCG *tpm1;
         EFI_TCG2 *tpm2;
 
-        assert(description);
+        assert(description || pcrindex == UINT32_MAX);
 
         tpm2 = tcg2_interface_check();
         if (tpm2)
