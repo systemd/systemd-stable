@@ -48,6 +48,9 @@ echo "disable $UNIT_NAME" >/run/systemd/system-preset/99-systemd-test.preset
 
 systemctl daemon-reload
 
+# Double free when editing a template unit (#26483)
+EDITOR='true' script -ec 'systemctl edit user@0' /dev/null
+
 # Argument help
 systemctl --state help
 systemctl --signal help
