@@ -143,7 +143,7 @@ EFI_STATUS tpm_log_event(UINT32 pcrindex, EFI_PHYSICAL_ADDRESS buffer, UINTN buf
         EFI_TCG *tpm1;
         EFI_TCG2 *tpm2;
 
-        assert(description);
+        assert(description || pcrindex == UINT32_MAX);
 
         /* PCR disabled */
         if (pcrindex == UINT32_MAX)
