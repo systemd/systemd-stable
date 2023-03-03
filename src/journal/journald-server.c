@@ -866,11 +866,11 @@ static bool shall_try_append_again(JournalFile *f, int r) {
         case -EBADMSG:         /* Corrupted                     */
         case -ENODATA:         /* Truncated                     */
         case -ESHUTDOWN:       /* Already archived              */
-                log_ratelimit_warning(JOURNAL_LOG_RATELIMIT, "%s: Journal file corrupted, rotating.", f->path);
+                log_ratelimit_info(JOURNAL_LOG_RATELIMIT, "%s: Journal file corrupted, rotating.", f->path);
                 return true;
 
         case -EIDRM:           /* Journal file has been deleted */
-                log_ratelimit_warning(JOURNAL_LOG_RATELIMIT, "%s: Journal file has been deleted, rotating.", f->path);
+                log_ratelimit_info(JOURNAL_LOG_RATELIMIT, "%s: Journal file has been deleted, rotating.", f->path);
                 return true;
 
         case -ETXTBSY:         /* Journal file is from the future */
@@ -878,15 +878,15 @@ static bool shall_try_append_again(JournalFile *f, int r) {
                 return true;
 
         case -EREMCHG:         /* Wallclock time (CLOCK_REALTIME) jumped backwards relative to last journal entry */
-                log_ratelimit_warning(JOURNAL_LOG_RATELIMIT, "%s: Realtime clock jumped backwards relative to last journal entry, rotating.", f->path);
+                log_ratelimit_info(JOURNAL_LOG_RATELIMIT, "%s: Realtime clock jumped backwards relative to last journal entry, rotating.", f->path);
                 return true;
 
         case -EREMOTE:         /* Boot ID different from the one of the last entry */
-                log_ratelimit_warning(JOURNAL_LOG_RATELIMIT, "%s: Boot ID changed since last record, rotating.", f->path);
+                log_ratelimit_info(JOURNAL_LOG_RATELIMIT, "%s: Boot ID changed since last record, rotating.", f->path);
                 return true;
 
         case -ENOTNAM:         /* Monotonic time (CLOCK_MONOTONIC) jumped backwards relative to last journal entry */
-                log_ratelimit_warning(JOURNAL_LOG_RATELIMIT, "%s: Montonic clock jumped backwards relative to last journal entry, rotating.", f->path);
+                log_ratelimit_info(JOURNAL_LOG_RATELIMIT, "%s: Monotonic clock jumped backwards relative to last journal entry, rotating.", f->path);
                 return true;
 
         case -EAFNOSUPPORT:
@@ -896,6 +896,7 @@ static bool shall_try_append_again(JournalFile *f, int r) {
                 return false;
 
         default:
+                log_ratelimit_error_errno(r, JOURNAL_LOG_RATELIMIT, "%s: Unexpected error while writing to journal file: %m", f->path);
                 return false;
         }
 }
@@ -956,19 +957,15 @@ static void server_write_to_journal(Server *s, uid_t uid, struct iovec *iovec, s
                 return;
         }
 
-        if (vacuumed || !shall_try_append_again(f->file, r)) {
-                log_ratelimit_error_errno(r, FAILED_TO_WRITE_ENTRY_RATELIMIT,
-                                          "Failed to write entry (%zu items, %zu bytes), ignoring: %m",
-                                          n, IOVEC_TOTAL_SIZE(iovec, n));
+        log_debug_errno(r, "Failed to write entry to %s (%zu items, %zu bytes): %m", f->file->path, n, IOVEC_TOTAL_SIZE(iovec, n));
+
+        if (!shall_try_append_again(f->file, r))
+                return;
+        if (vacuumed) {
+                log_ratelimit_warning_errno(r, JOURNAL_LOG_RATELIMIT,
+                                            "Suppressing rotation, as we already rotated immediately before write attempt. Giving up.");
                 return;
         }
-
-        if (r == -E2BIG)
-                log_debug("Journal file %s is full, rotating to a new file", f->file->path);
-        else
-                log_ratelimit_info_errno(r, FAILED_TO_WRITE_ENTRY_RATELIMIT,
-                                         "Failed to write entry to %s (%zu items, %zu bytes), rotating before retrying: %m",
-                                         f->file->path, n, IOVEC_TOTAL_SIZE(iovec, n));
 
         server_rotate(s);
         server_vacuum(s, false);
