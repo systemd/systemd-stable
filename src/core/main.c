@@ -658,6 +658,8 @@ static int parse_config_file(void) {
                 { "Manager", "NoNewPrivileges",              config_parse_bool,                  0, &arg_no_new_privs                      },
 #if HAVE_SECCOMP
                 { "Manager", "SystemCallArchitectures",      config_parse_syscall_archs,         0, &arg_syscall_archs                     },
+#else
+                { "Manager", "SystemCallArchitectures",      config_parse_syscall_archs,         0, &DISABLED_CONFIGURATION                },
 #endif
                 { "Manager", "TimerSlackNSec",               config_parse_nsec,                  0, &arg_timer_slack_nsec                  },
                 { "Manager", "DefaultTimerAccuracySec",      config_parse_sec,                   0, &arg_default_timer_accuracy_usec       },
