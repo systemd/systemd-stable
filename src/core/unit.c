@@ -4134,45 +4134,47 @@ int unit_patch_contexts(Unit *u) {
                     cc->device_policy == CGROUP_DEVICE_POLICY_AUTO)
                         cc->device_policy = CGROUP_DEVICE_POLICY_CLOSED;
 
-                if ((ec->root_image || !LIST_IS_EMPTY(ec->mount_images)) &&
-                    (cc->device_policy != CGROUP_DEVICE_POLICY_AUTO || cc->device_allow)) {
+                /* Only add these if needed, as they imply that everything else is blocked. */
+                if (cc->device_policy != CGROUP_DEVICE_POLICY_AUTO || cc->device_allow) {
+                        if (ec->root_image || !LIST_IS_EMPTY(ec->mount_images)) {
 
-                        /* When RootImage= or MountImages= is specified, the following devices are touched. */
-                        FOREACH_STRING(p, "/dev/loop-control", "/dev/mapper/control") {
-                                r = cgroup_add_device_allow(cc, p, "rw");
-                                if (r < 0)
-                                        return r;
+                                /* When RootImage= or MountImages= is specified, the following devices are touched. */
+                                FOREACH_STRING(p, "/dev/loop-control", "/dev/mapper/control") {
+                                        r = cgroup_add_device_allow(cc, p, "rw");
+                                        if (r < 0)
+                                                return r;
+                                }
+                                FOREACH_STRING(p, "block-loop", "block-blkext", "block-device-mapper") {
+                                        r = cgroup_add_device_allow(cc, p, "rwm");
+                                        if (r < 0)
+                                                return r;
+                                }
+
+                                /* Make sure "block-loop" can be resolved, i.e. make sure "loop" shows up in /proc/devices.
+                                * Same for mapper and verity. */
+                                FOREACH_STRING(p, "modprobe@loop.service", "modprobe@dm_mod.service", "modprobe@dm_verity.service") {
+                                        r = unit_add_two_dependencies_by_name(u, UNIT_AFTER, UNIT_WANTS, p, true, UNIT_DEPENDENCY_FILE);
+                                        if (r < 0)
+                                                return r;
+                                }
                         }
-                        FOREACH_STRING(p, "block-loop", "block-blkext", "block-device-mapper") {
-                                r = cgroup_add_device_allow(cc, p, "rwm");
+
+                        if (ec->protect_clock) {
+                                r = cgroup_add_device_allow(cc, "char-rtc", "r");
                                 if (r < 0)
                                         return r;
                         }
 
-                        /* Make sure "block-loop" can be resolved, i.e. make sure "loop" shows up in /proc/devices.
-                         * Same for mapper and verity. */
-                        FOREACH_STRING(p, "modprobe@loop.service", "modprobe@dm_mod.service", "modprobe@dm_verity.service") {
-                                r = unit_add_two_dependencies_by_name(u, UNIT_AFTER, UNIT_WANTS, p, true, UNIT_DEPENDENCY_FILE);
-                                if (r < 0)
-                                        return r;
-                        }
+                        /* If there are encrypted credentials we might need to access the TPM. */
+                        ExecLoadCredential *cred;
+                        HASHMAP_FOREACH(cred, ec->load_credentials)
+                                if (cred->encrypted) {
+                                        r = cgroup_add_device_allow(cc, "/dev/tpmrm0", "rw");
+                                        if (r < 0)
+                                                return r;
+                                        break;
+                                }
                 }
-
-                if (ec->protect_clock) {
-                        r = cgroup_add_device_allow(cc, "char-rtc", "r");
-                        if (r < 0)
-                                return r;
-                }
-
-                /* If there are encrypted credentials we might need to access the TPM. */
-                ExecLoadCredential *cred;
-                HASHMAP_FOREACH(cred, ec->load_credentials)
-                        if (cred->encrypted) {
-                                r = cgroup_add_device_allow(cc, "/dev/tpmrm0", "rw");
-                                if (r < 0)
-                                        return r;
-                                break;
-                        }
         }
 
         return 0;
