@@ -1124,6 +1124,11 @@ static int parse_argv(int argc, char *argv[]) {
                 r = pattern_compile(arg_pattern, flags, &arg_compiled_pattern);
                 if (r < 0)
                         return r;
+
+                /* When --grep is used along with --lines, we don't know how many lines we can print.
+                 * So we search backwards and count until enough lines have been printed or we hit the head. */
+                if (arg_lines >= 0)
+                        arg_reverse = true;
         }
 #endif
 
