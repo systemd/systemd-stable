@@ -1446,7 +1446,7 @@ static int become_shutdown(
                 exit_code[DECIMAL_STR_MAX(uint8_t) + 1],
                 timeout[DECIMAL_STR_MAX(usec_t) + 1];
 
-        const char* command_line[13] = {
+        const char* command_line[14] = {
                 SYSTEMD_SHUTDOWN_BINARY_PATH,
                 shutdown_verb,
                 "--timeout", timeout,
