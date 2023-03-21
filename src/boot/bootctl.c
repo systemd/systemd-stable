@@ -978,11 +978,16 @@ static int remove_from_order(uint16_t slot) {
         return 0;
 }
 
-static int install_variables(const char *esp_path,
-                             uint32_t part, uint64_t pstart, uint64_t psize,
-                             sd_id128_t uuid, const char *path,
-                             bool first) {
-        const char *p;
+static int install_variables(
+                const char *esp_path,
+                uint32_t part,
+                uint64_t pstart,
+                uint64_t psize,
+                sd_id128_t uuid,
+                const char *path,
+                bool first,
+                bool graceful) {
+
         uint16_t slot;
         int r;
 
@@ -991,7 +996,7 @@ static int install_variables(const char *esp_path,
                 return 0;
         }
 
-        p = prefix_roota(esp_path, path);
+        const char *p = prefix_roota(esp_path, path);
         if (access(p, F_OK) < 0) {
                 if (errno == ENOENT)
                         return 0;
@@ -1000,18 +1005,30 @@ static int install_variables(const char *esp_path,
         }
 
         r = find_slot(uuid, path, &slot);
-        if (r < 0)
-                return log_error_errno(r,
-                                       r == -ENOENT ?
-                                       "Failed to access EFI variables. Is the \"efivarfs\" filesystem mounted?" :
-                                       "Failed to determine current boot order: %m");
+        if (r < 0) {
+                int level = graceful ? arg_quiet ? LOG_DEBUG : LOG_INFO : LOG_ERR;
+                const char *skip = graceful ? ", skipping" : "";
+
+                log_full_errno(level, r,
+                               r == -ENOENT ?
+                               "Failed to access EFI variables%s. Is the \"efivarfs\" filesystem mounted?" :
+                               "Failed to determine current boot order%s: %m", skip);
+
+                return graceful ? 0 : r;
+        }
 
         if (first || r == 0) {
                 r = efi_add_boot_option(slot, "Linux Boot Manager",
                                         part, pstart, psize,
                                         uuid, path);
-                if (r < 0)
-                        return log_error_errno(r, "Failed to create EFI Boot variable entry: %m");
+                if (r < 0) {
+                        int level = graceful ? arg_quiet ? LOG_DEBUG : LOG_INFO : LOG_ERR;
+                        const char *skip = graceful ? ", skipping" : "";
+
+                        log_full_errno(level, r, "Failed to create EFI Boot variable entry%s: %m", skip);
+
+                        return graceful ? 0 : r;
+                }
 
                 log_info("Created EFI boot entry \"Linux Boot Manager\".");
         }
@@ -1977,7 +1994,7 @@ static int verb_install(int argc, char *argv[], void *userdata) {
 
         r = install_variables(arg_esp_path, part, pstart, psize, uuid,
                               "/EFI/systemd/systemd-boot" EFI_MACHINE_TYPE_NAME ".efi",
-                              install);
+                              install, graceful);
         if (r < 0)
                 return r;
 
