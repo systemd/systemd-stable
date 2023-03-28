@@ -3233,7 +3233,8 @@ do_test() {
                 fi
                 test_cleanup
                 if [ $ret -eq 0 ]; then
-                    rm "$TESTLOG"
+                    # $TESTLOG is in $STATEDIR, so clean it up only on success
+                    [[ -n "$STATEDIR" ]] && rm -vfr "$STATEDIR"
                     echo "[OK]"
                 else
                     echo "[FAILED]"
