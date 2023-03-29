@@ -1498,7 +1498,6 @@ static void redirect_telinit(int argc, char *argv[]) {
 }
 
 static int become_shutdown(int objective, int retval) {
-
         static const char* const table[_MANAGER_OBJECTIVE_MAX] = {
                 [MANAGER_EXIT]     = "exit",
                 [MANAGER_REBOOT]   = "reboot",
@@ -1507,46 +1506,47 @@ static int become_shutdown(int objective, int retval) {
                 [MANAGER_KEXEC]    = "kexec",
         };
 
-        char log_level[DECIMAL_STR_MAX(int) + 1],
-                exit_code[DECIMAL_STR_MAX(uint8_t) + 1],
-                timeout[DECIMAL_STR_MAX(usec_t) + 1];
-
-        const char* command_line[13] = {
-                SYSTEMD_SHUTDOWN_BINARY_PATH,
-                table[objective],
-                "--timeout", timeout,
-                "--log-level", log_level,
-                "--log-target",
-        };
+        char log_level[STRLEN("--log-level=") + DECIMAL_STR_MAX(int)],
+             timeout[STRLEN("--timeout=") + DECIMAL_STR_MAX(usec_t) + STRLEN("us")],
+             exit_code[STRLEN("--exit-code=") + DECIMAL_STR_MAX(uint8_t)];
 
         _cleanup_strv_free_ char **env_block = NULL;
         usec_t watchdog_timer = 0;
-        size_t pos = 7;
         int r;
 
         assert(objective >= 0 && objective < _MANAGER_OBJECTIVE_MAX);
         assert(table[objective]);
-        assert(!command_line[pos]);
-        env_block = strv_copy(environ);
 
-        xsprintf(log_level, "%d", log_get_max_level());
-        xsprintf(timeout, "%" PRI_USEC "us", arg_default_timeout_stop_usec);
+        xsprintf(log_level, "--log-level=%d", log_get_max_level());
+        xsprintf(timeout, "--timeout=%" PRI_USEC "us", arg_default_timeout_stop_usec);
+
+        const char* command_line[10] = {
+                SYSTEMD_SHUTDOWN_BINARY_PATH,
+                table[objective],
+                log_level,
+                timeout,
+                /* Note that the last position is a terminator and must contain NULL. */
+        };
+        size_t pos = 4;
+
+        assert(command_line[pos-1]);
+        assert(!command_line[pos]);
 
         switch (log_get_target()) {
 
         case LOG_TARGET_KMSG:
         case LOG_TARGET_JOURNAL_OR_KMSG:
         case LOG_TARGET_SYSLOG_OR_KMSG:
-                command_line[pos++] = "kmsg";
+                command_line[pos++] = "--log-target=kmsg";
                 break;
 
         case LOG_TARGET_NULL:
-                command_line[pos++] = "null";
+                command_line[pos++] = "--log_target=null";
                 break;
 
         case LOG_TARGET_CONSOLE:
         default:
-                command_line[pos++] = "console";
+                command_line[pos++] = "--log-target=console";
                 break;
         };
 
@@ -1560,12 +1560,13 @@ static int become_shutdown(int objective, int retval) {
                 command_line[pos++] = "--log-time";
 
         if (objective == MANAGER_EXIT) {
-                command_line[pos++] = "--exit-code";
+                xsprintf(exit_code, "--exit-code=%d", retval);
                 command_line[pos++] = exit_code;
-                xsprintf(exit_code, "%d", retval);
         }
 
         assert(pos < ELEMENTSOF(command_line));
+
+        /* The watchdog: */
 
         if (objective == MANAGER_REBOOT)
                 watchdog_timer = arg_reboot_watchdog;
@@ -1579,6 +1580,10 @@ static int become_shutdown(int objective, int retval) {
         (void) watchdog_setup_pretimeout_governor(NULL);
         r = watchdog_setup(watchdog_timer);
         watchdog_close(r < 0);
+
+        /* The environment block: */
+
+        env_block = strv_copy(environ);
 
         /* Tell the binary how often to ping, ignore failure */
         (void) strv_extendf(&env_block, "WATCHDOG_USEC="USEC_FMT, watchdog_timer);
@@ -1839,11 +1844,11 @@ static int do_reexecute(
                         log_error_errno(r, "Failed to switch root, trying to continue: %m");
         }
 
-        args_size = argc + 6;
+        args_size = argc + 5;
         args = newa(const char*, args_size);
 
         if (!switch_root_init) {
-                char sfd[DECIMAL_STR_MAX(int)];
+                char sfd[STRLEN("--deserialize=") + DECIMAL_STR_MAX(int)];
 
                 /* First try to spawn ourselves with the right path, and with full serialization. We do this
                  * only if the user didn't specify an explicit init to spawn. */
@@ -1851,15 +1856,15 @@ static int do_reexecute(
                 assert(arg_serialization);
                 assert(fds);
 
-                xsprintf(sfd, "%i", fileno(arg_serialization));
+                xsprintf(sfd, "--deserialize=%i", fileno(arg_serialization));
 
                 i = 1;         /* Leave args[0] empty for now. */
                 filter_args(args, &i, argv, argc);
 
                 if (switch_root_dir)
                         args[i++] = "--switched-root";
+
                 args[i++] = arg_system ? "--system" : "--user";
-                args[i++] = "--deserialize";
                 args[i++] = sfd;
                 args[i++] = NULL;
 
@@ -1966,7 +1971,7 @@ static int invoke_main_loop(
 
                         manager_send_reloading(m);
 
-                        log_info("Reloading.");
+                        log_info("Reloading...");
 
                         /* First, save any overridden log level/target, then parse the configuration file,
                          * which might change the log level to new settings. */
@@ -1991,6 +1996,9 @@ static int invoke_main_loop(
                                 /* Reloading failed before the point of no return.
                                  * Let's continue running as if nothing happened. */
                                 m->objective = MANAGER_OK;
+                        else
+                                log_info("Reloading finished in " USEC_FMT " ms.",
+                                         usec_sub_unsigned(now(CLOCK_MONOTONIC), m->timestamps[MANAGER_TIMESTAMP_UNITS_LOAD].monotonic) / USEC_PER_MSEC);
 
                         continue;
                 }

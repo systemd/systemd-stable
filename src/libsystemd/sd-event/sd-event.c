@@ -20,6 +20,7 @@
 #include "macro.h"
 #include "memory-util.h"
 #include "missing_syscall.h"
+#include "missing_threads.h"
 #include "prioq.h"
 #include "process-util.h"
 #include "set.h"

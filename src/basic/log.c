@@ -25,6 +25,7 @@
 #include "log.h"
 #include "macro.h"
 #include "missing_syscall.h"
+#include "missing_threads.h"
 #include "parse-util.h"
 #include "proc-cmdline.h"
 #include "process-util.h"
@@ -1245,6 +1246,24 @@ void log_parse_environment(void) {
 
 LogTarget log_get_target(void) {
         return log_target;
+}
+
+void log_settle_target(void) {
+
+        /* If we're using LOG_TARGET_AUTO and opening the log again on every single log call, we'll check if
+         * stderr is attached to the journal every single log call. However, if we then close all file
+         * descriptors later, that will stop working because stderr will be closed as well. To avoid that
+         * problem, this function is used to permanently change the log target depending on whether stderr is
+         * connected to the journal or not. */
+
+        LogTarget t = log_get_target();
+
+        if (t != LOG_TARGET_AUTO)
+                return;
+
+        t = getpid_cached() == 1 || stderr_is_journal() ? (prohibit_ipc ? LOG_TARGET_KMSG : LOG_TARGET_JOURNAL_OR_KMSG)
+                                                        : LOG_TARGET_CONSOLE;
+        log_set_target(t);
 }
 
 int log_get_max_level(void) {
