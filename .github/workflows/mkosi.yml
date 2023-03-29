@@ -78,6 +78,9 @@ jobs:
             release: "8"
 
     steps:
+    - name: mkosi dependencies
+      run: sudo apt-get install --assume-yes --no-install-recommends python3-pyelftools
+
     - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b
     - uses: systemd/mkosi@4be912b0fa4931403fddf649aa242cd4406471c4
 
