@@ -48,6 +48,9 @@ echo "disable $UNIT_NAME" >/run/systemd/system-preset/99-systemd-test.preset
 
 systemctl daemon-reload
 
+# Double free when editing a template unit (#26483)
+EDITOR='true' script -ec 'systemctl edit user@0' /dev/null
+
 # Argument help
 systemctl --state help
 systemctl --signal help
@@ -396,6 +399,18 @@ EOF
     systemctl restart issue-24990
     systemctl stop issue-24990
 fi
+
+# %J in WantedBy= causes ABRT (#26467)
+cat >/run/systemd/system/test-WantedBy.service <<EOF
+[Service]
+ExecStart=true
+
+[Install]
+WantedBy=user-%i@%J.service
+EOF
+systemctl daemon-reload
+systemctl enable --now test-WantedBy.service || :
+systemctl daemon-reload
 
 touch /testok
 rm /failed

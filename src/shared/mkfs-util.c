@@ -184,6 +184,7 @@ int make_filesystem(
                                       "-I", "256",
                                       "-m", "0",
                                       "-E", discard ? "discard,lazy_itable_init=1" : "nodiscard,lazy_itable_init=1",
+                                      "-T", "default",
                                       node, NULL);
 
                 else if (STR_IN_SET(fstype, "ext3", "ext4"))
@@ -195,6 +196,7 @@ int make_filesystem(
                                       "-O", "has_journal",
                                       "-m", "0",
                                       "-E", discard ? "discard,lazy_itable_init=1" : "nodiscard,lazy_itable_init=1",
+                                      "-T", "default",
                                       node, NULL);
 
                 else if (streq(fstype, "btrfs")) {
