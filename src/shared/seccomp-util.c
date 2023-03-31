@@ -300,6 +300,7 @@ const SyscallFilterSet syscall_filter_sets[_SYSCALL_FILTER_SET_MAX] = {
                 "exit_group\0"
                 "futex\0"
                 "futex_time64\0"
+                "futex_waitv\0"
                 "get_robust_list\0"
                 "get_thread_area\0"
                 "getegid\0"
@@ -699,6 +700,7 @@ const SyscallFilterSet syscall_filter_sets[_SYSCALL_FILTER_SET_MAX] = {
                 "open_by_handle_at\0"
                 "pivot_root\0"
                 "quotactl\0"
+                "quotactl_fd\0"
                 "setdomainname\0"
                 "setfsuid\0"
                 "setfsuid32\0"
@@ -779,6 +781,7 @@ const SyscallFilterSet syscall_filter_sets[_SYSCALL_FILTER_SET_MAX] = {
                 "sched_setparam\0"
                 "sched_setscheduler\0"
                 "set_mempolicy\0"
+                "set_mempolicy_home_node\0"
                 "setpriority\0"
                 "setrlimit\0"
         },
@@ -1576,7 +1579,7 @@ int seccomp_restrict_address_families(Set *address_families, bool allow_list) {
         return 0;
 }
 
-int seccomp_restrict_realtime(void) {
+int seccomp_restrict_realtime_full(int error_code) {
         static const int permitted_policies[] = {
                 SCHED_OTHER,
                 SCHED_BATCH,
@@ -1586,6 +1589,8 @@ int seccomp_restrict_realtime(void) {
         int r, max_policy = 0;
         uint32_t arch;
         unsigned i;
+
+        assert(error_code > 0);
 
         /* Determine the highest policy constant we want to allow */
         for (i = 0; i < ELEMENTSOF(permitted_policies); i++)
@@ -1620,7 +1625,7 @@ int seccomp_restrict_realtime(void) {
                         /* Deny this policy */
                         r = seccomp_rule_add_exact(
                                         seccomp,
-                                        SCMP_ACT_ERRNO(EPERM),
+                                        SCMP_ACT_ERRNO(error_code),
                                         SCMP_SYS(sched_setscheduler),
                                         1,
                                         SCMP_A1(SCMP_CMP_EQ, p));
@@ -1634,7 +1639,7 @@ int seccomp_restrict_realtime(void) {
                  * are unsigned here, hence no need no check for < 0 values. */
                 r = seccomp_rule_add_exact(
                                 seccomp,
-                                SCMP_ACT_ERRNO(EPERM),
+                                SCMP_ACT_ERRNO(error_code),
                                 SCMP_SYS(sched_setscheduler),
                                 1,
                                 SCMP_A1(SCMP_CMP_GT, max_policy));
