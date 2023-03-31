@@ -154,6 +154,15 @@ mouse:bluetooth:v05acp030d:name:*:*
  MOUSE_DPI=1300@1000
 
 ##########################################
+# Cherry
+##########################################
+
+# Cherry MW 2310
+mouse:usb:v1A81p1701:name:G-Tech Wireless Dongle Mouse:*
+ KEYBOARD_KEY_90005=back
+ KEYBOARD_KEY_90004=forward
+
+##########################################
 # Chicony
 ##########################################
 
@@ -386,6 +395,12 @@ mouse:usb:v046dpc332:name:Logitech Gaming Mouse G502:*
 mouse:usb:v046dpc08b:name:Logitech G502 HERO SE:*
 # Logitech G502 Hero
 mouse:usb:v046dpc08b:name:Logitech G502 HERO Gaming Mouse:*
+ MOUSE_DPI=1200@1000 *2400@1000 3200@1000 6400@1000
+
+# Logitech G502 X (Wired)
+mouse:usb:v046dpc098:name:Logitech, Inc. G502 X LIGHTSPEED:*
+# Logitech G502 X (Wireless)
+mouse:usb:v046dpc547:name:Logitech USB Receiver:*
  MOUSE_DPI=1200@1000 *2400@1000 3200@1000 6400@1000
 
 # Logitech G700 Laser Mouse (Wired)
