@@ -79,6 +79,8 @@ static int open_sockets(int *epoll_fd, bool accept) {
                         except[i] = SD_LISTEN_FDS_START + i;
 
                 log_close();
+                log_settle_target();
+
                 r = close_all_fds(except, n);
                 if (r < 0)
                         return log_error_errno(r, "Failed to close all file descriptors: %m");

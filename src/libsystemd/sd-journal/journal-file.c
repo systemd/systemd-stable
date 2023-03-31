@@ -2186,8 +2186,11 @@ static int bump_entry_array(JournalFile *f, Object *o, uint64_t offset, uint64_t
         assert(offset);
         assert(ret);
 
-        if (direction == DIRECTION_DOWN)
-                return le64toh(o->entry_array.next_entry_array_offset);
+        if (direction == DIRECTION_DOWN) {
+                assert(o);
+                *ret = le64toh(o->entry_array.next_entry_array_offset);
+                return 0;
+        }
 
         /* Entry array chains are a singly linked list, so to find the previous array in the chain, we have
          * to start iterating from the top. */
