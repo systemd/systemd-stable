@@ -107,7 +107,7 @@ static void scope_set_state(Scope *s, ScopeState state) {
         old_state = s->state;
         s->state = state;
 
-        if (!IN_SET(state, SCOPE_STOP_SIGTERM, SCOPE_STOP_SIGKILL))
+        if (!IN_SET(state, SCOPE_STOP_SIGTERM, SCOPE_STOP_SIGKILL, SCOPE_RUNNING))
                 s->timer_event_source = sd_event_source_disable_unref(s->timer_event_source);
 
         if (IN_SET(state, SCOPE_DEAD, SCOPE_FAILED)) {
