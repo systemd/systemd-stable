@@ -11,7 +11,7 @@ ARGS=(
     "--optimization=0"
     "--optimization=s -Dgnu-efi=true -Defi-cflags=-m32 -Defi-libdir=/usr/lib32"
     "--optimization=3 -Db_lto=true -Ddns-over-tls=false"
-    "--optimization=3 -Db_lto=false"
+    "--optimization=3 -Db_lto=false -Dtpm2=false -Dlibfido2=false -Dp11kit=false"
     "--optimization=3 -Ddns-over-tls=openssl"
     "--optimization=3 -Dfexecve=true -Dstandalone-binaries=true -Dstatic-libsystemd=true -Dstatic-libudev=true"
     "-Db_ndebug=true"
