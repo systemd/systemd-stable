@@ -54,16 +54,14 @@ if [ "$expected_credential" != "" ] ; then
 fi
 
 # Verify that the creds are immutable
-systemd-run -p LoadCredential=passwd:/etc/passwd \
+(! systemd-run -p LoadCredential=passwd:/etc/passwd \
             -p DynamicUser=1 \
             --wait \
-            touch '${CREDENTIALS_DIRECTORY}/passwd' \
-    && { echo 'unexpected success'; exit 1; }
-systemd-run -p LoadCredential=passwd:/etc/passwd \
+            touch '${CREDENTIALS_DIRECTORY}/passwd')
+(! systemd-run -p LoadCredential=passwd:/etc/passwd \
             -p DynamicUser=1 \
             --wait \
-            rm '${CREDENTIALS_DIRECTORY}/passwd' \
-    && { echo 'unexpected success'; exit 1; }
+            rm '${CREDENTIALS_DIRECTORY}/passwd')
 
 # Check directory-based loading
 mkdir -p /tmp/ts54-creds/sub

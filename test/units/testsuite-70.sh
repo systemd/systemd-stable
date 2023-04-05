@@ -18,7 +18,7 @@ env PASSWORD=passphrase systemd-cryptenroll --tpm2-device=auto $img
 
 # Check with wrong PCR
 tpm2_pcrextend 7:sha256=0000000000000000000000000000000000000000000000000000000000000000
-/usr/lib/systemd/systemd-cryptsetup attach test-volume $img - tpm2-device=auto,headless=1 && { echo 'unexpected success'; exit 1; }
+(! /usr/lib/systemd/systemd-cryptsetup attach test-volume $img - tpm2-device=auto,headless=1)
 
 # Enroll unlock with PCR+PIN policy
 systemd-cryptenroll --wipe-slot=tpm2 $img
@@ -27,11 +27,11 @@ env PIN=123456 /usr/lib/systemd/systemd-cryptsetup attach test-volume $img - tpm
 /usr/lib/systemd/systemd-cryptsetup detach test-volume
 
 # Check failure with wrong PIN
-env PIN=123457 /usr/lib/systemd/systemd-cryptsetup attach test-volume $img - tpm2-device=auto,headless=1 && { echo 'unexpected success'; exit 1; }
+(! env PIN=123457 /usr/lib/systemd/systemd-cryptsetup attach test-volume $img - tpm2-device=auto,headless=1)
 
 # Check failure with wrong PCR (and correct PIN)
 tpm2_pcrextend 7:sha256=0000000000000000000000000000000000000000000000000000000000000000
-env PIN=123456 /usr/lib/systemd/systemd-cryptsetup attach test-volume $img - tpm2-device=auto,headless=1 && { echo 'unexpected success'; exit 1; }
+(! env PIN=123456 /usr/lib/systemd/systemd-cryptsetup attach test-volume $img - tpm2-device=auto,headless=1)
 
 # Enroll unlock with PCR 0+7
 systemd-cryptenroll --wipe-slot=tpm2 $img
