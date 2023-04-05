@@ -554,6 +554,11 @@ test_convert() {
 
 : >/failed
 
+# Make sure the content of kbd-model-map is the one that the tests expect
+# regardless of the version intalled on the distro where the testsuite is
+# running on.
+export SYSTEMD_KBD_MODEL_MAP=/usr/lib/systemd/tests/testdata/test-keymap-util/kbd-model-map
+
 enable_debug
 test_locale
 test_vc_keymap
