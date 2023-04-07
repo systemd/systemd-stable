@@ -156,9 +156,8 @@ helper_check_device_units() {(
 
     local i
 
-    for ((i = 0; i < 20; i++)); do
-        (( i == 0 )) || sleep .5
-
+    for i in {1..20}; do
+        (( i > 1 )) && sleep 0.5
         if check_device_units 0 "$@"; then
             return 0
         fi
