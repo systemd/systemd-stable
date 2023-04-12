@@ -36,3 +36,12 @@ good:
         r->num++;
         return true;
 }
+
+usec_t ratelimit_end(const RateLimit *rl) {
+        assert(rl);
+
+        if (rl->begin == 0)
+                return 0;
+
+        return usec_add(rl->begin, rl->interval);
+}
