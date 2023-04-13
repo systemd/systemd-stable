@@ -1474,7 +1474,7 @@ static int become_shutdown(
                 break;
 
         case LOG_TARGET_NULL:
-                command_line[pos++] = "--log_target=null";
+                command_line[pos++] = "--log-target=null";
                 break;
 
         case LOG_TARGET_CONSOLE:
