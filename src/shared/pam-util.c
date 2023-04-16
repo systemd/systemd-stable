@@ -8,6 +8,7 @@
 #include "errno-util.h"
 #include "macro.h"
 #include "pam-util.h"
+#include "string-util.h"
 
 int pam_log_oom(pam_handle_t *handle) {
         /* This is like log_oom(), but uses PAM logging */
@@ -31,15 +32,21 @@ static void cleanup_system_bus(pam_handle_t *handle, void *data, int error_statu
         sd_bus_flush_close_unref(data);
 }
 
-int pam_acquire_bus_connection(pam_handle_t *handle, sd_bus **ret) {
+int pam_acquire_bus_connection(pam_handle_t *handle, const char *module_name, sd_bus **ret) {
         _cleanup_(sd_bus_unrefp) sd_bus *bus = NULL;
+        _cleanup_free_ char *cache_id = NULL;
         int r;
 
         assert(handle);
+        assert(module_name);
         assert(ret);
 
+        cache_id = strjoin("system-bus-", module_name);
+        if (!cache_id)
+                return pam_log_oom(handle);
+
         /* We cache the bus connection so that we can share it between the session and the authentication hooks */
-        r = pam_get_data(handle, "systemd-system-bus", (const void**) &bus);
+        r = pam_get_data(handle, cache_id, (const void**) &bus);
         if (r == PAM_SUCCESS && bus) {
                 *ret = sd_bus_ref(TAKE_PTR(bus)); /* Increase the reference counter, so that the PAM data stays valid */
                 return PAM_SUCCESS;
@@ -67,10 +74,17 @@ int pam_acquire_bus_connection(pam_handle_t *handle, sd_bus **ret) {
         return PAM_SUCCESS;
 }
 
-int pam_release_bus_connection(pam_handle_t *handle) {
+int pam_release_bus_connection(pam_handle_t *handle, const char *module_name) {
+        _cleanup_free_ char *cache_id = NULL;
         int r;
 
-        r = pam_set_data(handle, "systemd-system-bus", NULL, NULL);
+        assert(module_name);
+
+        cache_id = strjoin("system-bus-", module_name);
+        if (!cache_id)
+                return pam_log_oom(handle);
+
+        r = pam_set_data(handle, cache_id, NULL, NULL);
         if (r != PAM_SUCCESS)
                 pam_syslog(handle, LOG_ERR, "Failed to release PAM user record data: %s", pam_strerror(handle, r));
 
