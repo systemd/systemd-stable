@@ -269,3 +269,8 @@ size_t strspn_from_end(const char *str, const char *accept);
 
 char *strdupspn(const char *a, const char *accept);
 char *strdupcspn(const char *a, const char *reject);
+
+char *startswith_strv(const char *string, char **strv);
+
+#define STARTSWITH_SET(p, ...)                                  \
+        startswith_strv(p, STRV_MAKE(__VA_ARGS__))
