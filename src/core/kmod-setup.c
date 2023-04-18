@@ -10,6 +10,7 @@
 #include "macro.h"
 #include "recurse-dir.h"
 #include "string-util.h"
+#include "strv.h"
 #include "virt.h"
 
 #if HAVE_KMOD
@@ -56,10 +57,7 @@ static int has_virtio_rng_recurse_dir_cb(
                 return RECURSE_DIR_LEAVE_DIRECTORY;
         }
 
-        if (startswith(alias, "pci:v00001AF4d00001005"))
-                return 1;
-
-        if (startswith(alias, "pci:v00001AF4d00001044"))
+        if (STARTSWITH_SET(alias, "pci:v00001AF4d00001005", "pci:v00001AF4d00001044"))
                 return 1;
 
         return RECURSE_DIR_LEAVE_DIRECTORY;
