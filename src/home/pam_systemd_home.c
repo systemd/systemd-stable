@@ -784,7 +784,7 @@ _public_ PAM_EXTERN int pam_sm_open_session(
 
         r = acquire_home(handle, /* please_authenticate = */ false, suspend_please, debug);
         if (r == PAM_USER_UNKNOWN) /* Not managed by us? Don't complain. */
-                return PAM_SUCCESS;
+                goto success; /* Need to free the bus resource, as acquire_home() takes a reference. */
         if (r != PAM_SUCCESS)
                 return r;
 
@@ -800,6 +800,7 @@ _public_ PAM_EXTERN int pam_sm_open_session(
                 return r;
         }
 
+success:
         /* Let's release the D-Bus connection, after all the session might live quite a long time, and we are
          * not going to process the bus connection in that time, so let's better close before the daemon
          * kicks us off because we are not processing anything. */
