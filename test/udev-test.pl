@@ -218,6 +218,8 @@ EOF
 SUBSYSTEMS=="scsi", ATTRS{vendor}=="ATA", ATTRS{model}=="ST910021AS", ATTRS{scsi_level}=="6", ATTRS{rev}=="4.06", ATTRS{type}=="0", ATTRS{queue_depth}=="32", SYMLINK+="boot_diskXX%n"
 SUBSYSTEMS=="scsi", ATTRS{vendor}=="ATA", ATTRS{model}=="ST910021AS", ATTRS{scsi_level}=="6", ATTRS{rev}=="4.06", ATTRS{type}=="0", ATTRS{queue_depth}=="1", SYMLINK+="boot_diskXY%n"
 SUBSYSTEMS=="scsi", ATTRS{vendor}=="ATA", ATTRS{model}=="ST910021AS", ATTRS{scsi_level}=="6", ATTRS{rev}=="4.06", ATTRS{type}=="0", SYMLINK+="boot_disk%n"
+SUBSYSTEMS=="scsi", ATTRS{vendor}=="ATA", ATTRS{model}=="ST910021AS", SYMLINK=="link1", SYMLINK+="match"
+SUBSYSTEMS=="scsi", ATTRS{vendor}=="ATA", ATTRS{model}=="ST910021AS", SYMLINK!="removed1", SYMLINK+="unmatch"
 EOF
         },
         {
@@ -1821,13 +1823,15 @@ EOF
                 devices => [
                         {
                                 devpath         => "/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0/0:0:0:0/block/sda",
-                                exp_links       => ["found"],
-                                not_exp_name    => "bad",
+                                exp_links       => ["found", "found2"],
+                                not_exp_name    => ["bad", "bad2"],
                         }],
                 rules           => <<EOF
 KERNEL=="sda", TAG="foo"
 TAGS=="foo|", SYMLINK+="found"
 TAGS=="aaa|", SYMLINK+="bad"
+KERNEL=="sda", TAGS!="hoge", SYMLINK+="found2"
+KERNEL=="sda", TAGS!="foo", SYMLINK+="bad2"
 EOF
         },
         {
