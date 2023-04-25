@@ -443,7 +443,7 @@ int main(int argc, char **argv) {
                         "vconsole.font", &vc_font,
                         "vconsole.font_map", &vc_font_map,
                         "vconsole.font_unimap", &vc_font_unimap);
-        if (r < 0 && r != -ENXIO)
+        if (r < 0)
                 log_warning_errno(r, "Failed to import credentials, ignoring: %m");
 
         /* Load data from configuration file (middle priority) */
