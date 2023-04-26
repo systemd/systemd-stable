@@ -74,8 +74,6 @@ jobs:
             release: tumbleweed
           - distro: centos
             release: "9"
-          - distro: centos
-            release: "8"
 
     steps:
     - name: mkosi dependencies
