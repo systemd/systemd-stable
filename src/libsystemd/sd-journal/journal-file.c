@@ -3736,7 +3736,7 @@ int journal_file_dispose(int dir_fd, const char *fname) {
 }
 
 int journal_file_copy_entry(JournalFile *from, JournalFile *to, Object *o, uint64_t p) {
-        uint64_t q, n, m = 0, xor_hash = 0;
+        uint64_t n, m = 0, xor_hash = 0;
         const sd_id128_t *boot_id;
         dual_timestamp ts;
         EntryItem *items;
@@ -3761,7 +3761,7 @@ int journal_file_copy_entry(JournalFile *from, JournalFile *to, Object *o, uint6
 
         for (uint64_t i = 0; i < n; i++) {
                 Compression c;
-                uint64_t l, h;
+                uint64_t l, h, q;
                 size_t t;
                 void *data;
                 Object *u;
