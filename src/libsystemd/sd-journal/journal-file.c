@@ -3757,6 +3757,8 @@ int journal_file_copy_entry(JournalFile *from, JournalFile *to, Object *o, uint6
         boot_id = o->entry.boot_id;
 
         n = journal_file_entry_n_items(o);
+        if (n == 0)
+                return 0;
         items = newa(EntryItem, n);
 
         for (uint64_t i = 0; i < n; i++) {
