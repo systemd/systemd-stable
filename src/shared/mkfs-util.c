@@ -473,7 +473,6 @@ int make_filesystem(
 
                 argv = strv_new(mkfs,
                                 root, node,
-                                "-quiet",
                                 "-noappend");
 
         else if (streq(fstype, "erofs"))
