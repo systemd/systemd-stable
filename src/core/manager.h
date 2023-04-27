@@ -461,6 +461,9 @@ struct Manager {
         struct restrict_fs_bpf *restrict_fs;
 
         char *default_smack_process_label;
+
+        /* Dump*() are slow, so always rate limit them to 10 per 10 minutes */
+        RateLimit dump_ratelimit;
 };
 
 static inline usec_t manager_default_timeout_abort_usec(Manager *m) {
