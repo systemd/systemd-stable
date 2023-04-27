@@ -864,6 +864,11 @@ int manager_new(LookupScope scope, ManagerTestRunFlags test_run_flags, Manager *
                 .test_run_flags = test_run_flags,
 
                 .default_oom_policy = OOM_STOP,
+
+                .dump_ratelimit = {
+                        .interval = 10 * USEC_PER_MINUTE,
+                        .burst = 10,
+                },
         };
 
 #if ENABLE_EFI
