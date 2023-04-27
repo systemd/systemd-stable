@@ -39,10 +39,6 @@ jobs:
             release: testing
           - distro: ubuntu
             release: jammy
-          - distro: fedora
-            release: "37"
-          - distro: fedora
-            release: rawhide
           - distro: opensuse
             release: tumbleweed
           - distro: centos_epel
