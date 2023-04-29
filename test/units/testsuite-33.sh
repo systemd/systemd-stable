@@ -5,7 +5,7 @@
 set -eux
 set -o pipefail
 
-cat >/etc/systemd/system/testservice.service <<EOF
+cat >/run/systemd/system/testservice.service <<EOF
 [Service]
 ConfigurationDirectory=testservice
 RuntimeDirectory=testservice
@@ -75,7 +75,7 @@ test ! -e /var/lib/testservice
 test ! -e /var/cache/testservice
 test ! -e /var/log/testservice
 
-cat >/etc/systemd/system/testservice.service <<EOF
+cat >/run/systemd/system/testservice.service <<EOF
 [Service]
 DynamicUser=yes
 ConfigurationDirectory=testservice
@@ -170,7 +170,7 @@ test ! -L /var/lib/testservice
 test ! -L /var/cache/testservice
 test ! -L /var/log/testservice
 
-cat >/etc/systemd/system/tmp-hoge.mount <<EOF
+cat >/run/systemd/system/tmp-hoge.mount <<EOF
 [Mount]
 What=tmpfs
 Type=tmpfs
@@ -245,7 +245,7 @@ test ! -d /var/lib/hoge
 test ! -d /var/cache/hoge
 test ! -d /var/log/hoge
 
-cat >/etc/systemd/system/testservice.socket <<EOF
+cat >/run/systemd/system/testservice.socket <<EOF
 [Socket]
 ListenSequentialPacket=/run/testservice.socket
 RemoveOnStop=yes
