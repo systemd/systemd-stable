@@ -3736,8 +3736,8 @@ int journal_file_dispose(int dir_fd, const char *fname) {
 }
 
 int journal_file_copy_entry(JournalFile *from, JournalFile *to, Object *o, uint64_t p) {
-        uint64_t q, n, xor_hash = 0;
-        const sd_id128_t *boot_id;
+        uint64_t n, m = 0, xor_hash = 0;
+        sd_id128_t boot_id;
         dual_timestamp ts;
         EntryItem *items;
         int r;
@@ -3754,14 +3754,16 @@ int journal_file_copy_entry(JournalFile *from, JournalFile *to, Object *o, uint6
                 .monotonic = le64toh(o->entry.monotonic),
                 .realtime = le64toh(o->entry.realtime),
         };
-        boot_id = &o->entry.boot_id;
+        boot_id = o->entry.boot_id;
 
         n = journal_file_entry_n_items(o);
+        if (n == 0)
+                return 0;
         items = newa(EntryItem, n);
 
         for (uint64_t i = 0; i < n; i++) {
                 Compression c;
-                uint64_t l, h;
+                uint64_t l, h, q;
                 size_t t;
                 void *data;
                 Object *u;
@@ -3818,7 +3820,7 @@ int journal_file_copy_entry(JournalFile *from, JournalFile *to, Object *o, uint6
                 else
                         xor_hash ^= le64toh(u->data.hash);
 
-                items[i] = (EntryItem) {
+                items[m++] = (EntryItem) {
                         .object_offset = htole64(h),
                         .hash = u->data.hash,
                 };
@@ -3828,7 +3830,10 @@ int journal_file_copy_entry(JournalFile *from, JournalFile *to, Object *o, uint6
                         return r;
         }
 
-        r = journal_file_append_entry_internal(to, &ts, boot_id, xor_hash, items, n, NULL, NULL, NULL);
+        if (m == 0)
+                return 0;
+
+        r = journal_file_append_entry_internal(to, &ts, &boot_id, xor_hash, items, m, NULL, NULL, NULL);
 
         if (mmap_cache_fd_got_sigbus(to->cache_fd))
                 return -EIO;
