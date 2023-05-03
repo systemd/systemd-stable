@@ -2638,7 +2638,7 @@ static char **credential_search_path(
         if (DEBUG_LOGGING) {
                 _cleanup_free_ char *t = strv_join(l, ":");
 
-                log_debug("Credential search path is: %s", t);
+                log_debug("Credential search path is: %s", strempty(t));
         }
 
         return TAKE_PTR(l);
