@@ -527,6 +527,7 @@ assert(long_max > 100000)
 conf.set_quoted('LONG_MAX_STR', '@0@'.format(long_max))
 
 decl_headers = '''
+#include <dirent.h>
 #include <uchar.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
@@ -536,6 +537,7 @@ foreach decl : ['char16_t',
                 'char32_t',
                 'struct mount_attr',
                 'struct statx',
+                'struct dirent64',
                ]
 
         # We get -1 if the size cannot be determined
