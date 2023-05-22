@@ -990,7 +990,6 @@ static int unit_per_dependency_type_hashmap_update(
         if (r < 0)
                 return r;
 
-
         return 1;
 }
 
