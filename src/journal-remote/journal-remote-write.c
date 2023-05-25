@@ -29,13 +29,13 @@ Writer* writer_new(RemoteServer *server) {
         if (!w)
                 return NULL;
 
+        w->n_ref = 1;
         w->metrics = server->metrics;
 
         w->mmap = mmap_cache_new();
         if (!w->mmap)
                 return NULL;
 
-        w->n_ref = 1;
         w->server = server;
 
         if (is_dir(server->output, /* follow = */ true) > 0) {
