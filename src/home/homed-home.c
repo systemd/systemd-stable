@@ -2694,8 +2694,6 @@ static int home_dispatch_acquire(Home *h, Operation *o) {
         assert(o);
         assert(o->type == OPERATION_ACQUIRE);
 
-        assert(!h->current_operation);
-
         switch (home_get_state(h)) {
 
         case HOME_UNFIXATED:
@@ -2730,6 +2728,8 @@ static int home_dispatch_acquire(Home *h, Operation *o) {
                  * pending. */
                 return 0;
         }
+
+        assert(!h->current_operation);
 
         r = home_ratelimit(h, &error);
         if (r >= 0)
