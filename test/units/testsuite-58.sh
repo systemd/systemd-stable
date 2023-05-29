@@ -9,7 +9,7 @@ runas() {
     XDG_RUNTIME_DIR=/run/user/"$(id -u "$userid")" setpriv --reuid="$userid" --init-groups "$@"
 }
 
-if ! command -v systemd-repart &>/dev/null; then
+if ! command -v systemd-repart >/dev/null; then
     echo "no systemd-repart" >/skipped
     exit 0
 fi
