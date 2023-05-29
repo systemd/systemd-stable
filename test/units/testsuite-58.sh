@@ -3,7 +3,7 @@
 set -eux
 set -o pipefail
 
-if ! command -v systemd-repart &>/dev/null; then
+if ! command -v systemd-repart >/dev/null; then
     echo "no systemd-repart" >/skipped
     exit 0
 fi
