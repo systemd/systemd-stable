@@ -1788,7 +1788,9 @@ int json_variant_format(JsonVariant *v, JsonFormatFlags flags, char **ret) {
                 if (!f)
                         return -ENOMEM;
 
-                json_variant_dump(v, flags, f, NULL);
+                r = json_variant_dump(v, flags, f, NULL);
+                if (r < 0)
+                        return r;
 
                 /* Add terminating 0, so that the output buffer is a valid string. */
                 fputc('\0', f);
@@ -2185,7 +2187,7 @@ int json_variant_strv(JsonVariant *v, char ***ret) {
         if (!json_variant_is_array(v))
                 return -EINVAL;
 
-        sensitive = v->sensitive;
+        sensitive = json_variant_is_sensitive(v);
 
         size_t n = json_variant_elements(v);
         l = new(char*, n+1);
@@ -2196,7 +2198,7 @@ int json_variant_strv(JsonVariant *v, char ***ret) {
                 JsonVariant *e;
 
                 assert_se(e = json_variant_by_index(v, i));
-                sensitive = sensitive || e->sensitive;
+                sensitive = sensitive || json_variant_is_sensitive(e);
 
                 if (!json_variant_is_string(e)) {
                         l[i] = NULL;
