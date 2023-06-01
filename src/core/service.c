@@ -981,7 +981,7 @@ static int service_load_pid_file(Service *s, bool may_warn) {
                 r = chase_symlinks(s->pid_file, NULL, 0, NULL, &fd);
         }
         if (r < 0)
-                return log_unit_full_errno(UNIT(s), prio, fd,
+                return log_unit_full_errno(UNIT(s), prio, r,
                                            "Can't open PID file %s (yet?) after %s: %m", s->pid_file, service_state_to_string(s->state));
 
         /* Let's read the PID file now that we chased it down. But we need to convert the O_PATH fd
@@ -3012,6 +3012,11 @@ static int service_deserialize_item(Unit *u, const char *key, const char *value,
         } else if (streq(key, "accept-socket")) {
                 Unit *socket;
 
+                if (u->type != UNIT_SOCKET) {
+                        log_unit_debug(u, "Failed to deserialize accept-socket: unit is not a socket");
+                        return 0;
+                }
+
                 r = manager_load_unit(u->manager, value, NULL, NULL, &socket);
                 if (r < 0)
                         log_unit_debug_errno(u, r, "Failed to load accept-socket unit '%s': %m", value);
@@ -3524,6 +3529,7 @@ static void service_sigchld_event(Unit *u, pid_t pid, int code, int status) {
                         return;
 
                 s->main_pid = 0;
+                s->main_pid_known = false;
                 exec_status_exit(&s->main_exec_status, &s->exec_context, pid, code, status);
 
                 if (s->main_command) {

@@ -1357,7 +1357,8 @@ node /org/freedesktop/systemd1 {
       <function>DumpByFileDescriptor()</function>/<function>DumpUnitsMatchingPatternsByFileDescriptor()</function>
       are usually the preferred interface, since it ensures the data can be passed reliably from the service
       manager to the client. Note though that they cannot work when communicating with the service manager
-      remotely, as file descriptors are strictly local to a system.</para>
+      remotely, as file descriptors are strictly local to a system. All the <function>Dump*()</function>
+      methods are rate limited for unprivileged users.</para>
 
       <para><function>Reload()</function> may be invoked to reload all unit files.</para>
 
@@ -1721,7 +1722,9 @@ node /org/freedesktop/systemd1 {
       <function>UnsetAndSetEnvironment()</function>) require
       <interfacename>org.freedesktop.systemd1.set-environment</interfacename>. <function>Reload()</function>
       and <function>Reexecute()</function> require
-      <interfacename>org.freedesktop.systemd1.reload-daemon</interfacename>.
+      <interfacename>org.freedesktop.systemd1.reload-daemon</interfacename>. Operations which dump internal
+      state require <interfacename>org.freedesktop.systemd1.bypass-dump-ratelimit</interfacename> to avoid
+      rate limits.
       </para>
     </refsect2>
   </refsect1>
@@ -2405,10 +2408,6 @@ node /org/freedesktop/systemd1/unit/avahi_2ddaemon_2eservice {
       <varname>DefaultDependencies</varname>, <varname>OnFailureIsolate</varname>,
       <varname>IgnoreOnIsolate</varname>, <varname>IgnoreOnSnapshot</varname> map directly to the
       corresponding configuration booleans in the unit file.</para>
-
-      <para><varname>DefaultControlGroup</varname> contains the main control group of this unit as a
-      string. This refers to a group in systemd's own <literal>name=systemd</literal> hierarchy, which
-      systemd uses to watch and manipulate the unit and all its processes.</para>
 
       <para><varname>NeedDaemonReload</varname> is a boolean that indicates whether the configuration file
       this unit is loaded from (i.e. <varname>FragmentPath</varname> or <varname>SourcePath</varname>) has
