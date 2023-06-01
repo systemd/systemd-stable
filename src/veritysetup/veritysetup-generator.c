@@ -426,7 +426,7 @@ static int create_disk(
                         "After=systemd-tmpfiles-setup-dev.service\n",
                         hu_escaped);
 
-        r = generator_write_veritysetup_service_section(f, name, du_escaped, hu_escaped, roothash, options);
+        r = generator_write_veritysetup_service_section(f, name, du, hu, roothash, options);
         if (r < 0)
                 return r;
 
