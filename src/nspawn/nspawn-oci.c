@@ -627,7 +627,7 @@ static int oci_namespace_type(const char *name, JsonVariant *v, JsonDispatchFlag
                 *nsflags = CLONE_NEWCGROUP;
         else
                 return json_log(v, flags, SYNTHETIC_ERRNO(EINVAL),
-                                "Unknown cgroup type, refusing: %s", n);
+                                "Unknown namespace type, refusing: %s", n);
 
         return 0;
 }
@@ -685,7 +685,7 @@ static int oci_namespaces(const char *name, JsonVariant *v, JsonDispatchFlags fl
 
         if (!FLAGS_SET(n, CLONE_NEWNS))
                 return json_log(v, flags, SYNTHETIC_ERRNO(EOPNOTSUPP),
-                                "Containers without file system namespace aren't supported.");
+                                "Containers without a mount namespace aren't supported.");
 
         s->private_network = FLAGS_SET(n, CLONE_NEWNET);
         s->userns_mode = FLAGS_SET(n, CLONE_NEWUSER) ? USER_NAMESPACE_FIXED : USER_NAMESPACE_NO;
@@ -844,7 +844,7 @@ static int oci_device_file_mode(const char *name, JsonVariant *v, JsonDispatchFl
                 return json_log(v, flags, SYNTHETIC_ERRNO(ERANGE),
                                 "fileMode out of range, refusing.");
 
-        *mode = m;
+        *mode = (*mode & ~07777) | m;
         return 0;
 }
 
@@ -901,7 +901,7 @@ static int oci_devices(const char *name, JsonVariant *v, JsonDispatchFlags flags
                         /* Suppress a couple of implicit device nodes */
                         r = device_path_make_canonical(node->mode, makedev(node->major, node->minor), &path);
                         if (r < 0)
-                                json_log(e, flags|JSON_DEBUG, 0, "Failed to resolve device node %u:%u, ignoring: %m", node->major, node->minor);
+                                json_log(e, flags|JSON_DEBUG, r, "Failed to resolve device node %u:%u, ignoring: %m", node->major, node->minor);
                         else {
                                 if (PATH_IN_SET(path,
                                                 "/dev/null",
@@ -1638,7 +1638,7 @@ static int oci_sysctl(const char *name, JsonVariant *v, JsonDispatchFlags flags,
 
                 assert_se(m = json_variant_string(w));
 
-                if (sysctl_key_valid(k))
+                if (!sysctl_key_valid(k))
                         return json_log(v, flags, SYNTHETIC_ERRNO(EINVAL),
                                         "sysctl key invalid, refusing: %s", k);
 
@@ -1888,6 +1888,7 @@ static int oci_seccomp_syscalls(const char *name, JsonVariant *v, JsonDispatchFl
                         { "names",  JSON_VARIANT_ARRAY,  json_dispatch_strv, offsetof(struct syscall_rule, names),  JSON_MANDATORY },
                         { "action", JSON_VARIANT_STRING, oci_seccomp_action, offsetof(struct syscall_rule, action), JSON_MANDATORY },
                         { "args",   JSON_VARIANT_ARRAY,  oci_seccomp_args,   0,                                     0              },
+                        {}
                 };
                 struct syscall_rule rule = {
                         .action = UINT32_MAX,
@@ -2150,7 +2151,7 @@ static int oci_hooks_array(const char *name, JsonVariant *v, JsonDispatchFlags f
                         .timeout = USEC_INFINITY,
                 };
 
-                r = json_dispatch(e, table, oci_unexpected, flags, userdata);
+                r = json_dispatch(e, table, oci_unexpected, flags, new_item);
                 if (r < 0) {
                         free(new_item->path);
                         strv_free(new_item->args);

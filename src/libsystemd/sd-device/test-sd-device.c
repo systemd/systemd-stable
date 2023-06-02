@@ -259,7 +259,7 @@ static void test_sd_device_enumerator_filter_subsystem_one(
 
 TEST(sd_device_enumerator_filter_subsystem) {
         _cleanup_(sd_device_enumerator_unrefp) sd_device_enumerator *e = NULL;
-        _cleanup_(hashmap_freep) Hashmap *subsystems;
+        _cleanup_(hashmap_freep) Hashmap *subsystems = NULL;
         unsigned n_new_dev = 0, n_removed_dev = 0;
         sd_device *d;
         Hashmap *h;
