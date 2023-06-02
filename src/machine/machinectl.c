@@ -694,9 +694,7 @@ static int show_machine_properties(sd_bus *bus, const char *path, bool *new_line
 }
 
 static int show_machine(int argc, char *argv[], void *userdata) {
-
         _cleanup_(sd_bus_error_free) sd_bus_error error = SD_BUS_ERROR_NULL;
-        _cleanup_(sd_bus_message_unrefp) sd_bus_message *reply = NULL;
         bool properties, new_line = false;
         sd_bus *bus = userdata;
         int r = 0;
@@ -717,6 +715,7 @@ static int show_machine(int argc, char *argv[], void *userdata) {
         }
 
         for (int i = 1; i < argc; i++) {
+                _cleanup_(sd_bus_message_unrefp) sd_bus_message *reply = NULL;
                 const char *path = NULL;
 
                 r = bus_call_method(bus, bus_machine_mgr, "GetMachine", &error, &reply, "s", argv[i]);
@@ -993,9 +992,7 @@ static int show_image_properties(sd_bus *bus, const char *path, bool *new_line) 
 }
 
 static int show_image(int argc, char *argv[], void *userdata) {
-
         _cleanup_(sd_bus_error_free) sd_bus_error error = SD_BUS_ERROR_NULL;
-        _cleanup_(sd_bus_message_unrefp) sd_bus_message *reply = NULL;
         bool properties, new_line = false;
         sd_bus *bus = userdata;
         int r = 0;
@@ -1020,6 +1017,7 @@ static int show_image(int argc, char *argv[], void *userdata) {
         }
 
         for (int i = 1; i < argc; i++) {
+                _cleanup_(sd_bus_message_unrefp) sd_bus_message *reply = NULL;
                 const char *path = NULL;
 
                 r = bus_call_method(bus, bus_machine_mgr, "GetImage", &error, &reply, "s", argv[i]);
