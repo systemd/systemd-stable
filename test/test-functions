@@ -1686,8 +1686,7 @@ check_result_nspawn() {
         fi
     fi
 
-    check_result_common "${workspace}"
-    ret=$?
+    check_result_common "${workspace}" && ret=0 || ret=$?
 
     _umount_dir "${initdir:?}"
 
@@ -1707,8 +1706,7 @@ check_result_qemu() {
         fi
     fi
 
-    check_result_common "${initdir:?}"
-    ret=$?
+    check_result_common "${initdir:?}" && ret=0 || ret=$?
 
     _umount_dir "${initdir:?}"
 
