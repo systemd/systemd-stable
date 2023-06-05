@@ -324,8 +324,8 @@ static void test_exec_cpuaffinity(Manager *m) {
 
 static void test_exec_credentials(Manager *m) {
         test(m, "exec-set-credential.service", 0, CLD_EXITED);
-        test(m, "exec-load-credential.service", MANAGER_IS_SYSTEM(m) ? 0 : EXIT_CREDENTIALS, CLD_EXITED);
-        test(m, "exec-credentials-dir-specifier.service", MANAGER_IS_SYSTEM(m) ? 0 : EXIT_CREDENTIALS, CLD_EXITED);
+        test(m, "exec-load-credential.service", 0, CLD_EXITED);
+        test(m, "exec-credentials-dir-specifier.service", 0, CLD_EXITED);
 }
 
 static void test_exec_workingdirectory(Manager *m) {
@@ -1396,8 +1396,8 @@ static int prepare_ns(const char *process_name) {
 
                 /* Prepare credstore like tmpfiles.d/credstore.conf for LoadCredential= tests. */
                 FOREACH_STRING(p, "/run/credstore", "/run/credstore.encrypted") {
-                        assert_se(mkdir_p(p, 0) >= 0);
-                        assert_se(mount_nofollow_verbose(LOG_DEBUG, "tmpfs", p, "tmpfs", MS_NOSUID|MS_NODEV, "mode=0000") >= 0);
+                        assert_se(mkdir_p(p, 0700) >= 0);
+                        assert_se(mount_nofollow_verbose(LOG_DEBUG, "tmpfs", p, "tmpfs", MS_NOSUID|MS_NODEV, "mode=0700") >= 0);
                 }
 
                 assert_se(write_string_file("/run/credstore/test-execute.load-credential", "foo", WRITE_STRING_FILE_CREATE) >= 0);
