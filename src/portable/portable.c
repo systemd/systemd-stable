@@ -1037,7 +1037,7 @@ static int install_chroot_dropin(
                                         return -ENOMEM;
         }
 
-        r = write_string_file(dropin, text, WRITE_STRING_FILE_CREATE|WRITE_STRING_FILE_ATOMIC);
+        r = write_string_file(dropin, text, WRITE_STRING_FILE_CREATE|WRITE_STRING_FILE_ATOMIC|WRITE_STRING_FILE_SYNC);
         if (r < 0)
                 return log_debug_errno(r, "Failed to write '%s': %m", dropin);
 
@@ -1084,7 +1084,7 @@ static int install_profile_dropin(
 
         if (flags & PORTABLE_PREFER_COPY) {
 
-                r = copy_file_atomic(from, dropin, 0644, 0, 0, COPY_REFLINK);
+                r = copy_file_atomic(from, dropin, 0644, 0, 0, COPY_REFLINK|COPY_FSYNC);
                 if (r < 0)
                         return log_debug_errno(r, "Failed to copy %s %s %s: %m", from, special_glyph(SPECIAL_GLYPH_ARROW_RIGHT), dropin);
 
