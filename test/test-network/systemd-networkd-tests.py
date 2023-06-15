@@ -3755,7 +3755,7 @@ class NetworkdBondTests(unittest.TestCase, Utilities):
 
         self.wait_operstate('dummy98', 'off')
         self.wait_operstate('test1', 'enslaved')
-        self.wait_operstate('bond99', 'degraded-carrier')
+        self.wait_operstate('bond99', 'routable')
 
         check_output('ip link set dummy98 up')
 
@@ -3961,7 +3961,7 @@ class NetworkdBridgeTests(unittest.TestCase, Utilities):
 
         self.assertEqual(call('ip link del test1'), 0)
 
-        self.wait_operstate('bridge99', 'degraded-carrier')
+        self.wait_operstate('bridge99', 'routable')
 
         check_output('ip link del dummy98')
 
