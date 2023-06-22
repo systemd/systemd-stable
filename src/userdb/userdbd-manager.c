@@ -72,7 +72,7 @@ static int on_sigusr2(sd_event_source *s, const struct signalfd_siginfo *si, voi
         assert(s);
         assert(m);
 
-        (void) start_workers(m, true); /* Workers told us there's more work, let's add one more worker as long as we are below the high watermark */
+        (void) start_workers(m, /* explicit_request=*/ true); /* Workers told us there's more work, let's add one more worker as long as we are below the high watermark */
         return 0;
 }
 
@@ -302,5 +302,5 @@ int manager_startup(Manager *m) {
         if (setsockopt(m->listen_fd, SOL_SOCKET, SO_RCVTIMEO, TIMEVAL_STORE(LISTEN_TIMEOUT_USEC), sizeof(struct timeval)) < 0)
                 return log_error_errno(errno, "Failed to se SO_RCVTIMEO: %m");
 
-        return start_workers(m, false);
+        return start_workers(m, /* explicit_request= */ false);
 }
