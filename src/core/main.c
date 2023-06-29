@@ -1815,13 +1815,17 @@ static int do_reexecute(
                 xsprintf(sfd, "--deserialize=%i", fileno(arg_serialization));
 
                 i = 1;         /* Leave args[0] empty for now. */
-                filter_args(args, &i, argv, argc);
 
+                /* Put our stuff first to make sure it always gets parsed in case
+                 * we get weird stuff from the kernel cmdline (like --) */
                 if (switch_root_dir)
                         args[i++] = "--switched-root";
 
                 args[i++] = arg_system ? "--system" : "--user";
                 args[i++] = sfd;
+
+                filter_args(args, &i, argv, argc);
+
                 args[i++] = NULL;
 
                 assert(i <= args_size);
