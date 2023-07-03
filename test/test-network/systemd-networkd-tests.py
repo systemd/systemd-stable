@@ -2872,9 +2872,7 @@ class NetworkdNetworkTests(unittest.TestCase, Utilities):
 
         output = check_output('ip -6 route list dev bond199')
         print(output)
-        self.assertRegex(output, 'abcd::/16')
-        self.assertRegex(output, 'src')
-        self.assertRegex(output, '2001:1234:56:8f63::2')
+        self.assertIn('abcd::/16 via 2001:1234:56:8f63::1:1 proto static src 2001:1234:56:8f63::2', output)
 
     def test_ip_link_mac_address(self):
         copy_unit_to_networkd_unit_path('25-address-link-section.network', '12-dummy.netdev')
