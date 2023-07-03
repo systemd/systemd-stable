@@ -56,7 +56,7 @@ int network_config_state_to_string_alloc(NetworkConfigState s, char **ret);
                                                                         \
                 t->state = (t->state & ~mask) | (value & mask);         \
         }                                                               \
-        static inline bool name##_exists(type *t) {                     \
+        static inline bool name##_exists(const type *t) {               \
                 assert(t);                                              \
                                                                         \
                 if ((t->state & (NETWORK_CONFIG_STATE_CONFIGURING |     \
@@ -76,7 +76,7 @@ int network_config_state_to_string_alloc(NetworkConfigState s, char **ret);
                                     NETWORK_CONFIG_STATE_REQUESTING,    \
                                     0);                                 \
         }                                                               \
-        static inline bool name##_is_requesting(type *t) {              \
+        static inline bool name##_is_requesting(const type *t) {        \
                 return FLAGS_SET(t->state, NETWORK_CONFIG_STATE_REQUESTING); \
         }                                                               \
         static inline void name##_enter_configuring(type *t) {          \
@@ -100,7 +100,7 @@ int network_config_state_to_string_alloc(NetworkConfigState s, char **ret);
         static inline void name##_unmark(type *t) {                     \
                 name##_update_state(t, NETWORK_CONFIG_STATE_MARKED, 0); \
         }                                                               \
-        static inline bool name##_is_marked(type *t) {                  \
+        static inline bool name##_is_marked(const type *t) {            \
                 assert(t);                                              \
                 return FLAGS_SET(t->state, NETWORK_CONFIG_STATE_MARKED); \
         }                                                               \
