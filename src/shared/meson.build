@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 shared_sources = files(
+        'acl-util.c',
         'acl-util.h',
         'acpi-fpdt.c',
         'acpi-fpdt.h',
@@ -365,7 +366,6 @@ syscall_list_h = custom_target(
 
 if conf.get('HAVE_ACL') == 1
         shared_sources += files(
-                'acl-util.c',
                 'devnode-acl.c',
         )
 endif
