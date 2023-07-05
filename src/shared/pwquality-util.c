@@ -132,7 +132,7 @@ int suggest_passwords(void) {
         if (!joined)
                 return log_oom();
 
-        log_info("Password suggestions: %s", joined);
+        printf("Password suggestions: %s\n", joined);
         return 1;
 }
 
