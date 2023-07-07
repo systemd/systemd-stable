@@ -123,8 +123,16 @@ sensor:modalias:acpi:MXC6655*:dmi:*:svnAquarius*:pnNS483:*
 #########################################
 # Archos
 #########################################
+
+# Archos 80 Cesium
 sensor:modalias:acpi:SMO8500*:dmi:*:svnARCHOS:pnARCHOS80Cesium:*
+# Archos 101 Cesium
+sensor:modalias:acpi:KIOX000A*:dmi:*:svnARCHOS:pnARCHOS101CESIUM:*
  ACCEL_MOUNT_MATRIX=-1, 0, 0; 0, 1, 0; 0, 0, 1
+
+# Archos 101 Cesium Educ
+sensor:modalias:acpi:KIOX000A*:dmi:*:svnARCHOS:pnARCHOS101CesiumEduc:*
+ ACCEL_MOUNT_MATRIX=1, 0, 0; 0, -1, 0; 0, 0, 1
 
 #########################################
 # AsusTek
@@ -384,6 +392,10 @@ sensor:modalias:acpi:INVN6500*:dmi:*svnDell*:pnVenue10Pro5055:*
 # DBook D10 / Juno Tablet
 sensor:modalias:acpi:KIOX000A*:dmi:bvnAmericanMegatrendsInternational,LLC.:bvrJP2V*:svnDefaultstring:*
  ACCEL_MOUNT_MATRIX=1, 0, 0; 0, -1, 0; 0, 0, 1
+
+# T11 / Juno Tablet 2
+sensor:modalias:acpi:NSA2513*:dmi:*:svnDigitek:*
+ ACCEL_MOUNT_MATRIX=0, -1, 0; 1, 0, 0; 0, 0, 1
 
 #########################################
 # DEXP
