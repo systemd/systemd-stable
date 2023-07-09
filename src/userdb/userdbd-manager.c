@@ -72,7 +72,7 @@ static int on_sigusr2(sd_event_source *s, const struct signalfd_siginfo *si, voi
         assert(s);
         assert(m);
 
-        (void) start_workers(m, true); /* Workers told us there's more work, let's add one more worker as long as we are below the high watermark */
+        (void) start_workers(m, /* explicit_request=*/ true); /* Workers told us there's more work, let's add one more worker as long as we are below the high watermark */
         return 0;
 }
 
@@ -87,8 +87,8 @@ int manager_new(Manager **ret) {
         *m = (Manager) {
                 .listen_fd = -1,
                 .worker_ratelimit = {
-                        .interval = 5 * USEC_PER_SEC,
-                        .burst = 50,
+                        .interval = 2 * USEC_PER_SEC,
+                        .burst = 2500,
                 },
         };
 
@@ -293,7 +293,7 @@ int manager_startup(Manager *m) {
                 if (r < 0)
                         return log_error_errno(r, "Failed to bind io.systemd.Multiplexer: %m");
 
-                if (listen(m->listen_fd, SOMAXCONN) < 0)
+                if (listen(m->listen_fd, SOMAXCONN_DELUXE) < 0)
                         return log_error_errno(errno, "Failed to listen on socket: %m");
         }
 
@@ -302,5 +302,5 @@ int manager_startup(Manager *m) {
         if (setsockopt(m->listen_fd, SOL_SOCKET, SO_RCVTIMEO, TIMEVAL_STORE(LISTEN_TIMEOUT_USEC), sizeof(struct timeval)) < 0)
                 return log_error_errno(errno, "Failed to se SO_RCVTIMEO: %m");
 
-        return start_workers(m, false);
+        return start_workers(m, /* explicit_request= */ false);
 }

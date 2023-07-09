@@ -332,3 +332,10 @@ int socket_get_mtu(int fd, int af, size_t *ret);
 
 /* an initializer for struct ucred that initialized all fields to the invalid value appropriate for each */
 #define UCRED_INVALID { .pid = 0, .uid = UID_INVALID, .gid = GID_INVALID }
+
+/* libc's SOMAXCONN is defined to 128 or 4096 (at least on glibc). But actually, the value can be much
+ * larger. In our codebase we want to set it to the max usually, since noawadays socket memory is properly
+ * tracked by memcg, and hence we don't need to enforce extra limits here. Moreover, the kernel caps it to
+ * /proc/sys/net/core/somaxconn anyway, thus by setting this to unbounded we just make that sysctl file
+ * authoritative. */
+#define SOMAXCONN_DELUXE INT_MAX
