@@ -1462,7 +1462,7 @@ static bool context_has_no_new_privileges(const ExecContext *c) {
                 context_has_syscall_logs(c);
 }
 
-static bool exec_context_has_credentials(const ExecContext *context) {
+bool exec_context_has_credentials(const ExecContext *context) {
 
         assert(context);
 
@@ -2638,7 +2638,7 @@ static char **credential_search_path(
         if (DEBUG_LOGGING) {
                 _cleanup_free_ char *t = strv_join(l, ":");
 
-                log_debug("Credential search path is: %s", t);
+                log_debug("Credential search path is: %s", strempty(t));
         }
 
         return TAKE_PTR(l);
@@ -2872,6 +2872,10 @@ static int acquire_credentials(
         if (dfd < 0)
                 return -errno;
 
+        r = fd_acl_make_writable(dfd); /* Add the "w" bit, if we are reusing an already set up credentials dir where it was unset */
+        if (r < 0)
+                return r;
+
         /* First, load credentials off disk (or acquire via AF_UNIX socket) */
         HASHMAP_FOREACH(lc, context->load_credentials) {
                 _cleanup_close_ int sub_fd = -1;
@@ -2964,8 +2968,9 @@ static int acquire_credentials(
                 left -= add;
         }
 
-        if (fchmod(dfd, 0500) < 0) /* Now take away the "w" bit */
-                return -errno;
+        r = fd_acl_make_read_only(dfd); /* Now take away the "w" bit */
+        if (r < 0)
+                return r;
 
         /* After we created all keys with the right perms, also make sure the credential store as a whole is
          * accessible */
