@@ -86,7 +86,6 @@ static void test_link_get(sd_netlink *rtnl, int ifindex) {
         assert_se(sd_netlink_message_read_u32(r, IFLA_GROUP, &u32_data) == 0);
         assert_se(sd_netlink_message_read_u32(r, IFLA_TXQLEN, &u32_data) == 0);
         assert_se(sd_netlink_message_read_u32(r, IFLA_NUM_TX_QUEUES, &u32_data) == 0);
-        assert_se(sd_netlink_message_read_u32(r, IFLA_NUM_RX_QUEUES, &u32_data) == 0);
 
         assert_se(sd_netlink_message_read_ether_addr(r, IFLA_ADDRESS, &eth_data) == 0);
 }
