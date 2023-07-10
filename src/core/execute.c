@@ -1458,7 +1458,7 @@ static bool context_has_no_new_privileges(const ExecContext *c) {
                 context_has_syscall_logs(c);
 }
 
-bool exec_context_has_credentials(const ExecContext *context) {
+static bool exec_context_has_credentials(const ExecContext *context) {
 
         assert(context);
 
