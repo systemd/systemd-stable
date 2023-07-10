@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: LGPL-2.1-or-later */
 
 #include <getopt.h>
+#include <sys/stat.h>
 
 #include "fd-util.h"
 #include "generator.h"
@@ -169,6 +170,8 @@ static int run(int argc, char *argv[]) {
         int r;
 
         log_setup();
+
+        umask(0022);
 
         r = parse_argv(argc, argv);
         if (r <= 0)
