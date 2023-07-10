@@ -82,7 +82,7 @@ static void socket_init(Unit *u) {
         assert(u);
         assert(u->load_state == UNIT_STUB);
 
-        s->backlog = SOMAXCONN;
+        s->backlog = SOMAXCONN_DELUXE;
         s->timeout_usec = u->manager->default_timeout_start_usec;
         s->directory_mode = 0755;
         s->socket_mode = 0666;
@@ -120,6 +120,19 @@ static void socket_cleanup_fd_list(SocketPort *p) {
         p->n_auxiliary_fds = 0;
 }
 
+SocketPort *socket_port_free(SocketPort *p) {
+        if (!p)
+                return NULL;
+
+        sd_event_source_unref(p->event_source);
+
+        socket_cleanup_fd_list(p);
+        safe_close(p->fd);
+        free(p->path);
+
+        return mfree(p);
+}
+
 void socket_free_ports(Socket *s) {
         SocketPort *p;
 
@@ -127,13 +140,7 @@ void socket_free_ports(Socket *s) {
 
         while ((p = s->ports)) {
                 LIST_REMOVE(port, s->ports, p);
-
-                sd_event_source_unref(p->event_source);
-
-                socket_cleanup_fd_list(p);
-                safe_close(p->fd);
-                free(p->path);
-                free(p);
+                socket_port_free(p);
         }
 }
 
@@ -3454,7 +3461,7 @@ SocketTimestamping socket_timestamping_from_string_harder(const char *p) {
          * too. */
         if (streq(p, "nsec"))
                 return SOCKET_TIMESTAMPING_NS;
-        if (STR_IN_SET(p, "usec", "µs"))
+        if (STR_IN_SET(p, "usec", "µs", "μs")) /* Accept both small greek letter mu + micro sign unicode codepoints */
                 return SOCKET_TIMESTAMPING_US;
 
         r = parse_boolean(p);
