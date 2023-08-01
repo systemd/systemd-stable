@@ -3649,7 +3649,7 @@ int config_parse_restrict_filesystems(
 
         if (isempty(rvalue)) {
                 /* Empty assignment resets the list */
-                c->restrict_filesystems = set_free(c->restrict_filesystems);
+                c->restrict_filesystems = set_free_free(c->restrict_filesystems);
                 c->restrict_filesystems_allow_list = false;
                 return 0;
         }
@@ -5924,7 +5924,7 @@ int config_parse_restrict_network_interfaces(
 
         if (isempty(rvalue)) {
                 /* Empty assignment resets the list */
-                c->restrict_network_interfaces = set_free(c->restrict_network_interfaces);
+                c->restrict_network_interfaces = set_free_free(c->restrict_network_interfaces);
                 return 0;
         }
 
