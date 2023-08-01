@@ -1234,6 +1234,7 @@ install_suse_systemd() {
         systemd-container
         systemd-coredump
         systemd-experimental
+        systemd-homed
         systemd-journal-remote
         systemd-portable
         udev
