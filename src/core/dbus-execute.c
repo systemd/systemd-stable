@@ -1977,7 +1977,7 @@ int bus_exec_context_set_transient_property(
 
                         if (strv_isempty(l)) {
                                 c->restrict_filesystems_allow_list = false;
-                                c->restrict_filesystems = set_free(c->restrict_filesystems);
+                                c->restrict_filesystems = set_free_free(c->restrict_filesystems);
 
                                 unit_write_setting(u, flags, name, "RestrictFileSystems=");
                                 return 1;
