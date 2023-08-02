@@ -1361,7 +1361,7 @@ static void config_entry_parse_tries(
                         suffix);
 }
 
-static void config_entry_bump_counters(ConfigEntry *entry, EFI_FILE *root_dir) {
+static EFI_STATUS config_entry_bump_counters(ConfigEntry *entry) {
         _cleanup_free_ char16_t* old_path = NULL, *new_path = NULL;
         _cleanup_(file_closep) EFI_FILE *handle = NULL;
         _cleanup_free_ EFI_FILE_INFO *file_info = NULL;
@@ -1369,34 +1369,48 @@ static void config_entry_bump_counters(ConfigEntry *entry, EFI_FILE *root_dir) {
         EFI_STATUS err;
 
         assert(entry);
-        assert(root_dir);
 
         if (entry->tries_left < 0)
-                return;
+                return EFI_SUCCESS;
 
         if (!entry->path || !entry->current_name || !entry->next_name)
-                return;
+                return EFI_SUCCESS;
+
+        _cleanup_(file_closep) EFI_FILE *root = NULL;
+        err = open_volume(entry->device, &root);
+        if (err != EFI_SUCCESS) {
+                log_error_stall(L"Error opening entry root path: %r", err);
+                return err;
+        }
 
         old_path = xpool_print(L"%s\\%s", entry->path, entry->current_name);
 
-        err = root_dir->Open(root_dir, &handle, old_path, EFI_FILE_MODE_READ|EFI_FILE_MODE_WRITE, 0ULL);
-        if (err != EFI_SUCCESS)
-                return;
+        err = root->Open(root, &handle, old_path, EFI_FILE_MODE_READ|EFI_FILE_MODE_WRITE, 0ULL);
+        if (err != EFI_SUCCESS) {
+                log_error_stall(L"Error opening boot entry: %r", err);
+                return err;
+        }
 
         err = get_file_info_harder(handle, &file_info, &file_info_size);
-        if (err != EFI_SUCCESS)
-                return;
+        if (err != EFI_SUCCESS) {
+                log_error_stall(L"Error getting boot entry file info: %r", err);
+                return err;
+        }
 
         /* And rename the file */
         strcpy16(file_info->FileName, entry->next_name);
         err = handle->SetInfo(handle, &GenericFileInfo, file_info_size, file_info);
         if (err != EFI_SUCCESS) {
                 log_error_stall(L"Failed to rename '%s' to '%s', ignoring: %r", old_path, entry->next_name, err);
-                return;
+                return err;
         }
 
         /* Flush everything to disk, just in case… */
-        (void) handle->Flush(handle);
+        err = handle->Flush(handle);
+        if (err != EFI_SUCCESS) {
+                log_error_stall(L"Error flushing boot entry file info: %r", err);
+                return err;
+        }
 
         /* Let's tell the OS that we renamed this file, so that it knows what to rename to the counter-less name on
          * success */
@@ -1408,6 +1422,8 @@ static void config_entry_bump_counters(ConfigEntry *entry, EFI_FILE *root_dir) {
                 free(entry->loader);
                 entry->loader = TAKE_PTR(new_path);
         }
+
+        return EFI_SUCCESS;
 }
 
 static void config_entry_add_type1(
@@ -2736,7 +2752,7 @@ EFI_STATUS efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *sys_table) {
                         continue;
                 }
 
-                config_entry_bump_counters(entry, root_dir);
+                (void) config_entry_bump_counters(entry);
                 save_selected_entry(&config, entry);
 
                 /* Optionally, read a random seed off the ESP and pass it to the OS */
