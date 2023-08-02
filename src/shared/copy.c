@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/file.h>
 #include <sys/sendfile.h>
 #include <sys/xattr.h>
 #include <unistd.h>
