@@ -62,7 +62,7 @@ int pam_acquire_bus_connection(pam_handle_t *handle, const char *module_name, sd
                 return PAM_SERVICE_ERR;
         }
 
-        r = pam_set_data(handle, "systemd-system-bus", bus, cleanup_system_bus);
+        r = pam_set_data(handle, cache_id, bus, cleanup_system_bus);
         if (r != PAM_SUCCESS) {
                 pam_syslog(handle, LOG_ERR, "Failed to set PAM bus data: %s", pam_strerror(handle, r));
                 return r;
