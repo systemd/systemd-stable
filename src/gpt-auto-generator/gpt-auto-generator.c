@@ -487,33 +487,6 @@ static int slash_boot_in_fstab(void) {
         return cache;
 }
 
-static int slash_efi_in_fstab(void) {
-        static int cache = -1;
-
-        if (cache >= 0)
-                return cache;
-
-        cache = fstab_is_mount_point("/efi");
-        if (cache < 0)
-                return log_error_errno(cache, "Failed to parse fstab: %m");
-        return cache;
-}
-
-static bool slash_boot_exists(void) {
-        static int cache = -1;
-
-        if (cache >= 0)
-                return cache;
-
-        if (access("/boot", F_OK) >= 0)
-                return (cache = true);
-        if (errno != ENOENT)
-                log_error_errno(errno, "Failed to determine whether /boot/ exists, assuming no: %m");
-        else
-                log_debug_errno(errno, "/boot/: %m");
-        return (cache = false);
-}
-
 static int add_partition_xbootldr(DissectedPartition *p) {
         _cleanup_free_ char *options = NULL;
         int r;
@@ -562,6 +535,33 @@ static int add_partition_xbootldr(DissectedPartition *p) {
 }
 
 #if ENABLE_EFI
+static int slash_efi_in_fstab(void) {
+        static int cache = -1;
+
+        if (cache >= 0)
+                return cache;
+
+        cache = fstab_is_mount_point("/efi");
+        if (cache < 0)
+                return log_error_errno(cache, "Failed to parse fstab: %m");
+        return cache;
+}
+
+static bool slash_boot_exists(void) {
+        static int cache = -1;
+
+        if (cache >= 0)
+                return cache;
+
+        if (access("/boot", F_OK) >= 0)
+                return (cache = true);
+        if (errno != ENOENT)
+                log_error_errno(errno, "Failed to determine whether /boot/ exists, assuming no: %m");
+        else
+                log_debug_errno(errno, "/boot/: %m");
+        return (cache = false);
+}
+
 static int add_partition_esp(DissectedPartition *p, bool has_xbootldr) {
         const char *esp_path = NULL, *id = NULL;
         _cleanup_free_ char *options = NULL;
@@ -574,10 +574,17 @@ static int add_partition_esp(DissectedPartition *p, bool has_xbootldr) {
                 return 0;
         }
 
+        /* Check if there's an existing fstab entry for ESP. If so, we just skip the gpt-auto logic. */
+        r = fstab_has_node(p->node);
+        if (r < 0)
+                return log_error_errno(r,
+                                       "Failed to check if fstab entry for device '%s' exists: %m", p->node);
+        if (r > 0)
+                return 0;
+
         /* If /boot/ is present, unused, and empty, we'll take that.
          * Otherwise, if /efi/ is unused and empty (or missing), we'll take that.
-         * Otherwise, we do nothing.
-         */
+         * Otherwise, we do nothing. */
         if (!has_xbootldr && slash_boot_exists()) {
                 r = slash_boot_in_fstab();
                 if (r < 0)
@@ -590,16 +597,6 @@ static int add_partition_esp(DissectedPartition *p, bool has_xbootldr) {
                                 esp_path = "/boot";
                                 id = "boot";
                         }
-                } else {
-                        /* Check if the fstab entry for /boot/ is already the ESP. If so, we don't need to
-                         * check /efi/ or duplicate the mount there. */
-                        r = fstab_is_mount_point_full("/boot", p->node);
-                        if (r < 0)
-                                return log_error_errno(r,
-                                                       "Failed to check if fstab entry for /boot uses the same device as '%s': %m",
-                                                       p->node);
-                        if (r > 0)
-                                return 0;
                 }
         }
 
