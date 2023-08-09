@@ -34,6 +34,9 @@ CHANGES WITH 254:
           trailing with escape as a non comment line. For details, see:
           https://github.com/systemd/systemd/issues/27975
 
+        * PrivateNetwork=yes and NetworkNamespacePath= now imply
+          PrivateMounts=yes unless PrivateMounts=no is explicitly specified.
+
         * Behaviour of sandboxing options for the per-user service manager
           units has changed. They now imply PrivateUsers=yes, which means user
           namespaces will be implicitly enabled when a sandboxing option is
@@ -71,10 +74,12 @@ CHANGES WITH 254:
 
         Service Manager:
 
-        * "Startup" memory settings are now supported. Previously IO and CPU
-          settings were already supported via StartupCPUWeight= and similar.
-          The same logic has been added for the various per-unit memory
-          settings StartupMemoryMax= and related.
+        * Memory limits that apply while the unit is activating are now
+          supported. Previously IO and CPU settings were already supported via
+          StartupCPUWeight= and similar. The same logic has been added for the
+          various manager and unit memory settings (DefaultStartupMemoryLow=,
+          StartupMemoryLow=, StartupMemoryHigh=, StartupMemoryMax=,
+          StartupMemorySwapMax=, StartupMemoryZSwapMax=).
 
         * The service manager gained support for enqueuing POSIX signals to
           services that carry an additional integer value, exposing the
@@ -574,7 +579,7 @@ CHANGES WITH 254:
           specified command line after sending the requested messages. This is
           useful for sending out READY=1 first, and then continuing invocation
           without changing process ID, so that the tool can be nicely used
-          within an ExecStart= line of a unit file that uses Type=ready.
+          within an ExecStart= line of a unit file that uses Type=notify.
 
         sd-event + sd-bus APIs:
 
@@ -658,8 +663,8 @@ CHANGES WITH 254:
           server-side environment variable expansion in specified command
           lines. Expansion defaults to enabled for all execution types except
           --scope, where it defaults to off (and prints a warning) for backward
-          compatibility reasons. --scope will be flipped to default enabled too
-          in a future release, so if you are using --scope and passing a '$'
+          compatibility reasons. --scope will be flipped to enabled by default
+          too in a future release. If you are using --scope and passing a '$'
           character in the payload you should start explicitly using
           --expand-environment=yes/no according to the use case.
 
@@ -722,7 +727,7 @@ CHANGES WITH 254:
           systemd.battery-check=0 through the kernel command line.
 
         * The 'passwdqc' library is now supported as an alternative to the
-          'pwquality' library and it can be selected at build time.
+          'pwquality' library and can be selected at build time.
 
         Contributions from: 김인수, 07416, Addison Snelling, Adrian Vovk,
         Aidan Dang, Alexander Krabler, Alfred Klomp, Anatoli Babenia,
