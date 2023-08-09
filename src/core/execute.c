@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <sys/eventfd.h>
+#include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
@@ -5544,7 +5545,7 @@ void exec_context_done(ExecContext *c) {
         c->apparmor_profile = mfree(c->apparmor_profile);
         c->smack_process_label = mfree(c->smack_process_label);
 
-        c->restrict_filesystems = set_free(c->restrict_filesystems);
+        c->restrict_filesystems = set_free_free(c->restrict_filesystems);
 
         c->syscall_filter = hashmap_free(c->syscall_filter);
         c->syscall_archs = set_free(c->syscall_archs);
@@ -5556,8 +5557,8 @@ void exec_context_done(ExecContext *c) {
         c->log_level_max = -1;
 
         exec_context_free_log_extra_fields(c);
-        c->log_filter_allowed_patterns = set_free(c->log_filter_allowed_patterns);
-        c->log_filter_denied_patterns = set_free(c->log_filter_denied_patterns);
+        c->log_filter_allowed_patterns = set_free_free(c->log_filter_allowed_patterns);
+        c->log_filter_denied_patterns = set_free_free(c->log_filter_denied_patterns);
 
         c->log_ratelimit_interval_usec = 0;
         c->log_ratelimit_burst = 0;
