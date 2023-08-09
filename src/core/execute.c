@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <sys/eventfd.h>
+#include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
@@ -5399,7 +5400,7 @@ void exec_context_done(ExecContext *c) {
         c->apparmor_profile = mfree(c->apparmor_profile);
         c->smack_process_label = mfree(c->smack_process_label);
 
-        c->restrict_filesystems = set_free(c->restrict_filesystems);
+        c->restrict_filesystems = set_free_free(c->restrict_filesystems);
 
         c->syscall_filter = hashmap_free(c->syscall_filter);
         c->syscall_archs = set_free(c->syscall_archs);
