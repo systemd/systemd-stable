@@ -23,6 +23,7 @@
 #include "bus-locator.h"
 #include "bus-util.h"
 #include "constants.h"
+#include "efivars.h"
 #include "exec-util.h"
 #include "fd-util.h"
 #include "fileio.h"
@@ -224,8 +225,12 @@ static int execute(
                                * do it ourselves then. > 0 means: kernel already had a configured hibernation
                                * location which we shouldn't touch. */
                         r = write_hibernate_location_info(hibernate_location);
-                        if (r < 0)
+                        if (r < 0) {
+                                if (is_efi_boot())
+                                        (void) efi_set_variable(EFI_SYSTEMD_VARIABLE(HibernateLocation), NULL, 0);
+
                                 return log_error_errno(r, "Failed to prepare for hibernation: %m");
+                        }
                 }
 
                 r = write_mode(modes);
