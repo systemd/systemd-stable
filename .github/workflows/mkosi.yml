@@ -97,6 +97,13 @@ jobs:
         KernelCommandLine=${{ env.KERNEL_CMDLINE }}
         EOF
 
+        # TODO: Remove once archlinux-keyring is updated in ppa:michel-slm/kernel-utils.
+        tee mkosi.conf.d/arch/11-arch-keyring.conf <<- EOF
+        [Distribution]
+        Distribution=arch
+        RepositoryKeyCheck=no
+        EOF
+
     - name: Generate secure boot key
       run: mkosi genkey
 
