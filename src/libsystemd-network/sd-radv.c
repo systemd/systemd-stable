@@ -271,8 +271,7 @@ static int radv_recv(sd_event_source *s, int fd, uint32_t revents, void *userdat
 
                 switch (r) {
                 case -EADDRNOTAVAIL:
-                        log_radv(ra, "Received RS from non-link-local address %s. Ignoring",
-                                 IN6_ADDR_TO_STRING(&src));
+                        log_radv(ra, "Received RS from non-link-local address. Ignoring");
                         break;
 
                 case -EMULTIHOP:
