@@ -2746,6 +2746,7 @@ static int write_credential(
                 const void *data,
                 size_t size,
                 uid_t uid,
+                gid_t gid,
                 bool ownership_ok) {
 
         _cleanup_(unlink_and_freep) char *tmp = NULL;
@@ -2783,7 +2784,7 @@ static int write_credential(
                                             * user can no longer chmod() the file to gain write access. */
                                 return r;
 
-                        if (fchown(fd, uid, GID_INVALID) < 0)
+                        if (fchown(fd, uid, gid) < 0)
                                 return -errno;
                 }
         }
@@ -2845,6 +2846,7 @@ static int maybe_decrypt_and_write_credential(
                 const char *id,
                 bool encrypted,
                 uid_t uid,
+                gid_t gid,
                 bool ownership_ok,
                 const char *data,
                 size_t size,
@@ -2870,7 +2872,7 @@ static int maybe_decrypt_and_write_credential(
         if (add > *left)
                 return -E2BIG;
 
-        r = write_credential(dir_fd, id, data, size, uid, ownership_ok);
+        r = write_credential(dir_fd, id, data, size, uid, gid, ownership_ok);
         if (r < 0)
                 return log_debug_errno(r, "Failed to write credential '%s': %m", id);
 
@@ -2885,6 +2887,7 @@ static int load_credential_glob(
                 ReadFullFileFlags flags,
                 int write_dfd,
                 uid_t uid,
+                gid_t gid,
                 bool ownership_ok,
                 uint64_t *left) {
 
@@ -2932,6 +2935,7 @@ static int load_credential_glob(
                                 fn,
                                 encrypted,
                                 uid,
+                                gid,
                                 ownership_ok,
                                 data, size,
                                 left);
@@ -2955,6 +2959,7 @@ static int load_credential(
                 int read_dfd,
                 int write_dfd,
                 uid_t uid,
+                gid_t gid,
                 bool ownership_ok,
                 uint64_t *left) {
 
@@ -3066,7 +3071,7 @@ static int load_credential(
         if (r < 0)
                 return log_debug_errno(r, "Failed to read credential '%s': %m", path);
 
-        return maybe_decrypt_and_write_credential(write_dfd, id, encrypted, uid, ownership_ok, data, size, left);
+        return maybe_decrypt_and_write_credential(write_dfd, id, encrypted, uid, gid, ownership_ok, data, size, left);
 }
 
 struct load_cred_args {
@@ -3076,6 +3081,7 @@ struct load_cred_args {
         const char *unit;
         int dfd;
         uid_t uid;
+        gid_t gid;
         bool ownership_ok;
         uint64_t *left;
 };
@@ -3123,6 +3129,7 @@ static int load_cred_recurse_dir_cb(
                         dir_fd,
                         args->dfd,
                         args->uid,
+                        args->gid,
                         args->ownership_ok,
                         args->left);
         if (r < 0)
@@ -3137,6 +3144,7 @@ static int acquire_credentials(
                 const char *unit,
                 const char *p,
                 uid_t uid,
+                gid_t gid,
                 bool ownership_ok) {
 
         uint64_t left = CREDENTIALS_TOTAL_SIZE_MAX;
@@ -3186,6 +3194,7 @@ static int acquire_credentials(
                                         AT_FDCWD,
                                         dfd,
                                         uid,
+                                        gid,
                                         ownership_ok,
                                         &left);
                 else
@@ -3204,6 +3213,7 @@ static int acquire_credentials(
                                                 .unit = unit,
                                                 .dfd = dfd,
                                                 .uid = uid,
+                                                .gid = gid,
                                                 .ownership_ok = ownership_ok,
                                                 .left = &left,
                                         });
@@ -3227,6 +3237,7 @@ static int acquire_credentials(
                                 READ_FULL_FILE_SECURE|READ_FULL_FILE_FAIL_WHEN_LARGER,
                                 dfd,
                                 uid,
+                                gid,
                                 ownership_ok,
                                 &left);
                 if (r < 0)
@@ -3244,6 +3255,7 @@ static int acquire_credentials(
                                 READ_FULL_FILE_SECURE|READ_FULL_FILE_FAIL_WHEN_LARGER|READ_FULL_FILE_UNBASE64,
                                 dfd,
                                 uid,
+                                gid,
                                 ownership_ok,
                                 &left);
                 if (r < 0)
@@ -3281,7 +3293,7 @@ static int acquire_credentials(
                 if (add > left)
                         return -E2BIG;
 
-                r = write_credential(dfd, sc->id, data, size, uid, ownership_ok);
+                r = write_credential(dfd, sc->id, data, size, uid, gid, ownership_ok);
                 if (r < 0)
                         return r;
 
@@ -3304,7 +3316,7 @@ static int acquire_credentials(
                         if (!ownership_ok)
                                 return r;
 
-                        if (fchown(dfd, uid, GID_INVALID) < 0)
+                        if (fchown(dfd, uid, gid) < 0)
                                 return -errno;
                 }
         }
@@ -3320,7 +3332,8 @@ static int setup_credentials_internal(
                 const char *workspace,    /* This is where we can prepare it before moving it to the final place */
                 bool reuse_workspace,     /* Whether to reuse any existing workspace mount if it already is a mount */
                 bool must_mount,          /* Whether to require that we mount something, it's not OK to use the plain directory fall back */
-                uid_t uid) {
+                uid_t uid,
+                gid_t gid) {
 
         int r, workspace_mounted; /* negative if we don't know yet whether we have/can mount something; true
                                    * if we mounted something; false if we definitely can't mount anything */
@@ -3406,7 +3419,7 @@ static int setup_credentials_internal(
 
         (void) label_fix_full(AT_FDCWD, where, final, 0);
 
-        r = acquire_credentials(context, params, unit, where, uid, workspace_mounted);
+        r = acquire_credentials(context, params, unit, where, uid, gid, workspace_mounted);
         if (r < 0)
                 return r;
 
@@ -3461,7 +3474,8 @@ static int setup_credentials(
                 const ExecContext *context,
                 const ExecParameters *params,
                 const char *unit,
-                uid_t uid) {
+                uid_t uid,
+                gid_t gid) {
 
         _cleanup_free_ char *p = NULL, *q = NULL;
         int r;
@@ -3528,7 +3542,8 @@ static int setup_credentials(
                                 u,       /* temporary workspace to overmount */
                                 true,    /* reuse the workspace if it is already a mount */
                                 false,   /* it's OK to fall back to a plain directory if we can't mount anything */
-                                uid);
+                                uid,
+                                gid);
 
                 (void) rmdir(u); /* remove the workspace again if we can. */
 
@@ -3566,7 +3581,8 @@ static int setup_credentials(
                                 "/dev/shm",  /* temporary workspace to overmount */
                                 false,       /* do not reuse /dev/shm if it is already a mount, under no circumstances */
                                 true,        /* insist that something is mounted, do not allow fallback to plain directory */
-                                uid);
+                                uid,
+                                gid);
                 if (r < 0)
                         goto child_fail;
 
@@ -3751,6 +3767,7 @@ static int compile_bind_mounts(
 static int compile_symlinks(
                 const ExecContext *context,
                 const ExecParameters *params,
+                bool setup_os_release_symlink,
                 char ***ret_symlinks) {
 
         _cleanup_strv_free_ char **symlinks = NULL;
@@ -3794,6 +3811,20 @@ static int compile_symlinks(
                         if (r < 0)
                                 return r;
                 }
+        }
+
+        /* We make the host's os-release available via a symlink, so that we can copy it atomically
+         * and readers will never get a half-written version. Note that, while the paths specified here are
+         * absolute, when they are processed in namespace.c they will be made relative automatically, i.e.:
+         * 'os-release -> .os-release-stage/os-release' is what will be created. */
+        if (setup_os_release_symlink) {
+                r = strv_extend(&symlinks, "/run/host/.os-release-stage/os-release");
+                if (r < 0)
+                        return r;
+
+                r = strv_extend(&symlinks, "/run/host/os-release");
+                if (r < 0)
+                        return r;
         }
 
         *ret_symlinks = TAKE_PTR(symlinks);
@@ -3968,11 +3999,11 @@ static int apply_mount_namespace(
         _cleanup_strv_free_ char **empty_directories = NULL, **symlinks = NULL,
                         **read_write_paths_cleanup = NULL;
         _cleanup_free_ char *creds_path = NULL, *incoming_dir = NULL, *propagate_dir = NULL,
-                        *extension_dir = NULL, *host_os_release = NULL;
+                        *extension_dir = NULL, *host_os_release_stage = NULL;
         const char *root_dir = NULL, *root_image = NULL, *tmp_dir = NULL, *var_tmp_dir = NULL;
         char **read_write_paths;
         NamespaceInfo ns_info;
-        bool needs_sandboxing;
+        bool needs_sandboxing, setup_os_release_symlink;
         BindMount *bind_mounts = NULL;
         size_t n_bind_mounts = 0;
         int r;
@@ -3993,11 +4024,6 @@ static int apply_mount_namespace(
         }
 
         r = compile_bind_mounts(context, params, &bind_mounts, &n_bind_mounts, &empty_directories);
-        if (r < 0)
-                return r;
-
-        /* Symlinks for exec dirs are set up after other mounts, before they are made read-only. */
-        r = compile_symlinks(context, params, &symlinks);
         if (r < 0)
                 return r;
 
@@ -4065,6 +4091,12 @@ static int apply_mount_namespace(
         else
                 ns_info = (NamespaceInfo) {};
 
+        /* Symlinks (exec dirs, os-release) are set up after other mounts, before they are made read-only. */
+        setup_os_release_symlink = ns_info.mount_apivfs && (root_dir || root_image);
+        r = compile_symlinks(context, params, setup_os_release_symlink, &symlinks);
+        if (r < 0)
+                return r;
+
         if (context->mount_propagation_flag == MS_SHARED)
                 log_unit_debug(u, "shared mount propagation hidden by other fs namespacing unit settings: ignoring");
 
@@ -4091,9 +4123,9 @@ static int apply_mount_namespace(
 
                 /* If running under a different root filesystem, propagate the host's os-release. We make a
                  * copy rather than just bind mounting it, so that it can be updated on soft-reboot. */
-                if (root_dir || root_image) {
-                        host_os_release = strdup("/run/systemd/propagate/os-release");
-                        if (!host_os_release)
+                if (setup_os_release_symlink) {
+                        host_os_release_stage = strdup("/run/systemd/propagate/.os-release-stage");
+                        if (!host_os_release_stage)
                                 return -ENOMEM;
                 }
         } else {
@@ -4102,8 +4134,10 @@ static int apply_mount_namespace(
                 if (asprintf(&extension_dir, "/run/user/" UID_FMT "/systemd/unit-extensions", geteuid()) < 0)
                         return -ENOMEM;
 
-                if (root_dir || root_image) {
-                        if (asprintf(&host_os_release, "/run/user/" UID_FMT "/systemd/propagate/os-release", geteuid()) < 0)
+                if (setup_os_release_symlink) {
+                        if (asprintf(&host_os_release_stage,
+                                     "/run/user/" UID_FMT "/systemd/propagate/.os-release-stage",
+                                     geteuid()) < 0)
                                 return -ENOMEM;
                 }
         }
@@ -4153,7 +4187,7 @@ static int apply_mount_namespace(
                         incoming_dir,
                         extension_dir,
                         root_dir || root_image ? params->notify_socket : NULL,
-                        host_os_release,
+                        host_os_release_stage,
                         error_path);
 
         /* If we couldn't set up the namespace this is probably due to a missing capability. setup_namespace() reports
@@ -4942,6 +4976,7 @@ static int exec_child(
                                 *exit_status = EXIT_SUCCESS;
                                 return 0;
                         }
+
                         *exit_status = EXIT_CONFIRM;
                         return log_unit_error_errno(unit, SYNTHETIC_ERRNO(ECANCELED),
                                                     "Execution cancelled by the user");
@@ -5111,14 +5146,18 @@ static int exec_child(
                 r = set_coredump_filter(context->coredump_filter);
                 if (ERRNO_IS_PRIVILEGE(r))
                         log_unit_debug_errno(unit, r, "Failed to adjust coredump_filter, ignoring: %m");
-                else if (r < 0)
+                else if (r < 0) {
+                        *exit_status = EXIT_LIMITS;
                         return log_unit_error_errno(unit, r, "Failed to adjust coredump_filter: %m");
+                }
         }
 
         if (context->nice_set) {
                 r = setpriority_closest(context->nice);
-                if (r < 0)
+                if (r < 0) {
+                        *exit_status = EXIT_NICE;
                         return log_unit_error_errno(unit, r, "Failed to set up process scheduling priority (nice level): %m");
+                }
         }
 
         if (context->cpu_sched_set) {
@@ -5272,7 +5311,7 @@ static int exec_child(
         }
 
         if (FLAGS_SET(params->flags, EXEC_WRITE_CREDENTIALS)) {
-                r = setup_credentials(context, params, unit->id, uid);
+                r = setup_credentials(context, params, unit->id, uid, gid);
                 if (r < 0) {
                         *exit_status = EXIT_CREDENTIALS;
                         return log_unit_error_errno(unit, r, "Failed to set up credentials: %m");
@@ -5565,11 +5604,11 @@ static int exec_child(
                                               LOG_UNIT_MESSAGE(unit, "Executable %s missing, skipping: %m",
                                                                command->path),
                                               "EXECUTABLE=%s", command->path);
+                        *exit_status = EXIT_SUCCESS;
                         return 0;
                 }
 
                 *exit_status = EXIT_EXEC;
-
                 return log_unit_struct_errno(unit, LOG_INFO, r,
                                              "MESSAGE_ID=" SD_MESSAGE_SPAWN_FAILED_STR,
                                              LOG_UNIT_INVOCATION_ID(unit),
@@ -6031,7 +6070,7 @@ int exec_spawn(Unit *unit,
                 return log_unit_error_errno(unit, errno, "Failed to fork: %m");
 
         if (pid == 0) {
-                int exit_status = EXIT_SUCCESS;
+                int exit_status;
 
                 r = exec_child(unit,
                                command,
@@ -6049,9 +6088,8 @@ int exec_spawn(Unit *unit,
                                &exit_status);
 
                 if (r < 0) {
-                        const char *status =
-                                exit_status_to_string(exit_status,
-                                                      EXIT_STATUS_LIBC | EXIT_STATUS_SYSTEMD);
+                        const char *status = ASSERT_PTR(
+                                        exit_status_to_string(exit_status, EXIT_STATUS_LIBC | EXIT_STATUS_SYSTEMD));
 
                         log_unit_struct_errno(unit, LOG_ERR, r,
                                               "MESSAGE_ID=" SD_MESSAGE_SPAWN_FAILED_STR,
@@ -6059,7 +6097,8 @@ int exec_spawn(Unit *unit,
                                               LOG_UNIT_MESSAGE(unit, "Failed at step %s spawning %s: %m",
                                                                status, command->path),
                                               "EXECUTABLE=%s", command->path);
-                }
+                } else
+                        assert(exit_status == EXIT_SUCCESS);
 
                 _exit(exit_status);
         }

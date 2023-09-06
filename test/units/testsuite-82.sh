@@ -50,7 +50,7 @@ elif [ -f /run/testsuite82.touch2 ]; then
     # Test that we really are in the new overlayfs root fs
     read -r x </lower
     test "$x" = "miep"
-    cmp /etc/os-release /run/systemd/propagate/os-release
+    cmp /etc/os-release /run/systemd/propagate/.os-release-stage/os-release
     grep -q MARKER=1 /etc/os-release
 
     # Switch back to the original root, away from the overlayfs
@@ -92,11 +92,11 @@ elif [ -f /run/testsuite82.touch ]; then
     echo miep >/tmp/nextroot-lower/lower
 
     # Copy os-release away, so that we can manipulate it and check that it is updated in the propagate
-    # directory across soft reboots.
+    # directory across soft reboots. Try to cover corner cases by truncating it.
     mkdir -p /tmp/nextroot-lower/usr/lib
-    cp /etc/os-release /tmp/nextroot-lower/usr/lib/os-release
+    grep ID /etc/os-release >/tmp/nextroot-lower/usr/lib/os-release
     echo MARKER=1 >>/tmp/nextroot-lower/usr/lib/os-release
-    cmp /etc/os-release /run/systemd/propagate/os-release
+    cmp /etc/os-release /run/systemd/propagate/.os-release-stage/os-release
     (! grep -q MARKER=1 /etc/os-release)
 
     mount -t overlay nextroot /run/nextroot -o lowerdir=/tmp/nextroot-lower:/,ro
