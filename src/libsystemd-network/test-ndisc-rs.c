@@ -41,7 +41,8 @@ static void router_dump(sd_ndisc_router *rt) {
         assert_se(rt);
 
         log_info("--");
-        assert_se(sd_ndisc_router_get_address(rt, &addr) == -ENODATA);
+        assert_se(sd_ndisc_router_get_address(rt, &addr) >= 0);
+        log_info("Sender: %s", IN6_ADDR_TO_STRING(&addr));
 
         assert_se(sd_ndisc_router_get_timestamp(rt, CLOCK_REALTIME, &t) >= 0);
         log_info("Timestamp: %s", FORMAT_TIMESTAMP(t));
@@ -176,12 +177,27 @@ int icmp6_bind_router_advertisement(int ifindex) {
         return -ENOSYS;
 }
 
-int icmp6_receive(int fd, void *iov_base, size_t iov_len,
-                  struct in6_addr *dst, triple_timestamp *timestamp) {
+static struct in6_addr dummy_link_local = {
+        .s6_addr = {
+                0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x12, 0x34, 0x56, 0xff, 0xfe, 0x78, 0x9a, 0xbc,
+        },
+};
+
+int icmp6_receive(
+                int fd,
+                void *iov_base,
+                size_t iov_len,
+                struct in6_addr *ret_sender,
+                triple_timestamp *ret_timestamp) {
+
         assert_se(read (fd, iov_base, iov_len) == (ssize_t)iov_len);
 
-        if (timestamp)
-                triple_timestamp_get(timestamp);
+        if (ret_timestamp)
+                triple_timestamp_get(ret_timestamp);
+
+        if (ret_sender)
+                *ret_sender = dummy_link_local;
 
         return 0;
 }
