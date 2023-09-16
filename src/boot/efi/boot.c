@@ -2185,7 +2185,9 @@ static EFI_STATUS image_start(
         if (EFI_ERROR(err))
                 return log_error_status_stall(err, L"Error loading %s: %r", entry->loader, err);
 
-        if (entry->devicetree) {
+        /* DTBs are loaded by the kernel before ExitBootServices, and they can be used to map and assign
+         * arbitrary memory ranges, so skip it when secure boot is enabled as the DTB here is unverified. */
+        if (entry->devicetree && !secure_boot_enabled()) {
                 err = devicetree_install(&dtstate, root_dir, entry->devicetree);
                 if (EFI_ERROR(err))
                         return log_error_status_stall(err, L"Error loading %s: %r", entry->devicetree, err);
