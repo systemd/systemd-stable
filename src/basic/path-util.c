@@ -42,7 +42,7 @@ int path_split_and_make_absolute(const char *p, char ***ret) {
         return r;
 }
 
-char *path_make_absolute(const char *p, const char *prefix) {
+char* path_make_absolute(const char *p, const char *prefix) {
         assert(p);
 
         /* Makes every item in the list an absolute path by prepending
@@ -254,7 +254,7 @@ int path_strv_make_absolute_cwd(char **l) {
         return 0;
 }
 
-char **path_strv_resolve(char **l, const char *root) {
+char** path_strv_resolve(char **l, const char *root) {
         unsigned k = 0;
         bool enomem = false;
         int r;
@@ -335,7 +335,7 @@ char **path_strv_resolve(char **l, const char *root) {
         return l;
 }
 
-char **path_strv_resolve_uniq(char **l, const char *root) {
+char** path_strv_resolve_uniq(char **l, const char *root) {
 
         if (strv_isempty(l))
                 return l;
@@ -346,7 +346,7 @@ char **path_strv_resolve_uniq(char **l, const char *root) {
         return strv_uniq(l);
 }
 
-char *path_simplify_full(char *path, PathSimplifyFlags flags) {
+char* path_simplify_full(char *path, PathSimplifyFlags flags) {
         bool add_slash = false, keep_trailing_slash;
         char *f = ASSERT_PTR(path);
         int r;
@@ -399,7 +399,7 @@ char *path_simplify_full(char *path, PathSimplifyFlags flags) {
         return path;
 }
 
-char *path_startswith_full(const char *path, const char *prefix, bool accept_dot_dot) {
+char* path_startswith_full(const char *path, const char *prefix, bool accept_dot_dot) {
         assert(path);
         assert(prefix);
 
@@ -808,7 +808,7 @@ int fsck_exists_for_fstype(const char *fstype) {
         return executable_is_good(checker);
 }
 
-static const char *skip_slash_or_dot(const char *p) {
+static const char* skip_slash_or_dot(const char *p) {
         for (; !isempty(p); p++) {
                 if (*p == '/')
                         continue;
@@ -892,7 +892,7 @@ int path_find_first_component(const char **p, bool accept_dot_dot, const char **
         return len;
 }
 
-static const char *skip_slash_or_dot_backward(const char *path, const char *q) {
+static const char* skip_slash_or_dot_backward(const char *path, const char *q) {
         assert(path);
         assert(!q || q >= path);
 
@@ -993,7 +993,7 @@ int path_find_last_component(const char *path, bool accept_dot_dot, const char *
         return len;
 }
 
-const char *last_path_component(const char *path) {
+const char* last_path_component(const char *path) {
 
         /* Finds the last component of the path, preserving the optional trailing slash that signifies a directory.
          *
