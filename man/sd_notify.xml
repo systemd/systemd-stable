@@ -274,7 +274,11 @@
         stopped, its file descriptor store is discarded and all file descriptors in it are closed. Use
         <function>sd_pid_notify_with_fds()</function> to send messages with <literal>FDSTORE=1</literal>, see
         below. The service manager will set the <varname>$FDSTORE</varname> environment variable for services
-        that have the file descriptor store enabled.</para></listitem>
+        that have the file descriptor store enabled.</para>
+
+        <para>For further information on the file descriptor store see the <ulink
+        url="https://systemd.io/FILE_DESCRIPTOR_STORE">File Descriptor Store</ulink> overview.</para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
