@@ -860,8 +860,7 @@ static int sip_build_json(Link *link, JsonVariant **ret) {
                                                elements + n);
                 if (r < 0)
                         goto finalize;
-                if (r > 0)
-                        n++;
+                n++;
         }
 
         r = json_build(ret, JSON_BUILD_OBJECT(JSON_BUILD_PAIR("SIP", JSON_BUILD_VARIANT_ARRAY(elements, n))));
