@@ -19,6 +19,7 @@
 #include "pretty-print.h"
 #include "process-util.h"
 #include "rlimit-util.h"
+#include "sigbus.h"
 #include "signal-util.h"
 #include "socket-netlink.h"
 #include "socket-util.h"
@@ -1120,6 +1121,8 @@ static int run(int argc, char **argv) {
 
         /* The journal merging logic potentially needs a lot of fds. */
         (void) rlimit_nofile_bump(HIGH_RLIMIT_NOFILE);
+
+        sigbus_install();
 
         r = parse_config();
         if (r < 0)
