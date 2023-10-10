@@ -601,12 +601,12 @@ static int action_dissect(DissectedImage *m, LoopDevice *d) {
         else if (arg_json_format_flags & JSON_FORMAT_OFF)
                 printf("      Size: %s\n", FORMAT_BYTES(size));
 
-        printf(" Sec. Size: %" PRIu32 "\n", m->sector_size);
+        if (arg_json_format_flags & JSON_FORMAT_OFF) {
+                printf(" Sec. Size: %" PRIu32 "\n", m->sector_size);
 
-        if (arg_json_format_flags & JSON_FORMAT_OFF)
                 putc('\n', stdout);
-
-        fflush(stdout);
+                fflush(stdout);
+        }
 
         r = dissected_image_acquire_metadata(m, 0);
         if (r == -ENXIO)
