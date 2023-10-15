@@ -468,6 +468,7 @@ const SyscallFilterSet syscall_filter_sets[_SYSCALL_FILTER_SET_MAX] = {
                 "fchdir\0"
                 "fchmod\0"
                 "fchmodat\0"
+                "fchmodat2\0"
                 "fcntl\0"
                 "fcntl64\0"
                 "fgetxattr\0"
