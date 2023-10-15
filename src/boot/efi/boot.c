@@ -1145,7 +1145,7 @@ static char *line_get_key_value(
                 line[linelen] = '\0';
 
                 /* remove leading whitespace */
-                while (strchr8(" \t", *line)) {
+                while (linelen > 0 && strchr8(" \t", *line)) {
                         line++;
                         linelen--;
                 }
