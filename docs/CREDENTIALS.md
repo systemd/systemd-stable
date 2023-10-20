@@ -401,7 +401,12 @@ qemu-system-x86_64 \
 ## Relevant Paths
 
 From *service* perspective the runtime path to find loaded credentials in is
-provided in the `$CREDENTIALS_DIRECTORY` environment variable.
+provided in the `$CREDENTIALS_DIRECTORY` environment variable. For *system
+services* the credential directory will be `/run/credentials/<unit name>`, but
+hardcoding this path is discouraged, because it does not work for *user
+services*. Packagers and system administrators may hardcode the credential path
+as a last resort for software that does not yet search for credentials relative
+to `$CREDENTIALS_DIRECTORY`.
 
 At runtime, credentials passed to the *system* are placed in
 `/run/credentials/@system/` (for regular credentials, such as those passed from
