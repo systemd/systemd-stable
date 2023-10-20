@@ -1036,6 +1036,7 @@ install_modules() {
 
     if get_bool "$LOOKS_LIKE_SUSE"; then
         instmods ext4
+        instmods af_packet
         # for TEST-54-CREDS
         instmods dmi-sysfs
     fi
