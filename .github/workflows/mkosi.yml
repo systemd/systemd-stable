@@ -70,6 +70,10 @@ jobs:
 
         [Output]
         KernelCommandLine=${{ env.KERNEL_CMDLINE }}
+
+        [Host]
+        # Sometimes we run on a host with /dev/kvm, but it is broken, so explicitly disable it
+        QemuKvm=no
         EOF
 
     - name: Build ${{ matrix.distro }}
