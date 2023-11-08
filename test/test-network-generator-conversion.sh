@@ -292,5 +292,5 @@ INVALID_COMMAND_LINES=(
     "ip=[fdef:c400:bd01:1096::2]::[fdef:c400:bd01:1096::1]:64::ipv6:off:[fdef:c400:bd01:1096::aaaa]:foo"
 )
 for cmdline in "${INVALID_COMMAND_LINES[@]}"; do
-    (! SYSTEMD_LOG_LEVEL=debug SYSTEMD_PROC_CMDLINE="$cmdline" "$GENERATOR_BIN")
+    (! SYSTEMD_LOG_LEVEL=debug SYSTEMD_PROC_CMDLINE="$cmdline" "$GENERATOR_BIN" --root "$WORK_DIR")
 done
