@@ -108,6 +108,23 @@ jobs:
         RepositoryKeyCheck=no
         EOF
 
+        mkdir -p mkosi.repart/
+        tee mkosi.repart/00-esp.conf <<- EOF
+        [Partition]
+        Type=esp
+        Format=vfat
+        CopyFiles=/boot:/
+        SizeMinBytes=512M
+        SizeMaxBytes=512M
+        EOF
+        tee mkosi.repart/10-root.conf <<- EOF
+        [Partition]
+        Type=root
+        Format=ext4
+        CopyFiles=/
+        Minimize=guess
+        EOF
+
     - name: Generate secure boot key
       run: mkosi genkey
 
