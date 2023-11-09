@@ -24,8 +24,8 @@ actions:
     - "bash -ec 'git describe --tags --abbrev=0 | cut -b 2-'"
 
   post-upstream-clone:
-    # Use the Fedora Rawhide specfile
-    - "git clone https://src.fedoraproject.org/rpms/systemd .packit_rpm --depth=1"
+    # Use the Fedora 40 specfile
+    - "git clone --branch f40 https://src.fedoraproject.org/rpms/systemd .packit_rpm --depth=1"
     # Drop the "sources" file so rebase-helper doesn't think we're a dist-git
     - "rm -fv .packit_rpm/sources"
     # Drop backported patches from the specfile, but keep the downstream-only ones
@@ -46,11 +46,11 @@ jobs:
 - job: copr_build
   trigger: pull_request
   targets:
-  - fedora-rawhide-aarch64
-  - fedora-rawhide-i386
-  - fedora-rawhide-ppc64le
-  - fedora-rawhide-s390x
-  - fedora-rawhide-x86_64
+  - fedora-40-aarch64
+  - fedora-40-i386
+  - fedora-40-ppc64le
+  - fedora-40-s390x
+  - fedora-40-x86_64
 
 - job: tests
   trigger: pull_request
@@ -58,4 +58,4 @@ jobs:
   fmf_ref: main
   tmt_plan: ci
   targets:
-  - fedora-rawhide-x86_64
+  - fedora-40-x86_64
