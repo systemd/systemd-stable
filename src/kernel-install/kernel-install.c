@@ -960,7 +960,7 @@ static int context_prepare_execution(Context *c) {
 }
 
 static int context_execute(Context *c) {
-        int r;
+        int r, ret;
 
         assert(c);
 
@@ -979,7 +979,7 @@ static int context_execute(Context *c) {
                 log_debug("Plugin arguments: %s", strna(z));
         }
 
-        r = execute_strv(
+        ret = execute_strv(
                         /* name = */ NULL,
                         c->plugins,
                         /* root = */ NULL,
@@ -989,14 +989,13 @@ static int context_execute(Context *c) {
                         c->argv,
                         c->envp,
                         EXEC_DIR_SKIP_REMAINING);
-        if (r < 0)
-                return r;
 
         r = context_remove_entry_dir(c);
         if (r < 0)
                 return r;
 
-        return 0;
+        /* This returns 0 on success, positive exit code on plugin failure, negative errno on other failures. */
+        return ret;
 }
 
 static bool bypass(void) {
@@ -1265,4 +1264,4 @@ static int run(int argc, char* argv[]) {
         return dispatch_verb(argc, argv, verbs, &c);
 }
 
-DEFINE_MAIN_FUNCTION(run);
+DEFINE_MAIN_FUNCTION_WITH_POSITIVE_FAILURE(run);
