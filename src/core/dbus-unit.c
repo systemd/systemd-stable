@@ -1067,7 +1067,7 @@ static int property_get_current_memory(
 
         r = unit_get_memory_current(u, &sz);
         if (r < 0 && r != -ENODATA)
-                log_unit_warning_errno(u, r, "Failed to get memory.usage_in_bytes attribute: %m");
+                log_unit_warning_errno(u, r, "Failed to get current memory usage from cgroup: %m");
 
         return sd_bus_message_append(reply, "t", sz);
 }
