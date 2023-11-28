@@ -183,10 +183,16 @@ static int run(int argc, char *argv[]) {
                 assert_cc(sizeof(usec_t) == sizeof(uint64_t));
 
                 r = sd_bus_process(a, &m);
-                if (r < 0)
-                        return log_error_errno(r, "Failed to process bus a: %m");
+                if (r < 0) {
+                        if (ERRNO_IS_DISCONNECT(r)) /* Treat 'connection reset by peer' as clean exit condition */
+                                break;
 
+                        return log_error_errno(r, "Failed to process bus a: %m");
+                }
                 if (m) {
+                        if (sd_bus_message_is_signal(m, "org.freedesktop.DBus.Local", "Disconnected"))
+                                break;
+
                         r = sd_bus_send(b, m, NULL);
                         if (r < 0)
                                 return log_error_errno(r, "Failed to send message: %m");
@@ -199,12 +205,14 @@ static int run(int argc, char *argv[]) {
                 if (r < 0) {
                         /* treat 'connection reset by peer' as clean exit condition */
                         if (ERRNO_IS_DISCONNECT(r))
-                                return 0;
+                                break;
 
                         return log_error_errno(r, "Failed to process bus: %m");
                 }
-
                 if (m) {
+                        if (sd_bus_message_is_signal(m, "org.freedesktop.DBus.Local", "Disconnected"))
+                                break;
+
                         r = sd_bus_send(a, m, NULL);
                         if (r < 0)
                                 return log_error_errno(r, "Failed to send message: %m");
