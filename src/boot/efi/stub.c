@@ -479,16 +479,18 @@ static EFI_STATUS run(EFI_HANDLE image) {
         parameters_measured = parameters_measured < 0 ? m : (parameters_measured && m);
 
         _cleanup_free_ char16_t *dropin_dir = get_extra_dir(loaded_image->FilePath);
-        err = cmdline_append_and_measure_addons(
-                        image,
-                        loaded_image,
-                        dropin_dir,
-                        uname,
-                        &m,
-                        &cmdline);
-        if (err != EFI_SUCCESS)
-                log_error_status(err, "Error loading UKI-specific addons, ignoring: %m");
-        parameters_measured = parameters_measured < 0 ? m : (parameters_measured && m);
+        if (dropin_dir) {
+                err = cmdline_append_and_measure_addons(
+                                image,
+                                loaded_image,
+                                dropin_dir,
+                                uname,
+                                &m,
+                                &cmdline);
+                if (err != EFI_SUCCESS)
+                        log_error_status(err, "Error loading UKI-specific addons, ignoring: %m");
+                parameters_measured = parameters_measured < 0 ? m : (parameters_measured && m);
+        }
 
         /* SMBIOS OEM Strings data is controlled by the host admin and not covered
          * by the VM attestation, so MUST NOT be trusted when in a confidential VM */
