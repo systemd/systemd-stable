@@ -5000,12 +5000,6 @@ E00000-EFFFFF     (base 16)		iSmart electronic technology co.,LTD
 				HuiZhou  GuangDong  516000
 				CN
 
-38-B8-EB   (hex)		Wyres SAS
-E00000-EFFFFF     (base 16)		Wyres SAS
-				24 rue henri barbusse
-				Echirolles  Isere  38130
-				FR
-
 38-FD-FE   (hex)		Rademacher Geraete-Elektronik GmbH
 700000-7FFFFF     (base 16)		Rademacher Geraete-Elektronik GmbH
 				Buschkamp 7
@@ -6058,6 +6052,42 @@ B00000-BFFFFF     (base 16)		MedRx, Inc
 				4F?1 No. 258, Lian  Cheng Rd, Zhong He Dist
 				New Taipei City 235  Taipei  235
 				TW
+
+8C-55-70   (hex)		Nayax LTD
+800000-8FFFFF     (base 16)		Nayax LTD
+				3 Arik Einstein 
+				Herzliya     4659071
+				IL
+
+28-F8-C6   (hex)		3PI Tech Solutions
+B00000-BFFFFF     (base 16)		3PI Tech Solutions
+				5600 River Rd, Suite 800
+				Rosemont  IL  60018
+				US
+
+38-B8-EB   (hex)		WT-Consulting SAS
+E00000-EFFFFF     (base 16)		WT-Consulting SAS
+				4 rue de Paris
+				Morlaix    29600
+				FR
+
+28-F8-C6   (hex)		Intermatic AG
+200000-2FFFFF     (base 16)		Intermatic AG
+				Nezavisimosti av. 11, building 2
+				Minsk    220030
+				BY
+
+28-F8-C6   (hex)		Beijing HengzhengTC Sci-Tech Co., Ltd
+400000-4FFFFF     (base 16)		Beijing HengzhengTC Sci-Tech Co., Ltd
+				201, 2nd Floor, Office Building, No. 2 Courtyard of Long Xiang Zhi Ban Group, Huilongguan, Changping District
+				Beijing  Beijing  102208
+				CN
+
+28-F8-C6   (hex)		Videndum Media Solutions Spa
+A00000-AFFFFF     (base 16)		Videndum Media Solutions Spa
+				Via Valsugana 100
+				Cassola  Vicenza  36022
+				IT
 
 B8-4C-87   (hex)		Shenzhen Link-all Technology Co., Ltd
 300000-3FFFFF     (base 16)		Shenzhen Link-all Technology Co., Ltd
@@ -11740,6 +11770,66 @@ C00000-CFFFFF     (base 16)		Jiangsu Yibang New Energy Technology Co., LTD
 				Room 1101, 11th Floor, Building 11, China Israel Changzhou Innovation Park, No. 18-67 Changwu Middle Road, Wujin District
 				Changzhou City  Jiangsu Province  213100
 				CN
+
+8C-55-70   (hex)		Eideal Company Limited
+700000-7FFFFF     (base 16)		Eideal Company Limited
+				No. 45, Lane 205, Sec. 2, Nanshan Rd., Luzhu Dist.,
+				Taoyuan City    33852
+				TW
+
+8C-55-70   (hex)		Neptronic Ltd
+900000-9FFFFF     (base 16)		Neptronic Ltd
+				400 Lebeau Blvd
+				Montreal  Quebec  H4N 1R6
+				CA
+
+8C-55-70   (hex)		Johnson Health Tech. (Shanghai) Co.,Ltd.
+E00000-EFFFFF     (base 16)		Johnson Health Tech. (Shanghai) Co.,Ltd.
+				No.1355, Xinhe Rd., JiaDing District, Shanghai city, China
+				Shanghai    201815
+				CN
+
+8C-55-70   (hex)		Fortune Brands Innovations, Inc.
+A00000-AFFFFF     (base 16)		Fortune Brands Innovations, Inc.
+				520 Lake Cook Rd
+				Deerfield  IL  60015
+				US
+
+8C-55-70   (hex)		ScandiNova Systems
+300000-3FFFFF     (base 16)		ScandiNova Systems
+				Typsnittsgatan 15
+				Uppsala    75454
+				SE
+
+8C-55-70   (hex)		LLC Katusha Print
+100000-1FFFFF     (base 16)		LLC Katusha Print
+				Timiryazeva 28V
+				Almaty    050000
+				KZ
+
+28-F8-C6   (hex)		ASES GROUP, s.r.o.
+700000-7FFFFF     (base 16)		ASES GROUP, s.r.o.
+				Antala Staška 1859/34
+				Praha  Česká republika  14000
+				CZ
+
+28-F8-C6   (hex)		2iC-Care Ltd
+000000-0FFFFF     (base 16)		2iC-Care Ltd
+				20 Mortlake High Street
+				London    SW14 8JN
+				GB
+
+28-F8-C6   (hex)		Shenzhen Xifanlina Industrial Co.,Ltd
+800000-8FFFFF     (base 16)		Shenzhen Xifanlina Industrial Co.,Ltd
+				Room 409, Building 1, Youlian Garden, Longgang Avenue, Maoye Community, Buji Street, Longgang District
+				Shenzhen    518000
+				CN
+
+28-F8-C6   (hex)		secuever
+900000-9FFFFF     (base 16)		secuever
+				10, Baekjegobun-ro 9-gil, Songpa-gu
+				Seoul    05562
+				KR
 
 B8-4C-87   (hex)		Altronix , Corp
 A00000-AFFFFF     (base 16)		Altronix , Corp
@@ -17972,6 +18062,24 @@ A00000-AFFFFF     (base 16)		Edgenectar Inc.
 8C-55-70   (hex)		Private
 500000-5FFFFF     (base 16)		Private
 
+8C-55-70   (hex)		AST International GmbH
+000000-0FFFFF     (base 16)		AST International GmbH
+				Baerental 26
+				Calw    75365
+				DE
+
+8C-55-70   (hex)		Microvision Inc
+200000-2FFFFF     (base 16)		Microvision Inc
+				18390 NE 68th Street
+				Redmond  WA  98052
+				US
+
+28-F8-C6   (hex)		Annapurna labs
+C00000-CFFFFF     (base 16)		Annapurna labs
+				Matam Scientific Industries Center,   Building 8.2
+				Mail box 15123  Haifa  3508409
+				IL
+
 D0-14-11   (hex)		P.B. Elettronica srl
 100000-1FFFFF     (base 16)		P.B. Elettronica srl
 				Via Santorelli, 8
@@ -23924,6 +24032,36 @@ B00000-BFFFFF     (base 16)		SERNET (SUZHOU) TECHNOLOGIES CORPORATION
 				Suzhou    215021
 				CN
 
+8C-55-70   (hex)		Next Vision Tech(Ningbo)Co.,LTD
+400000-4FFFFF     (base 16)		Next Vision Tech(Ningbo)Co.,LTD
+				Room 1502, Building 1, Tsinghua Science and TechnologyPark, No. 119 Zicheng Road, Panhuo Street, Yinzhou District, Ningbo
+				Ningbo    513100
+				CN
+
+28-F8-C6   (hex)		ShenZhen Goodtimes Technoogy CO.,LTD
+D00000-DFFFFF     (base 16)		ShenZhen Goodtimes Technoogy CO.,LTD
+				10A, ShuiSong Building, TaiRan Science Park, No. 25, TaiRan 8th Rd, Tian'An Community, ShaTou Street, Futian District, Shenzhen.
+				Shenzhen  Guangdong  518000
+				CN
+
+28-F8-C6   (hex)		Annapurna labs
+100000-1FFFFF     (base 16)		Annapurna labs
+				Matam Scientific Industries Center,   Building 8.2
+				Mail box 15123  Haifa  3508409
+				IL
+
+28-F8-C6   (hex)		Shenzhen Hongdian technologies corporation.
+600000-6FFFFF     (base 16)		Shenzhen Hongdian technologies corporation.
+				Tower A, Hongdian Building, 100 Huabao Road, Pinghu, Longgang District
+				shenzhen  guangdong  518111
+				CN
+
+28-F8-C6   (hex)		PANASONIC AUTOMOTIVE SYSTEM MALAYSIA
+300000-3FFFFF     (base 16)		PANASONIC AUTOMOTIVE SYSTEM MALAYSIA
+				PLOT 10, PHASE 4PRAI INDUSTRAIL ESTATE
+				PRAI  PENANG  13600
+				MY
+
 C8-5C-E2   (hex)		Fela Management AG 
 000000-0FFFFF     (base 16)		Fela Management AG 
 				Basadingerstrasse 18
@@ -24069,12 +24207,6 @@ D0-15-BB   (hex)		Esders GmbH
 400000-4FFFFF     (base 16)		Esders GmbH
 				Hammer-Tannen-Strasse 26-30
 				Haselünne    49740
-				DE
-
-50-48-2C   (hex)		Hy-Line Computer Components GmbH
-400000-4FFFFF     (base 16)		Hy-Line Computer Components GmbH
-				Inselkammerstr. 10
-				Unterhaching    82008
 				DE
 
 50-48-2C   (hex)		Telecam Technology Co.,Ltd
@@ -25810,12 +25942,6 @@ C00000-CFFFFF     (base 16)		Encroute AB
 				Box 2062
 				Sundbyberg    17402
 				SE
-
-A0-02-4A   (hex)		Vitec Imaging Solutions Spa
-100000-1FFFFF     (base 16)		Vitec Imaging Solutions Spa
-				Via Valsugana 100
-				Cassola  Vicenza  36022
-				IT
 
 A0-02-4A   (hex)		Beijing Lyratone Technology Co., Ltd
 800000-8FFFFF     (base 16)		Beijing Lyratone Technology Co., Ltd
@@ -28097,12 +28223,6 @@ B00000-BFFFFF     (base 16)		Eutron SPA
 				Chicago    60607
 				US
 
-34-00-8A   (hex)		Sithon Technologies SAS
-600000-6FFFFF     (base 16)		Sithon Technologies SAS
-				115 Rue Claude Chappe
-				Plouzane    29280
-				FR
-
 34-00-8A   (hex)		ZQAM Communications
 100000-1FFFFF     (base 16)		ZQAM Communications
 				3F., No.6, Innovation Road II, Science Park, 
@@ -30046,3 +30166,33 @@ D4-61-37   (hex)		Mavenir Systems, Inc.
 				
 				    
 				
+
+8C-55-70   (hex)		EPSa Elektronik & Präzisionsbau Saalfeld GmbH
+D00000-DFFFFF     (base 16)		EPSa Elektronik & Präzisionsbau Saalfeld GmbH
+				Remschuetzer Str. 1
+				Saalfeld/Saale    07318
+				DE
+
+A0-02-4A   (hex)		Videndum Media Solutions Spa
+100000-1FFFFF     (base 16)		Videndum Media Solutions Spa
+				Via Valsugana 100
+				Cassola  Vicenza  36022
+				IT
+
+8C-55-70   (hex)		Antronix Inc.,
+C00000-CFFFFF     (base 16)		Antronix Inc.,
+				440 Forsgate Drive 
+				Cranbury  NJ  08512
+				US
+
+34-00-8A   (hex)		Sithon Technologies
+600000-6FFFFF     (base 16)		Sithon Technologies
+				38 RUE JIM SEVELLEC
+				BREST     29200
+				FR
+
+50-48-2C   (hex)		HY-LINE Technology GmbH
+400000-4FFFFF     (base 16)		HY-LINE Technology GmbH
+				Inselkammerstr. 10
+				Unterhaching    82008
+				DE

@@ -86,6 +86,9 @@ int verify_generate_path(char **ret, char **filenames) {
                 if (r < 0)
                         return r;
 
+                if (access(a, F_OK) < 0)
+                        continue;
+
                 r = path_extract_directory(a, &t);
                 if (r < 0)
                         return r;
@@ -97,6 +100,9 @@ int verify_generate_path(char **ret, char **filenames) {
 
         strv_uniq(ans);
 
+        if (isempty(joined))
+                return 0;
+
         /* First, prepend our directories. Second, if some path was specified, use that, and
          * otherwise use the defaults. Any duplicates will be filtered out in path-lookup.c.
          * Treat explicit empty path to mean that nothing should be appended.
@@ -104,7 +110,7 @@ int verify_generate_path(char **ret, char **filenames) {
         old = getenv("SYSTEMD_UNIT_PATH");
         if (!streq_ptr(old, "")) {
                 if (!old)
-                        old = ":";
+                        old = "";
 
                 r = strv_extend(&ans, old);
                 if (r < 0)

@@ -114,9 +114,7 @@ static int context_open_root(Context *c) {
         assert(c);
         assert(c->rfd < 0);
 
-        c->rfd = open("/", O_CLOEXEC | O_DIRECTORY | O_PATH);
-        if (c->rfd < 0)
-                return log_error_errno(errno, "Failed to open root directory: %m");
+        /* --root is not supported */
 
         return 0;
 }
@@ -215,7 +213,7 @@ static int context_set_version(Context *c, const char *s) {
         return context_set_string(s, "command line", "kernel version", &c->version);
 }
 
-static int context_set_path(Context *c, int rfd, const char *s, const char *source, const char *name, char **dest) {
+static int context_set_path(Context *c, const char *s, const char *source, const char *name, char **dest) {
         char *p;
         int r;
 
@@ -227,13 +225,17 @@ static int context_set_path(Context *c, int rfd, const char *s, const char *sour
         if (*dest || !s)
                 return 0;
 
-        if (rfd >= 0)
-                r = chaseat(rfd, s, CHASE_AT_RESOLVE_IN_ROOT, &p, /* ret_fd = */ NULL);
-        else
-                r = chase(s, /* root = */ NULL, 0, &p, /* ret_fd = */ NULL);
-        if (r < 0)
-                return log_warning_errno(r, "Failed to chase path %s for %s specified via %s, ignoring: %m",
-                                         s, name, source);
+        if (c->rfd >= 0) {
+                r = chaseat(c->rfd, s, CHASE_AT_RESOLVE_IN_ROOT, &p, /* ret_fd = */ NULL);
+                if (r < 0)
+                        return log_warning_errno(r, "Failed to chase path %s for %s specified via %s, ignoring: %m",
+                                                 s, name, source);
+        } else {
+                r = path_make_absolute_cwd(s, &p);
+                if (r < 0)
+                        return log_warning_errno(r, "Failed to make path '%s' for %s specified via %s absolute, ignoring: %m",
+                                                 s, name, source);
+        }
 
         log_debug("%s (%s) set via %s.", name, p, source);
 
@@ -243,21 +245,20 @@ static int context_set_path(Context *c, int rfd, const char *s, const char *sour
 
 static int context_set_boot_root(Context *c, const char *s, const char *source) {
         assert(c);
-        return context_set_path(c, c->rfd, s, source, "BOOT_ROOT", &c->boot_root);
+        return context_set_path(c, s, source, "BOOT_ROOT", &c->boot_root);
 }
 
 static int context_set_conf_root(Context *c, const char *s, const char *source) {
         assert(c);
-        return context_set_path(c, c->rfd, s, source, "CONF_ROOT", &c->conf_root);
+        return context_set_path(c, s, source, "CONF_ROOT", &c->conf_root);
 }
 
 static int context_set_kernel(Context *c, const char *s) {
         assert(c);
-        /* The path specified via command line should be relative to CWD. */
-        return context_set_path(c, AT_FDCWD, s, "command line", "kernel image file", &c->kernel);
+        return context_set_path(c, s, "command line", "kernel image file", &c->kernel);
 }
 
-static int context_set_path_strv(Context *c, int rfd, char* const* strv, const char *source, const char *name, char ***dest) {
+static int context_set_path_strv(Context *c, char* const* strv, const char *source, const char *name, char ***dest) {
         _cleanup_strv_free_ char **w = NULL;
         int r;
 
@@ -272,14 +273,17 @@ static int context_set_path_strv(Context *c, int rfd, char* const* strv, const c
         STRV_FOREACH(s, strv) {
                 char *p;
 
-                if (rfd >= 0)
-                        r = chaseat(rfd, *s, CHASE_AT_RESOLVE_IN_ROOT, &p, /* ret_fd = */ NULL);
-                else
-                        r = chase(*s, /* root = */ NULL, 0, &p, /* ret_fd = */ NULL);
-                if (r < 0)
-                        return log_warning_errno(r, "Failed to chase path %s for %s specified via %s: %m",
-                                                 *s, name, source);
-
+                if (c->rfd >= 0) {
+                        r = chaseat(c->rfd, *s, CHASE_AT_RESOLVE_IN_ROOT, &p, /* ret_fd = */ NULL);
+                        if (r < 0)
+                                return log_warning_errno(r, "Failed to chase path %s for %s specified via %s: %m",
+                                                         *s, name, source);
+                } else {
+                        r = path_make_absolute_cwd(*s, &p);
+                        if (r < 0)
+                                return log_warning_errno(r, "Failed to make path '%s' for %s specified via %s absolute, ignoring: %m",
+                                                         *s, name, source);
+                }
                 r = strv_consume(&w, p);
                 if (r < 0)
                         return log_oom();
@@ -306,12 +310,12 @@ static int context_set_plugins(Context *c, const char *s, const char *source) {
         if (!v)
                 return log_oom();
 
-        return context_set_path_strv(c, c->rfd, v, source, "plugins", &c->plugins);
+        return context_set_path_strv(c, v, source, "plugins", &c->plugins);
 }
 
 static int context_set_initrds(Context *c, char* const* strv) {
         assert(c);
-        return context_set_path_strv(c, AT_FDCWD, strv, "command line", "initrds", &c->initrds);
+        return context_set_path_strv(c, strv, "command line", "initrds", &c->initrds);
 }
 
 static int context_load_environment(Context *c) {
@@ -556,9 +560,15 @@ static int context_ensure_boot_root(Context *c) {
                 return r;
 
         /* If all else fails, use /boot. */
-        r = chaseat(c->rfd, "/boot", CHASE_AT_RESOLVE_IN_ROOT, &c->boot_root, /* ret_fd = */ NULL);
-        if (r < 0)
-                return log_error_errno(r, "Failed to chase '/boot': %m");
+        if (c->rfd >= 0) {
+                r = chaseat(c->rfd, "/boot", CHASE_AT_RESOLVE_IN_ROOT, &c->boot_root, /* ret_fd = */ NULL);
+                if (r < 0)
+                        return log_error_errno(r, "Failed to chase '/boot': %m");
+        } else {
+                c->boot_root = strdup("/boot");
+                if (!c->boot_root)
+                        return log_oom();
+        }
 
         log_debug("KERNEL_INSTALL_BOOT_ROOT autodetection yielded no candidates, using \"%s\".", c->boot_root);
         return 0;
@@ -960,7 +970,7 @@ static int context_prepare_execution(Context *c) {
 }
 
 static int context_execute(Context *c) {
-        int r;
+        int r, ret;
 
         assert(c);
 
@@ -979,7 +989,7 @@ static int context_execute(Context *c) {
                 log_debug("Plugin arguments: %s", strna(z));
         }
 
-        r = execute_strv(
+        ret = execute_strv(
                         /* name = */ NULL,
                         c->plugins,
                         /* root = */ NULL,
@@ -989,14 +999,13 @@ static int context_execute(Context *c) {
                         c->argv,
                         c->envp,
                         EXEC_DIR_SKIP_REMAINING);
-        if (r < 0)
-                return r;
 
         r = context_remove_entry_dir(c);
         if (r < 0)
                 return r;
 
-        return 0;
+        /* This returns 0 on success, positive exit code on plugin failure, negative errno on other failures. */
+        return ret;
 }
 
 static bool bypass(void) {
@@ -1241,7 +1250,7 @@ static int run(int argc, char* argv[]) {
                 {}
         };
         _cleanup_(context_done) Context c = {
-                .rfd = -EBADF,
+                .rfd = AT_FDCWD,
                 .action = _ACTION_INVALID,
                 .kernel_image_type = KERNEL_IMAGE_TYPE_UNKNOWN,
                 .layout = _LAYOUT_INVALID,
@@ -1265,4 +1274,4 @@ static int run(int argc, char* argv[]) {
         return dispatch_verb(argc, argv, verbs, &c);
 }
 
-DEFINE_MAIN_FUNCTION(run);
+DEFINE_MAIN_FUNCTION_WITH_POSITIVE_FAILURE(run);
