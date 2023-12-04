@@ -1644,7 +1644,7 @@ int dissected_image_mount(
                                 if (r > 0)
                                         ok = true;
                         }
-                        if (!ok && FLAGS_SET(flags, DISSECT_IMAGE_VALIDATE_OS_EXT)) {
+                        if (!ok && FLAGS_SET(flags, DISSECT_IMAGE_VALIDATE_OS_EXT) && m->image_name) {
                                 r = path_is_extension_tree(where, m->image_name, FLAGS_SET(flags, DISSECT_IMAGE_RELAX_SYSEXT_CHECK));
                                 if (r < 0)
                                         return r;
@@ -2887,6 +2887,9 @@ int dissected_image_acquire_metadata(DissectedImage *m, DissectImageFlags extra_
                         switch (k) {
 
                         case META_EXTENSION_RELEASE:
+                                if (!m->image_name)
+                                        goto next;
+
                                 /* As per the os-release spec, if the image is an extension it will have a file
                                  * named after the image name in extension-release.d/ - we use the image name
                                  * and try to resolve it with the extension-release helpers, as sometimes
