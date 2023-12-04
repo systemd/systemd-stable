@@ -230,9 +230,9 @@ struct DissectedImage {
         LoopDevice *loop;
         DissectedPartition partitions[_PARTITION_DESIGNATOR_MAX];
         DecryptedImage *decrypted_image;
+        char *image_name;
 
         /* Meta information extracted from /etc/os-release and similar */
-        char *image_name;
         char *hostname;
         sd_id128_t machine_id;
         char **machine_info;
