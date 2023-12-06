@@ -252,7 +252,7 @@ int sd_dhcp6_client_duid_as_string(
         int r;
 
         assert_return(client, -EINVAL);
-        assert_return(client->duid_len > 0, -ENODATA);
+        assert_return(client->duid_len > offsetof(struct duid, raw.data), -ENODATA);
         assert_return(duid, -EINVAL);
 
         v = duid_type_to_string(be16toh(client->duid.type));
@@ -266,7 +266,7 @@ int sd_dhcp6_client_duid_as_string(
                         return -ENOMEM;
         }
 
-        t = hexmem(&client->duid.raw.data, client->duid_len);
+        t = hexmem(client->duid.raw.data, client->duid_len - offsetof(struct duid, raw.data));
         if (!t)
                 return -ENOMEM;
 
