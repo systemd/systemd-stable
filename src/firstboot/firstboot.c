@@ -119,6 +119,8 @@ static void print_welcome(void) {
         pn = isempty(pretty_name) ? "Linux" : pretty_name;
         ac = isempty(ansi_color) ? "0" : ansi_color;
 
+        (void) reset_terminal_fd(STDIN_FILENO, /* switch_to_text= */ false);
+
         if (colors_enabled())
                 printf("\nWelcome to your new installation of \x1B[%sm%s\x1B[0m!\n", ac, pn);
         else
