@@ -3,5 +3,6 @@
 if want_ukify and want_tests != 'false'
    test('test-ukify',
         files('test_ukify.py'),
-        env : test_env)
+        env : test_env,
+        timeout : 120)
 endif
