@@ -431,6 +431,8 @@ def test_basic_operation(kernel_initrd, tmp_path):
     # let's check that objdump likes the resulting file
     subprocess.check_output(['objdump', '-h', output])
 
+    shutil.rmtree(tmp_path)
+
 def test_sections(kernel_initrd, tmp_path):
     if kernel_initrd is None:
         pytest.skip('linux+initrd not found')
@@ -458,6 +460,8 @@ def test_sections(kernel_initrd, tmp_path):
 
     for sect in 'text osrel cmdline linux initrd uname test'.split():
         assert re.search(fr'^\s*\d+\s+.{sect}\s+0', dump, re.MULTILINE)
+
+    shutil.rmtree(tmp_path)
 
 def test_addon(tmp_path):
     output = f'{tmp_path}/addon.efi'
@@ -560,6 +564,8 @@ def test_efi_signing_sbsign(kernel_initrd, tmp_path):
 
         assert 'Signature verification OK' in dump
 
+    shutil.rmtree(tmp_path)
+
 def test_efi_signing_pesign(kernel_initrd, tmp_path):
     if kernel_initrd is None:
         pytest.skip('linux+initrd not found')
@@ -602,6 +608,8 @@ def test_efi_signing_pesign(kernel_initrd, tmp_path):
     ], text=True)
 
     assert f"The signer's common name is {author}" in dump
+
+    shutil.rmtree(tmp_path)
 
 def test_pcr_signing(kernel_initrd, tmp_path):
     if kernel_initrd is None:
@@ -665,6 +673,8 @@ def test_pcr_signing(kernel_initrd, tmp_path):
         sig = json.loads(sig)
         assert list(sig.keys()) == ['sha1']
         assert len(sig['sha1']) == 4   # four items for four phases
+
+    shutil.rmtree(tmp_path)
 
 def test_pcr_signing2(kernel_initrd, tmp_path):
     if kernel_initrd is None:
@@ -735,6 +745,8 @@ def test_pcr_signing2(kernel_initrd, tmp_path):
     sig = json.loads(sig)
     assert list(sig.keys()) == ['sha1']
     assert len(sig['sha1']) == 6   # six items for six phases paths
+
+    shutil.rmtree(tmp_path)
 
 def test_key_cert_generation(tmp_path):
     opts = ukify.parse_args([
