@@ -1293,6 +1293,7 @@ const UnitVTable device_vtable = {
         .status_message_formats = {
                 .starting_stopping = {
                         [0] = "Expecting device %s...",
+                        [1] = "Waiting for device %s to disappear...",
                 },
                 .finished_start_job = {
                         [JOB_DONE]       = "Found device %s.",
