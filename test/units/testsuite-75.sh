@@ -16,6 +16,12 @@ run() {
     "$@" |& tee "$RUN_OUT"
 }
 
+run_delv() {
+    # Since [0] delv no longer loads /etc/(bind/)bind.keys by default, so we
+    # have to do that explicitly for each invocation
+    run delv -a /etc/bind.keys "$@"
+}
+
 monitor_check_rr() (
     set +x
     set +o pipefail
@@ -214,9 +220,9 @@ grep -qF "unsigned.test IN MX 15 mail.unsigned.test" "$RUN_OUT"
 # Check the trust chain (with and without systemd-resolved in between
 # Issue: https://github.com/systemd/systemd/issues/22002
 # PR: https://github.com/systemd/systemd/pull/23289
-run delv @10.0.0.1 signed.test
+run_delv @10.0.0.1 signed.test
 grep -qF "; fully validated" "$RUN_OUT"
-run delv signed.test
+run_delv signed.test
 grep -qF "; fully validated" "$RUN_OUT"
 
 run dig +short signed.test
@@ -239,9 +245,9 @@ grep -qF "authenticated: yes" "$RUN_OUT"
 # DNSSEC validation with multiple records of the same type for the same name
 # Issue: https://github.com/systemd/systemd/issues/22002
 # PR: https://github.com/systemd/systemd/pull/23289
-run delv @10.0.0.1 dupe.signed.test
+run_delv @10.0.0.1 dupe.signed.test
 grep -qF "; fully validated" "$RUN_OUT"
-run delv dupe.signed.test
+run_delv dupe.signed.test
 grep -qF "; fully validated" "$RUN_OUT"
 
 # Test resolution of CNAME chains
@@ -266,9 +272,9 @@ grep -qE "^follow14\.final\.signed\.test\..+IN\s+NSEC\s+" "$RUN_OUT"
 # Check the trust chain (with and without systemd-resolved in between
 # Issue: https://github.com/systemd/systemd/issues/22002
 # PR: https://github.com/systemd/systemd/pull/23289
-run delv @10.0.0.1 sub.onlinesign.test
+run_delv @10.0.0.1 sub.onlinesign.test
 grep -qF "; fully validated" "$RUN_OUT"
-run delv sub.onlinesign.test
+run_delv sub.onlinesign.test
 grep -qF "; fully validated" "$RUN_OUT"
 
 run dig +short sub.onlinesign.test
