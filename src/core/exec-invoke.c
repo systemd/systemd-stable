@@ -105,7 +105,7 @@ static int shift_fds(int fds[], size_t n_fds) {
         return 0;
 }
 
-static int flags_fds(
+static int flag_fds(
                 const int fds[],
                 size_t n_socket_fds,
                 size_t n_fds,
@@ -113,10 +113,7 @@ static int flags_fds(
 
         int r;
 
-        if (n_fds <= 0)
-                return 0;
-
-        assert(fds);
+        assert(fds || n_fds == 0);
 
         /* Drops/Sets O_NONBLOCK and FD_CLOEXEC from the file flags.
          * O_NONBLOCK only applies to socket activation though. */
@@ -1822,7 +1819,6 @@ static int build_environment(
                 const ExecParameters *p,
                 const CGroupContext *cgroup_context,
                 size_t n_fds,
-                char **fdnames,
                 const char *home,
                 const char *username,
                 const char *shell,
@@ -1856,7 +1852,7 @@ static int build_environment(
                         return -ENOMEM;
                 our_env[n_env++] = x;
 
-                joined = strv_join(fdnames, ":");
+                joined = strv_join(p->fd_names, ":");
                 if (!joined)
                         return -ENOMEM;
 
@@ -3604,32 +3600,29 @@ static int exec_context_cpu_affinity_from_numa(const ExecContext *c, CPUSet *ret
         return cpu_set_add_all(ret, &s);
 }
 
-static int add_shifted_fd(int *fds, size_t fds_size, size_t *n_fds, int fd, int *ret_fd) {
+static int add_shifted_fd(int *fds, size_t fds_size, size_t *n_fds, int *fd) {
         int r;
 
         assert(fds);
         assert(n_fds);
         assert(*n_fds < fds_size);
-        assert(ret_fd);
+        assert(fd);
 
-        if (fd < 0) {
-                *ret_fd = -EBADF;
-                return 0;
-        }
+        if (*fd < 0)
+               return 0;
 
-        if (fd < 3 + (int) *n_fds) {
+        if (*fd < 3 + (int) *n_fds) {
                 /* Let's move the fd up, so that it's outside of the fd range we will use to store
                  * the fds we pass to the process (or which are closed only during execve). */
 
-                r = fcntl(fd, F_DUPFD_CLOEXEC, 3 + (int) *n_fds);
+                r = fcntl(*fd, F_DUPFD_CLOEXEC, 3 + (int) *n_fds);
                 if (r < 0)
                         return -errno;
 
-                close_and_replace(fd, r);
+                close_and_replace(*fd, r);
         }
 
-        *ret_fd = fds[*n_fds] = fd;
-        (*n_fds) ++;
+        fds[(*n_fds)++] = *fd;
         return 1;
 }
 
@@ -3724,18 +3717,11 @@ static int get_open_file_fd(const ExecContext *c, const ExecParameters *p, const
         return TAKE_FD(fd);
 }
 
-static int collect_open_file_fds(
-                const ExecContext *c,
-                const ExecParameters *p,
-                int **fds,
-                char ***fdnames,
-                size_t *n_fds) {
+static int collect_open_file_fds(const ExecContext *c, ExecParameters *p, size_t *n_fds) {
         int r;
 
         assert(c);
         assert(p);
-        assert(fds);
-        assert(fdnames);
         assert(n_fds);
 
         LIST_FOREACH(open_files, of, p->open_files) {
@@ -3751,14 +3737,14 @@ static int collect_open_file_fds(
                         return fd;
                 }
 
-                if (!GREEDY_REALLOC(*fds, *n_fds + 1))
+                if (!GREEDY_REALLOC(p->fds, *n_fds + 1))
                         return -ENOMEM;
 
-                r = strv_extend(fdnames, of->fdname);
+                r = strv_extend(&p->fd_names, of->fdname);
                 if (r < 0)
                         return r;
 
-                (*fds)[*n_fds] = TAKE_FD(fd);
+                p->fds[*n_fds] = TAKE_FD(fd);
 
                 (*n_fds)++;
         }
@@ -3929,7 +3915,7 @@ int exec_invoke(
                 int *exit_status) {
 
         _cleanup_strv_free_ char **our_env = NULL, **pass_env = NULL, **joined_exec_search_path = NULL, **accum_env = NULL, **replaced_argv = NULL;
-        int r, ngids = 0, exec_fd;
+        int r, ngids = 0;
         _cleanup_free_ gid_t *supplementary_gids = NULL;
         const char *username = NULL, *groupname = NULL;
         _cleanup_free_ char *home_buffer = NULL, *memory_pressure_path = NULL;
@@ -3965,11 +3951,9 @@ int exec_invoke(
         int secure_bits;
         _cleanup_free_ gid_t *gids_after_pam = NULL;
         int ngids_after_pam = 0;
-        _cleanup_free_ int *fds = NULL;
-        _cleanup_strv_free_ char **fdnames = NULL;
 
-        int socket_fd = -EBADF, named_iofds[3] = EBADF_TRIPLET, *params_fds = NULL;
-        size_t n_storage_fds = 0, n_socket_fds = 0;
+        int socket_fd = -EBADF, named_iofds[3] = EBADF_TRIPLET;
+        size_t n_storage_fds, n_socket_fds;
 
         assert(command);
         assert(context);
@@ -4002,8 +3986,8 @@ int exec_invoke(
                         return log_exec_error_errno(context, params, SYNTHETIC_ERRNO(EINVAL), "Got no socket.");
 
                 socket_fd = params->fds[0];
+                n_storage_fds = n_socket_fds = 0;
         } else {
-                params_fds = params->fds;
                 n_socket_fds = params->n_socket_fds;
                 n_storage_fds = params->n_storage_fds;
         }
@@ -4045,41 +4029,27 @@ int exec_invoke(
         /* In case anything used libc syslog(), close this here, too */
         closelog();
 
-        fds = newdup(int, params_fds, n_fds);
-        if (!fds) {
-                *exit_status = EXIT_MEMORY;
-                return log_oom();
-        }
-
-        fdnames = strv_copy((char**) params->fd_names);
-        if (!fdnames) {
-                *exit_status = EXIT_MEMORY;
-                return log_oom();
-        }
-
-        r = collect_open_file_fds(context, params, &fds, &fdnames, &n_fds);
+        r = collect_open_file_fds(context, params, &n_fds);
         if (r < 0) {
                 *exit_status = EXIT_FDS;
                 return log_exec_error_errno(context, params, r, "Failed to get OpenFile= file descriptors: %m");
         }
 
         int keep_fds[n_fds + 3];
-        memcpy_safe(keep_fds, fds, n_fds * sizeof(int));
+        memcpy_safe(keep_fds, params->fds, n_fds * sizeof(int));
         n_keep_fds = n_fds;
 
-        r = add_shifted_fd(keep_fds, ELEMENTSOF(keep_fds), &n_keep_fds, params->exec_fd, &exec_fd);
+        r = add_shifted_fd(keep_fds, ELEMENTSOF(keep_fds), &n_keep_fds, &params->exec_fd);
         if (r < 0) {
                 *exit_status = EXIT_FDS;
-                return log_exec_error_errno(context, params, r, "Failed to shift fd and set FD_CLOEXEC: %m");
+                return log_exec_error_errno(context, params, r, "Failed to collect shifted fd: %m");
         }
 
 #if HAVE_LIBBPF
-        if (params->bpf_outer_map_fd >= 0) {
-                r = add_shifted_fd(keep_fds, ELEMENTSOF(keep_fds), &n_keep_fds, params->bpf_outer_map_fd, (int *)&params->bpf_outer_map_fd);
-                if (r < 0) {
-                        *exit_status = EXIT_FDS;
-                        return log_exec_error_errno(context, params, r, "Failed to shift fd and set FD_CLOEXEC: %m");
-                }
+        r = add_shifted_fd(keep_fds, ELEMENTSOF(keep_fds), &n_keep_fds, &params->bpf_outer_map_fd);
+        if (r < 0) {
+                *exit_status = EXIT_FDS;
+                return log_exec_error_errno(context, params, r, "Failed to collect shifted fd: %m");
         }
 #endif
 
@@ -4464,7 +4434,6 @@ int exec_invoke(
                         params,
                         cgroup_context,
                         n_fds,
-                        fdnames,
                         home,
                         username,
                         shell,
@@ -4574,7 +4543,7 @@ int exec_invoke(
                  * wins here. (See above.) */
 
                 /* All fds passed in the fds array will be closed in the pam child process. */
-                r = setup_pam(context->pam_name, username, uid, gid, context->tty_path, &accum_env, fds, n_fds);
+                r = setup_pam(context->pam_name, username, uid, gid, context->tty_path, &accum_env, params->fds, n_fds);
                 if (r < 0) {
                         *exit_status = EXIT_PAM;
                         return log_exec_error_errno(context, params, r, "Failed to set up PAM session: %m");
@@ -4760,10 +4729,10 @@ int exec_invoke(
                                              "EXECUTABLE=%s", command->path);
         }
 
-        r = add_shifted_fd(keep_fds, ELEMENTSOF(keep_fds), &n_keep_fds, executable_fd, &executable_fd);
+        r = add_shifted_fd(keep_fds, ELEMENTSOF(keep_fds), &n_keep_fds, &executable_fd);
         if (r < 0) {
                 *exit_status = EXIT_FDS;
-                return log_exec_error_errno(context, params, r, "Failed to shift fd and set FD_CLOEXEC: %m");
+                return log_exec_error_errno(context, params, r, "Failed to collect shifted fd: %m");
         }
 
 #if HAVE_SELINUX
@@ -4806,9 +4775,9 @@ int exec_invoke(
 
         r = close_all_fds(keep_fds, n_keep_fds);
         if (r >= 0)
-                r = shift_fds(fds, n_fds);
+                r = shift_fds(params->fds, n_fds);
         if (r >= 0)
-                r = flags_fds(fds, n_socket_fds, n_fds, context->non_blocking);
+                r = flag_fds(params->fds, n_socket_fds, n_fds, context->non_blocking);
         if (r < 0) {
                 *exit_status = EXIT_FDS;
                 return log_exec_error_errno(context, params, r, "Failed to adjust passed file descriptors: %m");
@@ -5213,13 +5182,13 @@ int exec_invoke(
 
         log_command_line(context, params, "Executing", executable, final_argv);
 
-        if (exec_fd >= 0) {
+        if (params->exec_fd >= 0) {
                 uint8_t hot = 1;
 
                 /* We have finished with all our initializations. Let's now let the manager know that. From this point
                  * on, if the manager sees POLLHUP on the exec_fd, then execve() was successful. */
 
-                if (write(exec_fd, &hot, sizeof(hot)) < 0) {
+                if (write(params->exec_fd, &hot, sizeof(hot)) < 0) {
                         *exit_status = EXIT_EXEC;
                         return log_exec_error_errno(context, params, errno, "Failed to enable exec_fd: %m");
                 }
@@ -5227,13 +5196,13 @@ int exec_invoke(
 
         r = fexecve_or_execve(executable_fd, executable, final_argv, accum_env);
 
-        if (exec_fd >= 0) {
+        if (params->exec_fd >= 0) {
                 uint8_t hot = 0;
 
                 /* The execve() failed. This means the exec_fd is still open. Which means we need to tell the manager
                  * that POLLHUP on it no longer means execve() succeeded. */
 
-                if (write(exec_fd, &hot, sizeof(hot)) < 0) {
+                if (write(params->exec_fd, &hot, sizeof(hot)) < 0) {
                         *exit_status = EXIT_EXEC;
                         return log_exec_error_errno(context, params, errno, "Failed to disable exec_fd: %m");
                 }

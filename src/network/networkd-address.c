@@ -645,7 +645,7 @@ static void address_modify_nft_set_context(Address *address, bool add, NFTSetCon
         assert(nft_set_context);
 
         if (!address->link->manager->fw_ctx) {
-                r = fw_ctx_new(&address->link->manager->fw_ctx);
+                r = fw_ctx_new_full(&address->link->manager->fw_ctx, /* init_tables= */ false);
                 if (r < 0)
                         return;
         }
@@ -1802,7 +1802,7 @@ int manager_rtnl_process_address(sd_netlink *rtnl, sd_netlink_message *message, 
                 /* If we did not know the address, then save it. */
                 r = address_add(link, tmp);
                 if (r < 0) {
-                        log_link_warning_errno(link, r, "Failed to remember foreign address %s, ignoring: %m",
+                        log_link_warning_errno(link, r, "Failed to save received address %s, ignoring: %m",
                                                IN_ADDR_PREFIX_TO_STRING(tmp->family, &tmp->in_addr, tmp->prefixlen));
                         return 0;
                 }
@@ -2472,7 +2472,7 @@ int address_section_verify(Address *address) {
         if (address->flags != filtered_flags) {
                 _cleanup_free_ char *str = NULL;
 
-                (void) address_flags_to_string_alloc(filtered_flags, address->family, &str);
+                (void) address_flags_to_string_alloc(address->flags ^ filtered_flags, address->family, &str);
                 return log_warning_errno(SYNTHETIC_ERRNO(EINVAL),
                                          "%s: unexpected address flags \"%s\" were configured. "
                                          "Ignoring [Address] section from line %u.",
