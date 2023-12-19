@@ -502,6 +502,8 @@ int manager_rtnl_process_neighbor(sd_netlink *rtnl, sd_netlink_message *message,
         }
 
         tmp = new0(Neighbor, 1);
+        if (!tmp)
+                return log_oom();
 
         r = sd_rtnl_message_neigh_get_family(message, &tmp->family);
         if (r < 0) {
