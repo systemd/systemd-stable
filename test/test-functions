@@ -155,6 +155,7 @@ BASICTOOLS=(
     bash
     capsh
     cat
+    chgrp
     chmod
     chown
     chroot
@@ -1132,26 +1133,34 @@ install_multipath() {
 }
 
 install_lvm() {
+    local lvm_rules rule_prefix
+
     image_install lvm
     image_install "${ROOTLIBDIR:?}"/system/lvm2-lvmpolld.{service,socket}
     image_install "${ROOTLIBDIR:?}"/system/{blk-availability,lvm2-monitor}.service
     image_install -o "/lib/tmpfiles.d/lvm2.conf"
+
     if get_bool "$LOOKS_LIKE_DEBIAN"; then
-        inst_rules 56-lvm.rules 69-lvm-metad.rules
+        lvm_rules="56-lvm.rules"
+        rule_prefix=""
     else
-        # Support the new udev autoactivation introduced in lvm 2.03.14
-        # https://sourceware.org/git/?p=lvm2.git;a=commit;h=67722b312390cdab29c076c912e14bd739c5c0f6
-        # Static autoactivation (via lvm2-activation-generator) was dropped
-        # in lvm 2.03.15
-        # https://sourceware.org/git/?p=lvm2.git;a=commit;h=ee8fb0310c53ed003a43b324c99cdfd891dd1a7c
-        if [[ -f /lib/udev/rules.d/69-dm-lvm.rules ]]; then
-            inst_rules 11-dm-lvm.rules 69-dm-lvm.rules
-        else
-            image_install "${ROOTLIBDIR:?}"/system-generators/lvm2-activation-generator
-            image_install "${ROOTLIBDIR:?}"/system/lvm2-pvscan@.service
-            inst_rules 11-dm-lvm.rules 69-dm-lvm-metad.rules
-        fi
+        lvm_rules="11-dm-lvm.rules"
+        rule_prefix="dm-"
     fi
+
+    # Support the new udev autoactivation introduced in lvm 2.03.14
+    # https://sourceware.org/git/?p=lvm2.git;a=commit;h=67722b312390cdab29c076c912e14bd739c5c0f6
+    # Static autoactivation (via lvm2-activation-generator) was dropped
+    # in lvm 2.03.15
+    # https://sourceware.org/git/?p=lvm2.git;a=commit;h=ee8fb0310c53ed003a43b324c99cdfd891dd1a7c
+    if [[ -f "/lib/udev/rules.d/69-${rule_prefix}lvm.rules" ]]; then
+        inst_rules "$lvm_rules" "69-${rule_prefix}lvm.rules"
+    else
+        image_install "${ROOTLIBDIR:?}"/system-generators/lvm2-activation-generator
+        image_install "${ROOTLIBDIR:?}"/system/lvm2-pvscan@.service
+        inst_rules "$lvm_rules" "69-${rule_prefix}lvm-metad.rules"
+    fi
+
     mkdir -p "${initdir:?}/etc/lvm"
 }
 
@@ -2784,14 +2793,14 @@ inst_binary() {
 
     # Same as above, but we need to wrap certain libraries unconditionally
     #
-    # chown, getent, login, setfacl, su, useradd, userdel
+    # chgrp, chown, getent, login, setfacl, su, useradd, userdel
     #    - dlopen() (not only) systemd's PAM modules
     # ls, mkfs.*, mksquashfs, mkswap, setpriv, stat
     #   - pull in nss_systemd with certain options (like ls -l) when
     #     nsswitch.conf uses [SUCCESS=merge] (like on Arch Linux)
     # delv, dig - pull in nss_resolve if `resolve` is in nsswitch.conf
     # tar - called by machinectl in TEST-25
-    bin_rx='/(agetty|chown|curl|delv|dig|getfacl|getent|id|login|ls|mkfs\.[a-z0-9]+|mksquashfs|mkswap|setfacl|setpriv|stat|su|tar|useradd|userdel)$'
+    bin_rx='/(agetty|chgrp|chown|curl|delv|dig|getfacl|getent|id|login|ls|mkfs\.[a-z0-9]+|mksquashfs|mkswap|setfacl|setpriv|stat|su|tar|useradd|userdel)$'
     if get_bool "$IS_BUILT_WITH_ASAN" && [[ "$bin" =~ $bin_rx ]]; then
         wrap_binary=1
         # Ugh, so we want to disable LSan in most cases for the wrapped binaries, since
