@@ -1210,7 +1210,8 @@ static int process_reset(int rfd) {
                        "/etc/vconsole.conf",
                        "/etc/hostname",
                        "/etc/machine-id",
-                       "/etc/kernel/cmdline") {
+                       "/etc/kernel/cmdline",
+                       "/etc/localtime") {
                 r = reset_one(rfd, p);
                 if (r < 0)
                         return r;
