@@ -151,7 +151,7 @@ static int shift_fds(int fds[], size_t n_fds) {
         return 0;
 }
 
-static int flags_fds(const int fds[], size_t n_socket_fds, size_t n_storage_fds, bool nonblock) {
+static int flag_fds(const int fds[], size_t n_socket_fds, size_t n_storage_fds, bool nonblock) {
         size_t n_fds;
         int r;
 
@@ -160,6 +160,7 @@ static int flags_fds(const int fds[], size_t n_socket_fds, size_t n_storage_fds,
                 return 0;
 
         assert(fds);
+        assert(fds || n_fds == 0);
 
         /* Drops/Sets O_NONBLOCK and FD_CLOEXEC from the file flags.
          * O_NONBLOCK only applies to socket activation though. */
@@ -4855,7 +4856,7 @@ static int exec_child(
         if (r >= 0)
                 r = shift_fds(fds, n_fds);
         if (r >= 0)
-                r = flags_fds(fds, n_socket_fds, n_storage_fds, context->non_blocking);
+                r = flag_fds(fds, n_socket_fds, n_storage_fds, context->non_blocking);
         if (r < 0) {
                 *exit_status = EXIT_FDS;
                 return log_unit_error_errno(unit, r, "Failed to adjust passed file descriptors: %m");
@@ -6315,7 +6316,7 @@ void exec_context_revert_tty(ExecContext *c) {
         if (!path)
                 return;
 
-        fd = open(path, O_PATH|O_CLOEXEC);
+        fd = open(path, O_PATH|O_CLOEXEC); /* Pin the inode */
         if (fd < 0)
                 return (void) log_full_errno(errno == ENOENT ? LOG_DEBUG : LOG_WARNING, errno,
                                              "Failed to open TTY inode of '%s' to adjust ownership/access mode, ignoring: %m",
@@ -6334,7 +6335,7 @@ void exec_context_revert_tty(ExecContext *c) {
 
         r = fchmod_and_chown(fd, TTY_MODE, 0, TTY_GID);
         if (r < 0)
-                log_warning_errno(r, "Failed to reset TTY ownership/access mode of %s, ignoring: %m", path);
+                log_warning_errno(r, "Failed to reset TTY ownership/access mode of %s to " UID_FMT ":" GID_FMT ", ignoring: %m", path, (uid_t) 0, (gid_t) TTY_GID);
 }
 
 int exec_context_get_clean_directories(

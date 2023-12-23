@@ -1013,6 +1013,10 @@ static int link_configure(Link *link) {
         if (r < 0)
                 return r;
 
+        r = link_configure_mtu(link);
+        if (r < 0)
+                return r;
+
         if (link->iftype == ARPHRD_CAN) {
                 /* let's shortcut things for CAN which doesn't need most of what's done below. */
                 r = link_request_to_set_can(link);
@@ -1043,10 +1047,6 @@ static int link_configure(Link *link) {
                 return r;
 
         r = link_request_to_set_group(link);
-        if (r < 0)
-                return r;
-
-        r = link_configure_mtu(link);
         if (r < 0)
                 return r;
 

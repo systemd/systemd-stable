@@ -1520,10 +1520,20 @@ class NetworkdNetDevTests(unittest.TestCase, Utilities):
 
     @expectedFailureIfModuleIsNotAvailable('vcan')
     def test_vcan(self):
-        copy_network_unit('25-vcan.netdev', '26-netdev-link-local-addressing-yes.network')
+        copy_network_unit('25-vcan.netdev', '26-netdev-link-local-addressing-yes.network',
+                          '25-vcan98.netdev', '25-vcan98.network')
         start_networkd()
 
-        self.wait_online(['vcan99:carrier'])
+        self.wait_online(['vcan99:carrier', 'vcan98:carrier'])
+
+        # https://github.com/systemd/systemd/issues/30140
+        output = check_output('ip -d link show vcan99')
+        print(output)
+        self.assertIn('mtu 16 ', output)
+
+        output = check_output('ip -d link show vcan98')
+        print(output)
+        self.assertIn('mtu 16 ', output)
 
     @expectedFailureIfModuleIsNotAvailable('vxcan')
     def test_vxcan(self):
@@ -2674,6 +2684,7 @@ class NetworkdNetworkTests(unittest.TestCase, Utilities):
         self.assertIn('default via 149.10.125.65 proto static onlink', output)
         self.assertIn('default via 149.10.124.64 proto static', output)
         self.assertIn('default proto static', output)
+        self.assertIn('default via 1.1.8.104 proto static', output)
 
         print('### ip -4 route show table local dev dummy98')
         output = check_output('ip -4 route show table local dev dummy98')

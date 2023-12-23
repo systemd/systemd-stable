@@ -396,7 +396,7 @@ qemu-system-x86_64 \
         -drive if=none,id=hd,file=test.raw,format=raw \
         -device virtio-scsi-pci,id=scsi \
         -device scsi-hd,drive=hd,bootindex=1 \
-        -smbios type=11,value=io.systemd.credential.binary:tmpfiles.extra=$(echo "f~ /root/.ssh/authorized_keys 700 root root - $(ssh-add -L | base64 -w 0)" | base64 -w 0)
+        -smbios type=11,value=io.systemd.credential.binary:tmpfiles.extra=$(echo "f~ /root/.ssh/authorized_keys 600 root root - $(ssh-add -L | base64 -w 0)" | base64 -w 0)
 ```
 ## Relevant Paths
 

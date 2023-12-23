@@ -132,6 +132,8 @@ Manager* manager_free(Manager *m) {
         sd_event_source_disable_unref(m->sigusr2_event_source);
         sd_event_source_disable_unref(m->sigchld_event_source);
 
+        safe_close(m->listen_fd);
+
         sd_event_unref(m->event);
 
         return mfree(m);
