@@ -788,9 +788,10 @@ typedef struct Context {
 static void device_hash_func(const struct stat *q, struct siphash *state) {
         assert(q);
 
+        mode_t m = q->st_mode & S_IFMT;
+        siphash24_compress(&m, sizeof(m), state);
+
         if (S_ISBLK(q->st_mode) || S_ISCHR(q->st_mode)) {
-                mode_t m = q->st_mode & S_IFMT;
-                siphash24_compress(&m, sizeof(m), state);
                 siphash24_compress(&q->st_rdev, sizeof(q->st_rdev), state);
                 return;
         }
