@@ -733,15 +733,30 @@ def restart_networkd(show_logs=True):
 def networkd_pid():
     return int(check_output('systemctl show --value -p MainPID systemd-networkd.service'))
 
+def networkctl(*args):
+    return check_output(*(networkctl_cmd + list(args)), env=env)
+
+def networkctl_status(*args):
+    return networkctl('-n', '0', 'status', *args)
+
+def networkctl_json(*args):
+    return networkctl('--json=short', 'status', *args)
+
 def networkctl_reconfigure(*links):
-    check_output(*networkctl_cmd, 'reconfigure', *links, env=env)
+    networkctl('reconfigure', *links)
 
 def networkctl_reload(sleep_time=1):
-    check_output(*networkctl_cmd, 'reload', env=env)
+    networkctl('reload')
     # 'networkctl reload' asynchronously reconfigure links.
     # Hence, we need to wait for a short time for link to be in configuring state.
     if sleep_time > 0:
         time.sleep(sleep_time)
+
+def resolvectl(*args):
+    return check_output(*(resolvectl_cmd + list(args)), env=env)
+
+def timedatectl(*args):
+    return check_output(*(timedatectl_cmd + list(args)), env=env)
 
 def setup_common():
     print()
@@ -930,7 +945,7 @@ class Utilities():
                 time.sleep(1)
             if not link_exists(link):
                 continue
-            output = check_output(*networkctl_cmd, '-n', '0', 'status', link, env=env)
+            output = networkctl_status(link)
             if re.search(rf'(?m)^\s*State:\s+{operstate}\s+\({setup_state}\)\s*$', output):
                 return True
 
@@ -975,7 +990,7 @@ class Utilities():
             for link in links_with_operstate:
                 name = link.split(':')[0]
                 if link_exists(name):
-                    call(*networkctl_cmd, '-n', '0', 'status', name, env=env)
+                    networkctl_status(name)
             raise
         if not bool_any and setup_state:
             for link in links_with_operstate:
@@ -1068,7 +1083,7 @@ class NetworkctlTests(unittest.TestCase, Utilities):
         start_networkd()
         self.wait_online(['dummy98:degraded'])
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'dummy98', env=env)
+        output = networkctl_status('dummy98')
         self.assertRegex(output, 'hogehogehogehogehogehoge')
 
     @expectedFailureIfAlternativeNameIsNotAvailable()
@@ -1078,7 +1093,7 @@ class NetworkctlTests(unittest.TestCase, Utilities):
         start_networkd()
         self.wait_online(['dummyalt:degraded'])
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'dummyalt', env=env)
+        output = networkctl_status('dummyalt')
         self.assertIn('hogehogehogehogehogehoge', output)
         self.assertNotIn('dummy98', output)
 
@@ -1130,7 +1145,7 @@ class NetworkctlTests(unittest.TestCase, Utilities):
     def test_renew(self):
         def check():
             self.wait_online(['veth99:routable', 'veth-peer:routable'])
-            output = check_output(*networkctl_cmd, '-n', '0', 'status', 'veth99', env=env)
+            output = networkctl_status('veth99')
             print(output)
             self.assertRegex(output, r'Address: 192.168.5.[0-9]* \(DHCP4 via 192.168.5.1\)')
             self.assertIn('Gateway: 192.168.5.3', output)
@@ -1140,13 +1155,12 @@ class NetworkctlTests(unittest.TestCase, Utilities):
         copy_network_unit('25-veth.netdev', '25-dhcp-client.network', '25-dhcp-server.network')
         start_networkd()
         check()
-        output = check_output(*networkctl_cmd, '--lines=0', '--stats', '--all', '--full', '--json=short', 'status')
-        check_json(output)
+        check_json(networkctl_json('--lines=0', '--stats', '--all', '--full'))
 
         for verb in ['renew', 'forcerenew']:
-            call_check(*networkctl_cmd, verb, 'veth99')
+            networkctl(verb, 'veth99')
             check()
-            call_check(*networkctl_cmd, verb, 'veth99', 'veth99', 'veth99')
+            networkctl(verb, 'veth99', 'veth99', 'veth99')
             check()
 
     def test_up_down(self):
@@ -1154,13 +1168,13 @@ class NetworkctlTests(unittest.TestCase, Utilities):
         start_networkd()
         self.wait_online(['dummy98:routable'])
 
-        call_check(*networkctl_cmd, 'down', 'dummy98')
+        networkctl('down', 'dummy98')
         self.wait_online(['dummy98:off'])
-        call_check(*networkctl_cmd, 'up', 'dummy98')
+        networkctl('up', 'dummy98')
         self.wait_online(['dummy98:routable'])
-        call_check(*networkctl_cmd, 'down', 'dummy98', 'dummy98', 'dummy98')
+        networkctl('down', 'dummy98', 'dummy98', 'dummy98')
         self.wait_online(['dummy98:off'])
-        call_check(*networkctl_cmd, 'up', 'dummy98', 'dummy98', 'dummy98')
+        networkctl('up', 'dummy98', 'dummy98', 'dummy98')
         self.wait_online(['dummy98:routable'])
 
     def test_reload(self):
@@ -1192,23 +1206,23 @@ class NetworkctlTests(unittest.TestCase, Utilities):
 
         self.wait_online(['test1:degraded'])
 
-        output = check_output(*networkctl_cmd, 'list', env=env)
+        output = networkctl('list')
         self.assertRegex(output, '1 lo ')
         self.assertRegex(output, 'test1')
 
-        output = check_output(*networkctl_cmd, 'list', 'test1', env=env)
+        output = networkctl('list', 'test1')
         self.assertNotRegex(output, '1 lo ')
         self.assertRegex(output, 'test1')
 
-        output = check_output(*networkctl_cmd, 'list', 'te*', env=env)
+        output = networkctl('list', 'te*')
         self.assertNotRegex(output, '1 lo ')
         self.assertRegex(output, 'test1')
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'te*', env=env)
+        output = networkctl_status('te*')
         self.assertNotRegex(output, '1: lo ')
         self.assertRegex(output, 'test1')
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'tes[a-z][0-9]', env=env)
+        output = networkctl_status('tes[a-z][0-9]')
         self.assertNotRegex(output, '1: lo ')
         self.assertRegex(output, 'test1')
 
@@ -1218,7 +1232,7 @@ class NetworkctlTests(unittest.TestCase, Utilities):
 
         self.wait_online(['test1:degraded'])
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'test1', env=env)
+        output = networkctl_status('test1')
         self.assertRegex(output, 'MTU: 1600')
 
     def test_type(self):
@@ -1226,11 +1240,11 @@ class NetworkctlTests(unittest.TestCase, Utilities):
         start_networkd()
         self.wait_online(['test1:degraded'])
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'test1', env=env)
+        output = networkctl_status('test1')
         print(output)
         self.assertRegex(output, 'Type: ether')
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'lo', env=env)
+        output = networkctl_status('lo')
         print(output)
         self.assertRegex(output, 'Type: loopback')
 
@@ -1239,7 +1253,7 @@ class NetworkctlTests(unittest.TestCase, Utilities):
         start_networkd()
         self.wait_online(['test1:degraded'])
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'test1', env=env)
+        output = networkctl_status('test1')
         print(output)
         self.assertRegex(output, r'Link File: /run/systemd/network/25-default.link')
         self.assertRegex(output, r'Network File: /run/systemd/network/11-dummy.network')
@@ -1248,7 +1262,7 @@ class NetworkctlTests(unittest.TestCase, Utilities):
         # In that case, the udev DB for the loopback network interface may already have ID_NET_LINK_FILE property.
         # Let's reprocess the interface and drop the property.
         check_output(*udevadm_cmd, 'trigger', '--settle', '--action=add', '/sys/class/net/lo')
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'lo', env=env)
+        output = networkctl_status('lo')
         print(output)
         self.assertRegex(output, r'Link File: n/a')
         self.assertRegex(output, r'Network File: n/a')
@@ -1260,13 +1274,13 @@ class NetworkctlTests(unittest.TestCase, Utilities):
 
         self.wait_online(['test1:degraded', 'veth99:degraded', 'veth-peer:degraded'])
 
-        check_output(*networkctl_cmd, 'delete', 'test1', 'veth99', env=env)
+        networkctl('delete', 'test1', 'veth99')
         self.check_link_exists('test1', expected=False)
         self.check_link_exists('veth99', expected=False)
         self.check_link_exists('veth-peer', expected=False)
 
     def test_label(self):
-        call_check(*networkctl_cmd, 'label')
+        networkctl('label')
 
 class NetworkdMatchTests(unittest.TestCase, Utilities):
 
@@ -1287,7 +1301,7 @@ class NetworkdMatchTests(unittest.TestCase, Utilities):
         start_networkd()
 
         self.wait_online(['dummy98:routable'])
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'dummy98', env=env)
+        output = networkctl_status('dummy98')
         self.assertIn('Network File: /run/systemd/network/12-dummy-match-mac-01.network', output)
         output = check_output('ip -4 address show dev dummy98')
         self.assertIn('10.0.0.1/16', output)
@@ -1297,7 +1311,7 @@ class NetworkdMatchTests(unittest.TestCase, Utilities):
 
         self.wait_address('dummy98', '10.0.0.2/16', ipv='-4', timeout_sec=10)
         self.wait_online(['dummy98:routable'])
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'dummy98', env=env)
+        output = networkctl_status('dummy98')
         self.assertIn('Network File: /run/systemd/network/12-dummy-match-mac-02.network', output)
 
         check_output('ip link set dev dummy98 down')
@@ -1305,7 +1319,7 @@ class NetworkdMatchTests(unittest.TestCase, Utilities):
 
         self.wait_address('dummy98-1', '10.0.1.2/16', ipv='-4', timeout_sec=10)
         self.wait_online(['dummy98-1:routable'])
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'dummy98-1', env=env)
+        output = networkctl_status('dummy98-1')
         self.assertIn('Network File: /run/systemd/network/12-dummy-match-renamed.network', output)
 
         check_output('ip link set dev dummy98-1 down')
@@ -1314,7 +1328,7 @@ class NetworkdMatchTests(unittest.TestCase, Utilities):
 
         self.wait_address('dummy98-2', '10.0.2.2/16', ipv='-4', timeout_sec=10)
         self.wait_online(['dummy98-2:routable'])
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'dummy98-2', env=env)
+        output = networkctl_status('dummy98-2')
         self.assertIn('Network File: /run/systemd/network/12-dummy-match-altname.network', output)
 
     def test_match_udev_property(self):
@@ -1322,7 +1336,7 @@ class NetworkdMatchTests(unittest.TestCase, Utilities):
         start_networkd()
         self.wait_online(['dummy98:routable'])
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'dummy98', env=env)
+        output = networkctl_status('dummy98')
         print(output)
         self.assertRegex(output, 'Network File: /run/systemd/network/14-match-udev-property')
 
@@ -1401,7 +1415,7 @@ class NetworkdNetDevTests(unittest.TestCase, Utilities):
         self.assertEqual(1,         int(read_link_attr('bridge99', 'bridge', 'stp_state')))
         self.assertEqual(3,         int(read_link_attr('bridge99', 'bridge', 'multicast_igmp_version')))
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'bridge99', env=env)
+        output = networkctl_status('bridge99')
         print(output)
         self.assertRegex(output, 'Priority: 9')
         self.assertRegex(output, 'STP: yes')
@@ -1434,14 +1448,14 @@ class NetworkdNetDevTests(unittest.TestCase, Utilities):
         self.check_link_attr('bond98', 'bonding', 'mode',              'balance-tlb 5')
         self.check_link_attr('bond98', 'bonding', 'tlb_dynamic_lb',    '1')
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'bond99', env=env)
+        output = networkctl_status('bond99')
         print(output)
         self.assertIn('Mode: 802.3ad', output)
         self.assertIn('Miimon: 1s', output)
         self.assertIn('Updelay: 2s', output)
         self.assertIn('Downdelay: 2s', output)
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'bond98', env=env)
+        output = networkctl_status('bond98')
         print(output)
         self.assertIn('Mode: balance-tlb', output)
 
@@ -2314,7 +2328,7 @@ class NetworkdNetDevTests(unittest.TestCase, Utilities):
         self.assertIn('00:11:22:33:44:66 dst 10.0.0.6 self permanent', output)
         self.assertIn('00:11:22:33:44:77 dst 10.0.0.7 via test1 self permanent', output)
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'vxlan99', env=env)
+        output = networkctl_status('vxlan99')
         print(output)
         self.assertIn('VNI: 999', output)
         self.assertIn('Destination Port: 5555', output)
@@ -2555,8 +2569,7 @@ class NetworkdNetworkTests(unittest.TestCase, Utilities):
         # netlabel
         self.check_netlabel('dummy98', r'10\.10\.1\.0/24')
 
-        output = check_output(*networkctl_cmd, '--json=short', 'status', env=env)
-        check_json(output)
+        check_json(networkctl_json())
 
     def test_address_static(self):
         copy_network_unit('25-address-static.network', '12-dummy.netdev', copy_dropins=False)
@@ -2873,7 +2886,7 @@ class NetworkdNetworkTests(unittest.TestCase, Utilities):
                     check_output(f'ip link set dev test1 carrier {carrier}')
                 self.wait_online([f'test1:{routable_map[carrier]}:{routable_map[carrier]}'])
 
-                output = check_output(*networkctl_cmd, '-n', '0', 'status', 'test1', env=env)
+                output = networkctl_status('test1')
                 print(output)
                 self.assertRegex(output, '192.168.0.15')
                 self.assertRegex(output, '192.168.0.1')
@@ -2897,7 +2910,7 @@ class NetworkdNetworkTests(unittest.TestCase, Utilities):
                     check_output(f'ip link set dev test1 carrier {carrier}')
                 self.wait_online([f'test1:{routable_map[carrier]}:{routable_map[carrier]}'])
 
-                output = check_output(*networkctl_cmd, '-n', '0', 'status', 'test1', env=env)
+                output = networkctl_status('test1')
                 print(output)
                 if have_config:
                     self.assertRegex(output, '192.168.0.15')
@@ -2942,8 +2955,7 @@ class NetworkdNetworkTests(unittest.TestCase, Utilities):
         self.assertRegex(output, 'iif test1')
         self.assertRegex(output, 'lookup 10')
 
-        output = check_output(*networkctl_cmd, '--json=short', 'status', env=env)
-        check_json(output)
+        check_json(networkctl_json())
 
     def test_routing_policy_rule_issue_11280(self):
         copy_network_unit('25-routing-policy-rule-test1.network', '11-dummy.netdev',
@@ -3071,7 +3083,7 @@ class NetworkdNetworkTests(unittest.TestCase, Utilities):
         start_networkd()
         self.wait_online(['dummy98:routable'])
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'dummy98', env=env)
+        output = networkctl_status('dummy98')
         print(output)
 
         print('### ip -6 route show dev dummy98')
@@ -3174,8 +3186,7 @@ class NetworkdNetworkTests(unittest.TestCase, Utilities):
         self.assertIn('via 2001:1234:5:8fff:ff:ff:ff:ff dev dummy98', output)
         self.assertIn('via 2001:1234:5:9fff:ff:ff:ff:ff dev dummy98', output)
 
-        output = check_output(*networkctl_cmd, '--json=short', 'status', env=env)
-        check_json(output)
+        check_json(networkctl_json())
 
         copy_network_unit('25-address-static.network')
         networkctl_reload()
@@ -3301,7 +3312,7 @@ class NetworkdNetworkTests(unittest.TestCase, Utilities):
         start_networkd()
         self.wait_online(['dummy98:routable'])
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'dummy98', env=env)
+        output = networkctl_status('dummy98')
         print(output)
 
         print('### ip -6 route show dev dummy98')
@@ -3446,8 +3457,7 @@ class NetworkdNetworkTests(unittest.TestCase, Utilities):
         self.assertNotIn('192.168.10.2', output)
         self.assertNotIn('00:00:5e:00:02:67', output)
 
-        output = check_output(*networkctl_cmd, '--json=short', 'status', env=env)
-        check_json(output)
+        check_json(networkctl_json())
 
         copy_network_unit('25-neighbor-section.network.d/override.conf')
         networkctl_reload()
@@ -3500,8 +3510,7 @@ class NetworkdNetworkTests(unittest.TestCase, Utilities):
         self.assertRegex(output, '2001:db8:0:f102::17 lladdr 2a:?00:ff:?de:45:?67:ed:?de:[0:]*:49:?88 PERMANENT')
         self.assertNotIn('2001:db8:0:f102::18', output)
 
-        output = check_output(*networkctl_cmd, '--json=short', 'status', env=env)
-        check_json(output)
+        check_json(networkctl_json())
 
     def test_link_local_addressing(self):
         copy_network_unit('25-link-local-addressing-yes.network', '11-dummy.netdev',
@@ -3790,7 +3799,7 @@ class NetworkdNetworkTests(unittest.TestCase, Utilities):
             # default is true, if neither are specified
             expected = True
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'test1', env=env)
+        output = networkctl_status('test1')
         print(output)
 
         yesno = 'yes' if expected else 'no'
@@ -3814,7 +3823,7 @@ class NetworkdNetworkTests(unittest.TestCase, Utilities):
         start_networkd()
         self.wait_online(['dummy98:routable'])
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'dummy98', env=env)
+        output = networkctl_status('dummy98')
         print(output)
         self.assertRegex(output, 'Address: 192.168.42.100')
         self.assertRegex(output, 'DNS: 192.168.42.1')
@@ -3900,8 +3909,7 @@ class NetworkdNetworkTests(unittest.TestCase, Utilities):
             self.assertIn('nexthop via 192.168.20.1 dev dummy98 weight 1', output)
             self.assertIn('nexthop via 192.168.5.1 dev veth99 weight 3', output)
 
-            output = check_output(*networkctl_cmd, '--json=short', 'status', env=env)
-            check_json(output)
+            check_json(networkctl_json())
 
         copy_network_unit('25-nexthop.network', '25-veth.netdev', '25-veth-peer.network',
                           '12-dummy.netdev', '25-nexthop-dummy.network')
@@ -4218,10 +4226,9 @@ class NetworkdStateFileTests(unittest.TestCase, Utilities):
         self.wait_online(['dummy98:routable'])
 
         # make link state file updated
-        check_output(*resolvectl_cmd, 'revert', 'dummy98', env=env)
+        resolvectl('revert', 'dummy98')
 
-        output = check_output(*networkctl_cmd, '--json=short', 'status', env=env)
-        check_json(output)
+        check_json(networkctl_json())
 
         output = read_link_state_file('dummy98')
         print(output)
@@ -4242,15 +4249,14 @@ class NetworkdStateFileTests(unittest.TestCase, Utilities):
         self.assertIn('MDNS=yes', output)
         self.assertIn('DNSSEC=no', output)
 
-        check_output(*resolvectl_cmd, 'dns', 'dummy98', '10.10.10.12#ccc.com', '10.10.10.13', '1111:2222::3333', env=env)
-        check_output(*resolvectl_cmd, 'domain', 'dummy98', 'hogehogehoge', '~foofoofoo', env=env)
-        check_output(*resolvectl_cmd, 'llmnr', 'dummy98', 'yes', env=env)
-        check_output(*resolvectl_cmd, 'mdns', 'dummy98', 'no', env=env)
-        check_output(*resolvectl_cmd, 'dnssec', 'dummy98', 'yes', env=env)
-        check_output(*timedatectl_cmd, 'ntp-servers', 'dummy98', '2.fedora.pool.ntp.org', '3.fedora.pool.ntp.org', env=env)
+        resolvectl('dns', 'dummy98', '10.10.10.12#ccc.com', '10.10.10.13', '1111:2222::3333')
+        resolvectl('domain', 'dummy98', 'hogehogehoge', '~foofoofoo')
+        resolvectl('llmnr', 'dummy98', 'yes')
+        resolvectl('mdns', 'dummy98', 'no')
+        resolvectl('dnssec', 'dummy98', 'yes')
+        timedatectl('ntp-servers', 'dummy98', '2.fedora.pool.ntp.org', '3.fedora.pool.ntp.org')
 
-        output = check_output(*networkctl_cmd, '--json=short', 'status', env=env)
-        check_json(output)
+        check_json(networkctl_json())
 
         output = read_link_state_file('dummy98')
         print(output)
@@ -4262,10 +4268,9 @@ class NetworkdStateFileTests(unittest.TestCase, Utilities):
         self.assertIn('MDNS=no', output)
         self.assertIn('DNSSEC=yes', output)
 
-        check_output(*timedatectl_cmd, 'revert', 'dummy98', env=env)
+        timedatectl('revert', 'dummy98')
 
-        output = check_output(*networkctl_cmd, '--json=short', 'status', env=env)
-        check_json(output)
+        check_json(networkctl_json())
 
         output = read_link_state_file('dummy98')
         print(output)
@@ -4277,10 +4282,9 @@ class NetworkdStateFileTests(unittest.TestCase, Utilities):
         self.assertIn('MDNS=no', output)
         self.assertIn('DNSSEC=yes', output)
 
-        check_output(*resolvectl_cmd, 'revert', 'dummy98', env=env)
+        resolvectl('revert', 'dummy98')
 
-        output = check_output(*networkctl_cmd, '--json=short', 'status', env=env)
-        check_json(output)
+        check_json(networkctl_json())
 
         output = read_link_state_file('dummy98')
         print(output)
@@ -4668,7 +4672,7 @@ class NetworkdBridgeTests(unittest.TestCase, Utilities):
                     self.wait_online(['bridge99:no-carrier:no-carrier'])
                     self.check_link_attr('bridge99', 'carrier', '0')
 
-                output = check_output(*networkctl_cmd, '-n', '0', 'status', 'bridge99', env=env)
+                output = networkctl_status('bridge99')
                 self.assertRegex(output, '10.1.2.3')
                 self.assertRegex(output, '10.1.2.1')
 
@@ -4848,7 +4852,7 @@ class NetworkdLLDPTests(unittest.TestCase, Utilities):
             if trial > 0:
                 time.sleep(1)
 
-            output = check_output(*networkctl_cmd, 'lldp', env=env)
+            output = networkctl('lldp')
             print(output)
             if re.search(r'veth99 .* veth-peer', output):
                 break
@@ -4871,16 +4875,16 @@ class NetworkdRATests(unittest.TestCase, Utilities):
         start_networkd()
         self.wait_online(['veth99:routable', 'veth-peer:degraded'])
 
-        output = check_output(*resolvectl_cmd, 'dns', 'veth99', env=env)
+        output = resolvectl('dns', 'veth99')
         print(output)
         self.assertRegex(output, 'fe80::')
         self.assertRegex(output, '2002:da8:1::1')
 
-        output = check_output(*resolvectl_cmd, 'domain', 'veth99', env=env)
+        output = resolvectl('domain', 'veth99')
         print(output)
         self.assertIn('hogehoge.test', output)
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'veth99', env=env)
+        output = networkctl_status('veth99')
         print(output)
         self.assertRegex(output, '2002:da8:1:0')
 
@@ -4900,7 +4904,7 @@ class NetworkdRATests(unittest.TestCase, Utilities):
         start_networkd()
         self.wait_online(['veth99:routable', 'veth-peer:degraded'])
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'veth99', env=env)
+        output = networkctl_status('veth99')
         print(output)
         self.assertRegex(output, '2002:da8:1:0:1a:2b:3c:4d')
         self.assertRegex(output, '2002:da8:1:0:fa:de:ca:fe')
@@ -4912,7 +4916,7 @@ class NetworkdRATests(unittest.TestCase, Utilities):
         start_networkd()
         self.wait_online(['veth99:routable', 'veth-peer:degraded'])
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'veth99', env=env)
+        output = networkctl_status('veth99')
         print(output)
         self.assertIn('2002:da8:1:0:b47e:7975:fc7a:7d6e', output)
         self.assertIn('2002:da8:2:0:1034:56ff:fe78:9abc', output) # EUI64
@@ -4922,7 +4926,7 @@ class NetworkdRATests(unittest.TestCase, Utilities):
         start_networkd()
         self.wait_online(['veth99:routable', 'veth-peer:degraded'])
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'veth99', env=env)
+        output = networkctl_status('veth99')
         print(output)
         self.assertIn('2002:da8:1:0:b47e:7975:fc7a:7d6e', output)
         self.assertIn('2002:da8:2:0:f689:561a:8eda:7443', output)
@@ -4994,7 +4998,7 @@ class NetworkdRATests(unittest.TestCase, Utilities):
         self.wait_online(['client:routable'])
 
         self.wait_address('client', '2002:da8:1:99:1034:56ff:fe78:9a00/64', ipv='-6', timeout_sec=10)
-        output = check_output(*networkctl_cmd, 'status', 'client', env=env)
+        output = networkctl_status('client')
         print(output)
         self.assertIn('Captive Portal: http://systemd.io', output)
 
@@ -5030,7 +5034,7 @@ class NetworkdRATests(unittest.TestCase, Utilities):
             self.wait_online(['client:routable'])
 
             self.wait_address('client', '2002:da8:1:99:1034:56ff:fe78:9a00/64', ipv='-6', timeout_sec=10)
-            output = check_output(*networkctl_cmd, 'status', 'client', env=env)
+            output = networkctl_status('client')
             print(output)
             self.assertNotIn('Captive Portal:', output)
 
@@ -5047,14 +5051,14 @@ class NetworkdDHCPServerTests(unittest.TestCase, Utilities):
         start_networkd()
         self.wait_online(['veth99:routable', 'veth-peer:routable'])
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'veth99', env=env)
+        output = networkctl_status('veth99')
         print(output)
         self.assertRegex(output, r'Address: 192.168.5.[0-9]* \(DHCP4 via 192.168.5.1\)')
         self.assertIn('Gateway: 192.168.5.3', output)
         self.assertRegex(output, 'DNS: 192.168.5.1\n *192.168.5.10')
         self.assertRegex(output, 'NTP: 192.168.5.1\n *192.168.5.11')
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'veth-peer', env=env)
+        output = networkctl_status('veth-peer')
         self.assertRegex(output, "Offered DHCP leases: 192.168.5.[0-9]*")
 
     def test_dhcp_server_null_server_address(self):
@@ -5070,14 +5074,14 @@ class NetworkdDHCPServerTests(unittest.TestCase, Utilities):
         client_address = json.loads(output)[0]['addr_info'][0]['local']
         print(client_address)
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'veth99', env=env)
+        output = networkctl_status('veth99')
         print(output)
         self.assertRegex(output, rf'Address: {client_address} \(DHCP4 via {server_address}\)')
         self.assertIn(f'Gateway: {server_address}', output)
         self.assertIn(f'DNS: {server_address}', output)
         self.assertIn(f'NTP: {server_address}', output)
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'veth-peer', env=env)
+        output = networkctl_status('veth-peer')
         self.assertIn(f'Offered DHCP leases: {client_address}', output)
 
     def test_dhcp_server_with_uplink(self):
@@ -5086,7 +5090,7 @@ class NetworkdDHCPServerTests(unittest.TestCase, Utilities):
         start_networkd()
         self.wait_online(['veth99:routable', 'veth-peer:routable'])
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'veth99', env=env)
+        output = networkctl_status('veth99')
         print(output)
         self.assertRegex(output, r'Address: 192.168.5.[0-9]* \(DHCP4 via 192.168.5.1\)')
         self.assertIn('Gateway: 192.168.5.3', output)
@@ -5098,7 +5102,7 @@ class NetworkdDHCPServerTests(unittest.TestCase, Utilities):
         start_networkd()
         self.wait_online(['veth99:routable', 'veth-peer:routable'])
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'veth99', env=env)
+        output = networkctl_status('veth99')
         print(output)
         self.assertRegex(output, r'Address: 192.168.5.[0-9]* \(DHCP4 via 192.168.5.1\)')
         self.assertIn('Gateway: 192.168.5.1', output)
@@ -5109,7 +5113,7 @@ class NetworkdDHCPServerTests(unittest.TestCase, Utilities):
         start_networkd()
         self.wait_online(['veth99:routable', 'veth-peer:routable'])
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'veth99', env=env)
+        output = networkctl_status('veth99')
         print(output)
         self.assertIn('Address: 10.1.1.200 (DHCP4 via 10.1.1.1)', output)
         self.assertIn('DHCP4 Client ID: 12:34:56:78:9a:bc', output)
@@ -5119,7 +5123,7 @@ class NetworkdDHCPServerTests(unittest.TestCase, Utilities):
         start_networkd()
         self.wait_online(['veth99:routable', 'veth-peer:routable'])
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'veth99', env=env)
+        output = networkctl_status('veth99')
         print(output)
         self.assertIn('Address: 10.1.1.200 (DHCP4 via 10.1.1.1)', output)
         self.assertRegex(output, 'DHCP4 Client ID: IAID:[0-9a-z]*/DUID')
@@ -5143,7 +5147,7 @@ class NetworkdDHCPServerRelayAgentTests(unittest.TestCase, Utilities):
 
         self.wait_online(['client:routable'])
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'client', env=env)
+        output = networkctl_status('client')
         print(output)
         self.assertRegex(output, r'Address: 192.168.5.150 \(DHCP4 via 192.168.5.1\)')
 
@@ -5202,8 +5206,7 @@ class NetworkdDHCPClientTests(unittest.TestCase, Utilities):
         self.assertNotIn('DHCPREPLY(veth-peer)', output)
 
         # Check json format
-        output = check_output(*networkctl_cmd, '--json=short', 'status', 'veth99', env=env)
-        check_json(output)
+        check_json(networkctl_json('veth99'))
 
         # solicit mode
         stop_dnsmasq()
@@ -5230,7 +5233,7 @@ class NetworkdDHCPClientTests(unittest.TestCase, Utilities):
         self.assertRegex(output, 'token :: dev veth99')
 
         # Make manager and link state file updated
-        check_output(*resolvectl_cmd, 'revert', 'veth99', env=env)
+        resolvectl('revert', 'veth99')
 
         # Check link state file
         print('## link state file')
@@ -5257,8 +5260,7 @@ class NetworkdDHCPClientTests(unittest.TestCase, Utilities):
         self.assertIn('sent size:  0 option: 14 rapid-commit', output)
 
         # Check json format
-        output = check_output(*networkctl_cmd, '--json=short', 'status', 'veth99', env=env)
-        check_json(output)
+        check_json(networkctl_json('veth99'))
 
         # Testing without rapid commit support
         with open(os.path.join(network_unit_dir, '25-dhcp-client-ipv6-only.network'), mode='a', encoding='utf-8') as f:
@@ -5284,7 +5286,7 @@ class NetworkdDHCPClientTests(unittest.TestCase, Utilities):
         self.assertRegex(output, 'via fe80::1034:56ff:fe78:9abd')
 
         # Make manager and link state file updated
-        check_output(*resolvectl_cmd, 'revert', 'veth99', env=env)
+        resolvectl('revert', 'veth99')
 
         # Check link state file
         print('## link state file')
@@ -5311,8 +5313,7 @@ class NetworkdDHCPClientTests(unittest.TestCase, Utilities):
         self.assertNotIn('rapid-commit', output)
 
         # Check json format
-        output = check_output(*networkctl_cmd, '--json=short', 'status', 'veth99', env=env)
-        check_json(output)
+        check_json(networkctl_json('veth99'))
 
     def test_dhcp_client_ipv6_dbus_status(self):
         copy_network_unit('25-veth.netdev', '25-dhcp-server-veth-peer.network', '25-dhcp-client-ipv6-only.network')
@@ -5352,7 +5353,7 @@ class NetworkdDHCPClientTests(unittest.TestCase, Utilities):
 
         # Test renew command
         # See https://github.com/systemd/systemd/pull/29472#issuecomment-1759092138
-        check_output(*networkctl_cmd, 'renew', 'veth99', env=env)
+        networkctl('renew', 'veth99')
 
         for _ in range(100):
             state = get_dhcp4_client_state('veth99')
@@ -5459,8 +5460,7 @@ class NetworkdDHCPClientTests(unittest.TestCase, Utilities):
         self.assertIn('DOMAINS=example.com', output)
 
         print('## json')
-        output = check_output(*networkctl_cmd, '--json=short', 'status', 'veth99', env=env)
-        j = json.loads(output)
+        j = json.loads(networkctl_json('veth99'))
 
         self.assertEqual(len(j['DNS']), 2)
         for i in j['DNS']:
@@ -5555,8 +5555,7 @@ class NetworkdDHCPClientTests(unittest.TestCase, Utilities):
         self.assertIn('DOMAINS=foo.example.com', output)
 
         print('## json')
-        output = check_output(*networkctl_cmd, '--json=short', 'status', 'veth99', env=env)
-        j = json.loads(output)
+        j = json.loads(networkctl_json('veth99'))
 
         self.assertEqual(len(j['DNS']), 3)
         for i in j['DNS']:
@@ -5778,8 +5777,7 @@ class NetworkdDHCPClientTests(unittest.TestCase, Utilities):
             self.assertNotRegex(output, r'8.8.8.8 via 192.168.5.[0-9]* proto dhcp src 192.168.5.[0-9]* metric 1024')
             self.assertNotRegex(output, r'9.9.9.9 via 192.168.5.[0-9]* proto dhcp src 192.168.5.[0-9]* metric 1024')
 
-        output = check_output(*networkctl_cmd, '--json=short', 'status', env=env)
-        check_json(output)
+        check_json(networkctl_json())
 
     def test_dhcp_client_settings_anonymize(self):
         copy_network_unit('25-veth.netdev', '25-dhcp-server-veth-peer.network', '25-dhcp-client-anonymize.network')
@@ -5956,7 +5954,7 @@ class NetworkdDHCPClientTests(unittest.TestCase, Utilities):
         start_dnsmasq()
         self.wait_online(['veth99:routable', 'veth-peer:routable'])
 
-        output = check_output(*networkctl_cmd, '-n', '0', 'status', 'veth99', env=env)
+        output = networkctl_status('veth99')
         print(output)
         self.assertRegex(output, '192.168.5')
 
@@ -6020,9 +6018,9 @@ class NetworkdDHCPClientTests(unittest.TestCase, Utilities):
             self.wait_address('veth99', r'inet6 2600::[0-9a-f]*/128 scope global (dynamic noprefixroute|noprefixroute dynamic)', ipv='-6')
 
             # make resolved re-read the link state file
-            check_output(*resolvectl_cmd, 'revert', 'veth99', env=env)
+            resolvectl('revert', 'veth99')
 
-            output = check_output(*resolvectl_cmd, 'dns', 'veth99', env=env)
+            output = resolvectl('dns', 'veth99')
             print(output)
             if ipv4:
                 self.assertIn('192.168.5.1', output)
@@ -6033,8 +6031,7 @@ class NetworkdDHCPClientTests(unittest.TestCase, Utilities):
             else:
                 self.assertNotIn('2600::1', output)
 
-            output = check_output(*networkctl_cmd, '--json=short', 'status', env=env)
-            check_json(output)
+            check_json(networkctl_json())
 
         copy_network_unit('25-veth.netdev', '25-dhcp-server-veth-peer.network', '25-dhcp-client.network', copy_dropins=False)
 
@@ -6065,15 +6062,14 @@ class NetworkdDHCPClientTests(unittest.TestCase, Utilities):
             self.wait_address('veth99', r'inet 192.168.5.[0-9]*/24 metric 1024 brd 192.168.5.255 scope global dynamic', ipv='-4')
             self.wait_address('veth99', r'inet6 2600::[0-9a-f]*/128 scope global (dynamic noprefixroute|noprefixroute dynamic)', ipv='-6')
 
-            output = check_output(*networkctl_cmd, 'status', 'veth99', env=env)
+            output = networkctl_status('veth99')
             print(output)
             if ipv4 or ipv6:
                 self.assertIn('Captive Portal: http://systemd.io', output)
             else:
                 self.assertNotIn('Captive Portal: http://systemd.io', output)
 
-            output = check_output(*networkctl_cmd, '--json=short', 'status', env=env)
-            check_json(output)
+            check_json(networkctl_json())
 
         copy_network_unit('25-veth.netdev', '25-dhcp-server-veth-peer.network', '25-dhcp-client.network', copy_dropins=False)
 
@@ -6104,13 +6100,12 @@ class NetworkdDHCPClientTests(unittest.TestCase, Utilities):
             self.wait_address('veth99', r'inet 192.168.5.[0-9]*/24 metric 1024 brd 192.168.5.255 scope global dynamic', ipv='-4')
             self.wait_address('veth99', r'inet6 2600::[0-9a-f]*/128 scope global (dynamic noprefixroute|noprefixroute dynamic)', ipv='-6')
 
-            output = check_output(*networkctl_cmd, 'status', 'veth99', env=env)
+            output = networkctl_status('veth99')
             print(output)
             self.assertNotIn('Captive Portal: ', output)
             self.assertNotIn('invalid/url', output)
 
-            output = check_output(*networkctl_cmd, '--json=short', 'status', env=env)
-            check_json(output)
+            check_json(networkctl_json())
 
         copy_network_unit('25-veth.netdev', '25-dhcp-server-veth-peer.network', '25-dhcp-client.network', copy_dropins=False)
 
@@ -6686,18 +6681,17 @@ class NetworkdIPv6PrefixTests(unittest.TestCase, Utilities):
         self.assertIn('inet6 2001:db8:0:2:fa:de:ca:fe', output)
         self.assertNotIn('inet6 2001:db8:0:3:', output)
 
-        output = check_output(*resolvectl_cmd, 'dns', 'veth-peer', env=env)
+        output = resolvectl('dns', 'veth-peer')
         print(output)
         self.assertRegex(output, '2001:db8:1:1::2')
 
-        output = check_output(*resolvectl_cmd, 'domain', 'veth-peer', env=env)
+        output = resolvectl('domain', 'veth-peer')
         print(output)
         self.assertIn('example.com', output)
 
-        output = check_output(*networkctl_cmd, '--json=short', 'status', env=env)
-        check_json(output)
+        check_json(networkctl_json())
 
-        output = check_output(*networkctl_cmd, '--json=short', 'status', 'veth-peer', env=env)
+        output = networkctl_json('veth-peer')
         check_json(output)
 
         # PREF64 or NAT64
@@ -6733,11 +6727,11 @@ class NetworkdIPv6PrefixTests(unittest.TestCase, Utilities):
         self.assertNotIn('inet6 2001:db8:0:1:', output)
         self.assertIn('inet6 2001:db8:0:2:', output)
 
-        output = check_output(*resolvectl_cmd, 'dns', 'veth-peer', env=env)
+        output = resolvectl('dns', 'veth-peer')
         print(output)
         self.assertRegex(output, '2001:db8:1:1::2')
 
-        output = check_output(*resolvectl_cmd, 'domain', 'veth-peer', env=env)
+        output = resolvectl('domain', 'veth-peer')
         print(output)
         self.assertIn('example.com', output)
 
