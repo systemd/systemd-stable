@@ -10,6 +10,7 @@
 #include "sd-journal.h"
 
 #include "alloc-util.h"
+#include "env-util.h"
 #include "fd-util.h"
 #include "main-func.h"
 #include "parse-argument.h"
