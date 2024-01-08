@@ -11,6 +11,7 @@
 #include "stdio-util.h"
 #include "string-util.h"
 #include "sync-util.h"
+#include "virt.h"
 
 bool id128_is_valid(const char *s) {
         size_t l;
@@ -180,6 +181,13 @@ int id128_get_product(sd_id128_t *ret) {
 
         /* Reads the systems product UUID from DMI or devicetree (where it is located on POWER). This is
          * particularly relevant in VM environments, where VM managers typically place a VM uuid there. */
+
+        r = detect_container();
+        if (r < 0)
+                return r;
+        if (r > 0) /* Refuse returning this in containers, as this is not a property of our system then, but
+                    * of the host */
+                return -ENOENT;
 
         r = id128_read("/sys/class/dmi/id/product_uuid", ID128_FORMAT_UUID, &uuid);
         if (r == -ENOENT)
