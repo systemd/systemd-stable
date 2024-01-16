@@ -23,6 +23,7 @@ ADDITIONAL_DEPS=(
     python3-pefile
     python3-pyelftools
     python3-pyparsing
+    python3-pytest
     rpm
     zstd
 )
