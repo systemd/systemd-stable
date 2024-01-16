@@ -5575,10 +5575,23 @@ int tpm2_unseal(Tpm2Context *c,
                 /* If we know the policy hash to expect, and it doesn't match, we can shortcut things here, and not
                  * wait until the TPM2 tells us to go away. */
                 if (known_policy_hash_size > 0 &&
-                        memcmp_nn(policy_digest->buffer, policy_digest->size, known_policy_hash, known_policy_hash_size) != 0)
+                    memcmp_nn(policy_digest->buffer, policy_digest->size, known_policy_hash, known_policy_hash_size) != 0) {
+
+#if HAVE_OPENSSL
+                        if (pubkey_size > 0 &&
+                            pubkey_tpm2b.publicArea.type == TPM2_ALG_RSA &&
+                            pubkey_tpm2b.publicArea.parameters.rsaDetail.exponent == TPM2_RSA_DEFAULT_EXPONENT) {
+                                /* Due to bug #30546, if using RSA pubkey with the default exponent, we may
+                                 * need to set the exponent to the TPM special-case value of 0 and retry. */
+                                log_debug("Policy hash mismatch, retrying with RSA pubkey exponent set to 0.");
+                                pubkey_tpm2b.publicArea.parameters.rsaDetail.exponent = 0;
+                                continue;
+                        } else
+#endif
                                 return log_debug_errno(SYNTHETIC_ERRNO(EPERM),
                                                        "Current policy digest does not match stored policy digest, cancelling "
                                                        "TPM2 authentication attempt.");
+                }
 
                 log_debug("Unsealing HMAC key.");
 
