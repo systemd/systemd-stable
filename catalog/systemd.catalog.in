@@ -549,3 +549,23 @@ Whenever the system transitions to a new runtime phase, the specified PCR is
 extended with a different string, to ensure that security policies for
 TPM-bound secrets and other resources are limited to specific phases of the
 runtime.
+
+-- 187c62eb1e7f463bb530394f52cb090f
+Subject: A Portable Service has been attached
+Defined-By: systemd
+Support: %SUPPORT_URL%
+Documentation: https://systemd.io/PORTABLE_SERVICES/
+
+A new Portable Service @PORTABLE_ROOT@ (with extensions: @PORTABLE_EXTENSION@) has
+been attached to the system and is now available for use. The list of attached
+Portable Services can be queried with 'portablectl list'.
+
+-- 76c5c754d628490d8ecba4c9d042112b
+Subject: A Portable Service has been detached
+Defined-By: systemd
+Support: %SUPPORT_URL%
+Documentation: https://systemd.io/PORTABLE_SERVICES/
+
+A Portable Service @PORTABLE_ROOT@ (with extensions: @PORTABLE_EXTENSION@) has been
+detached from the system and is no longer available for use. The list of attached
+Portable Services can be queried with 'portablectl list'.
