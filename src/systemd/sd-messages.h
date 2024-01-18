@@ -195,6 +195,11 @@ _SD_BEGIN_DECLARATIONS;
 #define SD_MESSAGE_TPM_PCR_EXTEND                     SD_ID128_MAKE(3f,7d,5e,f3,e5,4f,43,02,b4,f0,b1,43,bb,27,0c,ab)
 #define SD_MESSAGE_TPM_PCR_EXTEND_STR                 SD_ID128_MAKE_STR(3f,7d,5e,f3,e5,4f,43,02,b4,f0,b1,43,bb,27,0c,ab)
 
+#define SD_MESSAGE_PORTABLE_ATTACHED                  SD_ID128_MAKE(18,7c,62,eb,1e,7f,46,3b,b5,30,39,4f,52,cb,09,0f)
+#define SD_MESSAGE_PORTABLE_ATTACHED_STR              SD_ID128_MAKE_STR(18,7c,62,eb,1e,7f,46,3b,b5,30,39,4f,52,cb,09,0f)
+#define SD_MESSAGE_PORTABLE_DETACHED                  SD_ID128_MAKE(76,c5,c7,54,d6,28,49,0d,8e,cb,a4,c9,d0,42,11,2b)
+#define SD_MESSAGE_PORTABLE_DETACHED_STR              SD_ID128_MAKE_STR(76,c5,c7,54,d6,28,49,0d,8e,cb,a4,c9,d0,42,11,2b)
+
 _SD_END_DECLARATIONS;
 
 #endif
