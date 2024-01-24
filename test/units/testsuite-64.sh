@@ -396,6 +396,11 @@ EOF
 
     udevadm control --reload
 
+    # initialize partition table
+    for disk in {0..9}; do
+        echo 'label: gpt' | udevadm lock --device="${devices[$disk]}" sfdisk -q "${devices[$disk]}"
+    done
+
     # Delete the partitions, immediately recreate them, wait for udev to settle
     # down, and then check if we have any dangling symlinks in /dev/disk/. Rinse
     # and repeat.
@@ -1158,10 +1163,6 @@ testcase_mdadm_lvm() {
     udevadm wait --settle --timeout=30 --removed "${expected_symlinks[@]}"
     helper_check_device_units
 }
-
-# Disable the mdmonitor service, since it fails if there's no valid email address
-# configured in /etc/mdadm.conf, which just unnecessarily pollutes the logs
-systemctl list-unit-files mdmonitor.service >/dev/null && systemctl mask --runtime mdmonitor.service
 
 udevadm settle
 udevadm control --log-level debug

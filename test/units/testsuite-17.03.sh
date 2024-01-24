@@ -8,6 +8,9 @@ KILL_PID=
 setup() {
     mkdir -p "${TEST_RULE%/*}"
     [[ -e /etc/udev/udev.conf ]] && cp -f /etc/udev/udev.conf /etc/udev/udev.conf.bak
+    # Don't bother storing the coredumps in journal for this particular test
+    mkdir -p /run/systemd/coredump.conf.d/
+    echo -ne "[Coredump]\nStorage=external\n" >/run/systemd/coredump.conf.d/99-storage-journal.conf
 
     cat >"${TEST_RULE}" <<EOF
 ACTION=="add", SUBSYSTEM=="mem", KERNEL=="null", OPTIONS="log_level=debug"
@@ -32,6 +35,7 @@ teardown() {
     rm -rf "$TMPDIR"
     rm -f "$TEST_RULE"
     [[ -e /etc/udev/udev.conf.bak ]] && mv -f /etc/udev/udev.conf.bak /etc/udev/udev.conf
+    rm /run/systemd/coredump.conf.d/99-storage-journal.conf
     systemctl restart systemd-udevd.service
 }
 
