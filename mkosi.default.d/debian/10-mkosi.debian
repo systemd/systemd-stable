@@ -23,6 +23,7 @@ Packages=
         libpam0g
         libpwquality1
         libqrencode4
+        libip4tc2
         libtss2-dev # Use the -dev package to avoid churn in updating version numbers
         netcat-openbsd
         policykit-1
