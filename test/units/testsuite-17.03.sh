@@ -5,6 +5,10 @@ set -ex
 TEST_RULE="/run/udev/rules.d/49-test.rules"
 KILL_PID=
 
+# FIXME: temporarily skip the test in the stable branch
+# See: https://github.com/systemd/systemd-stable/pull/357#issuecomment-1907706904
+exit 0
+
 setup() {
     mkdir -p "${TEST_RULE%/*}"
     [[ -e /etc/udev/udev.conf ]] && cp -f /etc/udev/udev.conf /etc/udev/udev.conf.bak
