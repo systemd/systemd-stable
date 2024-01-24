@@ -73,8 +73,8 @@ STATIC_DESTRUCTOR_REGISTER(arg_policy_path, freep);
 #define PCRLOCK_FIRMWARE_CONFIG_LATE_PATH   "/var/lib/pcrlock.d/550-firmware-config-late.pcrlock.d/generated.pcrlock"
 #define PCRLOCK_GPT_PATH                    "/var/lib/pcrlock.d/600-gpt.pcrlock.d/generated.pcrlock"
 #define PCRLOCK_SECUREBOOT_AUTHORITY_PATH   "/var/lib/pcrlock.d/620-secureboot-authority.pcrlock.d/generated.pcrlock"
-#define PCRLOCK_KERNEL_CMDLINE_PATH         "/var/lib/pcrlock.d/710-kernel-cmdline.pcrlock/generated.pcrlock"
-#define PCRLOCK_KERNEL_INITRD_PATH          "/var/lib/pcrlock.d/720-kernel-initrd.pcrlock/generated.pcrlock"
+#define PCRLOCK_KERNEL_CMDLINE_PATH         "/var/lib/pcrlock.d/710-kernel-cmdline.pcrlock.d/generated.pcrlock"
+#define PCRLOCK_KERNEL_INITRD_PATH          "/var/lib/pcrlock.d/720-kernel-initrd.pcrlock.d/generated.pcrlock"
 #define PCRLOCK_MACHINE_ID_PATH             "/var/lib/pcrlock.d/820-machine-id.pcrlock"
 #define PCRLOCK_ROOT_FILE_SYSTEM_PATH       "/var/lib/pcrlock.d/830-root-file-system.pcrlock"
 #define PCRLOCK_FILE_SYSTEM_PATH_PREFIX     "/var/lib/pcrlock.d/840-file-system-"
@@ -2801,8 +2801,8 @@ static int verb_lock_secureboot_policy(int argc, char *argv[], void *userdata) {
                 int synthesize_empty; /* 0 → fail, > 0 → synthesize empty db, < 0 → skip */
         } variables[] = {
                 { EFI_VENDOR_GLOBAL,   "SecureBoot", 0 },
-                { EFI_VENDOR_GLOBAL,   "PK",         0 },
-                { EFI_VENDOR_GLOBAL,   "KEK",        0 },
+                { EFI_VENDOR_GLOBAL,   "PK",         1 },
+                { EFI_VENDOR_GLOBAL,   "KEK",        1 },
                 { EFI_VENDOR_DATABASE, "db",         1 },
                 { EFI_VENDOR_DATABASE, "dbx",        1 },
                 { EFI_VENDOR_DATABASE, "dbt",       -1 },
@@ -4593,7 +4593,7 @@ static int verb_make_policy(int argc, char *argv[], void *userdata) {
                         return r;
         }
 
-        log_info("Written new policy to '%s' and digest to TPM2 NV index 0x%" PRIu32 ".", path, nv_index);
+        log_info("Written new policy to '%s' and digest to TPM2 NV index 0x%x.", path, nv_index);
 
         log_info("Overall time spent: %s", FORMAT_TIMESPAN(usec_sub_unsigned(now(CLOCK_MONOTONIC), start_usec), 1));
 
