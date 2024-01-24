@@ -74,6 +74,10 @@ static void dns_transaction_close_connection(
          * and the reply we might still get from the server will be eaten up instead of resulting in an ICMP
          * port unreachable error message. */
 
+        /* Skip the graveyard stuff when we're shutting down, since that requires running event loop */
+        if (!t->scope->manager->event || sd_event_get_state(t->scope->manager->event) == SD_EVENT_FINISHED)
+                use_graveyard = false;
+
         if (use_graveyard && t->dns_udp_fd >= 0 && t->sent && !t->received) {
                 r = manager_add_socket_to_graveyard(t->scope->manager, t->dns_udp_fd);
                 if (r < 0)
@@ -627,9 +631,20 @@ static int on_stream_complete(DnsStream *s, int error) {
                 }
         }
 
-        if (error != 0)
-                LIST_FOREACH(transactions_by_stream, t, s->transactions)
+        if (error != 0) {
+                /* First, detach the stream from the server. Otherwise, transactions attached to this stream
+                 * may be restarted by on_transaction_stream_error() below with this stream. */
+                dns_stream_detach(s);
+
+                /* Do not use LIST_FOREACH() here, as
+                 *     on_transaction_stream_error()
+                 *         -> dns_transaction_complete_errno()
+                 *             -> dns_transaction_free()
+                 * may free multiple transactions in the list. */
+                DnsTransaction *t;
+                while ((t = s->transactions))
                         on_transaction_stream_error(t, error);
+        }
 
         return 0;
 }
