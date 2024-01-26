@@ -18,6 +18,7 @@ test_append_files() {
     initdir="$container" setup_basic_dirs
     initdir="$container" image_install \
         bash \
+        env \
         cat \
         hostname \
         grep \
