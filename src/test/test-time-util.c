@@ -599,6 +599,9 @@ static void test_map_clock_usec(void) {
 int main(int argc, char *argv[]) {
         test_setup_logging(LOG_INFO);
 
+        /* Tests have hard-coded results that do not expect a specific timezone to be set by the caller */
+        assert_se(unsetenv("TZ") >= 0);
+
         log_info("realtime=" USEC_FMT "\n"
                  "monotonic=" USEC_FMT "\n"
                  "boottime=" USEC_FMT "\n",
