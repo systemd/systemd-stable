@@ -1061,7 +1061,9 @@ install_multipath() {
     image_install kpartx /lib/udev/kpartx_id lsmod mpathpersist multipath multipathd partx
     image_install "${ROOTLIBDIR:?}"/system/multipathd.{service,socket}
     if get_bool "$LOOKS_LIKE_DEBIAN"; then
-        inst_rules 56-dm-parts.rules 56-dm-mpath.rules 60-multipath.rules 68-del-part-nodes.rules 95-kpartx.rules
+        # Note: try both 60-kpartx.rules (as seen on Debian Sid with 0.9.4-7) and 90-kpartx.rules (as seen on
+        # Ubuntu Jammy with 0.8.8-1ubuntu1.22.04.4)
+        inst_rules 56-dm-parts.rules 56-dm-mpath.rules 60-kpartx.rules 60-multipath.rules 68-del-part-nodes.rules 90-kpartx.rules
     else
         inst_rules 11-dm-mpath.rules 11-dm-parts.rules 62-multipath.rules 66-kpartx.rules 68-del-part-nodes.rules
     fi
@@ -1107,6 +1109,11 @@ install_lvm() {
 
     mkdir -p "${initdir:?}/etc/lvm"
 }
+
+host_has_btrfs() (
+    set -e
+    modprobe -nv btrfs && command -v mkfs.btrfs && command -v btrfs || return $?
+)
 
 install_btrfs() {
     instmods btrfs
@@ -1175,6 +1182,11 @@ install_iscsi() {
     fi
 }
 
+host_has_mdadm() (
+    set -e
+    command -v mdadm || return $?
+)
+
 install_mdadm() {
     local unit
     local mdadm_units=(
@@ -1188,6 +1200,7 @@ install_mdadm() {
         system-shutdown/mdadm.shutdown
     )
 
+    instmods "=md"
     image_install mdadm mdmon
     inst_rules 01-md-raid-creating.rules 63-md-raid-arrays.rules 64-md-raid-assembly.rules 69-md-clustered-confirm-device.rules
     # Fedora/CentOS/RHEL ships this rule file
@@ -1196,6 +1209,10 @@ install_mdadm() {
     for unit in "${mdadm_units[@]}"; do
         image_install "${ROOTLIBDIR:?}/$unit"
     done
+
+    # Disable the mdmonitor service, since it fails if there's no valid email address
+    # configured in /etc/mdadm.conf, which just unnecessarily pollutes the logs
+    "${SYSTEMCTL:?}" mask --root "${initdir:?}" mdmonitor.service || :
 }
 
 install_compiled_systemd() {
@@ -1976,14 +1993,14 @@ install_dbus() {
     # Newer Fedora versions use dbus-broker by default. Let's install it if it's available.
     if [ -f "$ROOTLIBDIR/system/dbus-broker.service" ]; then
         inst "$ROOTLIBDIR/system/dbus-broker.service"
-        inst_symlink /etc/systemd/system/dbus.service
         inst /usr/bin/dbus-broker
         inst /usr/bin/dbus-broker-launch
+        image_install -o {/etc,/usr/lib}/systemd/system/dbus.service
     elif [ -f "$ROOTLIBDIR/system/dbus-daemon.service" ]; then
         # Fedora rawhide replaced dbus.service with dbus-daemon.service
         inst "$ROOTLIBDIR/system/dbus-daemon.service"
         # Alias symlink
-        inst_symlink /etc/systemd/system/dbus.service
+        image_install -o {/etc,/usr/lib}/systemd/system/dbus.service
     else
         inst "$ROOTLIBDIR/system/dbus.service"
     fi
@@ -2042,12 +2059,12 @@ EOF
     # Newer Fedora versions use dbus-broker by default. Let's install it if it's available.
     if [ -f "$userunitdir/dbus-broker.service" ]; then
         inst "$userunitdir/dbus-broker.service"
-        inst_symlink /etc/systemd/user/dbus.service
+        image_install -o {/etc,/usr/lib}/systemd/user/dbus.service
     elif [ -f "${ROOTLIBDIR:?}/system/dbus-daemon.service" ]; then
         # Fedora rawhide replaced dbus.service with dbus-daemon.service
         inst "$userunitdir/dbus-daemon.service"
         # Alias symlink
-        inst_symlink /etc/systemd/user/dbus.service
+        image_install -o {/etc,/usr/lib}/systemd/user/dbus.service
     else
         inst "$userunitdir/dbus.service"
     fi
