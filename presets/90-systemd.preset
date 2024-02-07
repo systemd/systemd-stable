@@ -26,6 +26,8 @@ enable systemd-userdbd.socket
 enable systemd-pstore.service
 enable systemd-boot-update.service
 enable systemd-journald-audit.socket
+enable systemd-confext.service
+enable systemd-sysext.service
 
 disable console-getty.service
 disable debug-shell.service
