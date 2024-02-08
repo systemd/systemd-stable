@@ -4,6 +4,7 @@
 
 import argparse
 import logging
+import signal
 import sys
 
 import pexpect
@@ -90,7 +91,9 @@ def run(args):
     except Exception as e:
         logger.error(e)
         logger.info("killing child pid %d", console.pid)
-        console.terminate(force=True)
+
+        # Ask systemd-nspawn to stop and release the container's resources properly.
+        console.kill(signal.SIGTERM)
 
     return ret
 
