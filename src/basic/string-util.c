@@ -1260,3 +1260,15 @@ char *strdupcspn(const char *a, const char *reject) {
 
         return strndup(a, strcspn(a, reject));
 }
+
+char *startswith_strv(const char *string, char **strv) {
+        char *found = NULL;
+
+        STRV_FOREACH(i, strv) {
+                found = startswith(string, *i);
+                if (found)
+                        break;
+        }
+
+        return found;
+}
