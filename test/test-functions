@@ -1317,6 +1317,7 @@ install_suse_systemd() {
 
     pkgs=(
         systemd
+        systemd-boot
         systemd-container
         systemd-coredump
         systemd-experimental
