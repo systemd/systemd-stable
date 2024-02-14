@@ -238,7 +238,7 @@ static void exec_context_tty_reset(const ExecContext *context, const ExecParamet
 
         if (p && p->stdin_fd >= 0) {
                 fd = xopenat_lock(p->stdin_fd, NULL,
-                                  O_RDONLY|O_CLOEXEC|O_NONBLOCK|O_NOCTTY, 0, 0, LOCK_BSD, LOCK_EX);
+                                  O_RDONLY|O_CLOEXEC|O_NONBLOCK|O_NOCTTY, LOCK_BSD, LOCK_EX);
                 if (fd < 0)
                         return;
         } else if (path) {
