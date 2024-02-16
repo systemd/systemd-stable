@@ -12,17 +12,16 @@ TEST_NO_NSPAWN=1
 . "${TEST_BASE_DIR:?}/test-functions"
 
 test_append_files() {
-    # Create a swap file
-    (
-        image_install mkswap swapon swapoff stress
-        image_install -o btrfs
+    local workspace="${1:?}"
 
-        mkdir -p "${initdir:?}/etc/systemd/system/init.scope.d/"
-        cat >>"${initdir:?}/etc/systemd/system/init.scope.d/test-55-oomd.conf" <<EOF
+    image_install mkswap swapon swapoff stress
+    image_install -o btrfs
+
+    mkdir -p "${workspace:?}/etc/systemd/system/init.scope.d/"
+    cat >"${workspace:?}/etc/systemd/system/init.scope.d/test-55-oomd.conf" <<EOF
 [Scope]
 MemoryHigh=10G
 EOF
-    )
 }
 
 do_test "$@" 55
