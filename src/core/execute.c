@@ -4512,6 +4512,16 @@ static int exec_child(
         }
 
         if (context->utmp_id) {
+                _cleanup_free_ char *username_alloc = NULL;
+
+                if (!username && context->utmp_mode == EXEC_UTMP_USER) {
+                        username_alloc = uid_to_name(uid_is_valid(uid) ? uid : saved_uid);
+                        if (!username_alloc) {
+                                *exit_status = EXIT_USER;
+                                return log_oom();
+                        }
+                }
+
                 const char *line = context->tty_path ?
                         (path_startswith(context->tty_path, "/dev/") ?: context->tty_path) :
                         NULL;
@@ -4520,7 +4530,7 @@ static int exec_child(
                                       context->utmp_mode == EXEC_UTMP_INIT  ? INIT_PROCESS :
                                       context->utmp_mode == EXEC_UTMP_LOGIN ? LOGIN_PROCESS :
                                       USER_PROCESS,
-                                      username);
+                                      username ?: username_alloc);
         }
 
         if (uid_is_valid(uid)) {
