@@ -95,6 +95,7 @@ if systemctl status testsuite-55-testbloat.service; then exit 42; fi
 if ! systemctl status testsuite-55-testchill.service; then exit 24; fi
 
 # Make sure we also work correctly on user units.
+loginctl enable-linger testuser
 
 systemctl start --machine "testuser@.host" --user testsuite-55-testchill.service
 systemctl start --machine "testuser@.host" --user testsuite-55-testbloat.service
@@ -121,6 +122,8 @@ done
 # testbloat should be killed and testchill should be fine
 if systemctl --machine "testuser@.host" --user status testsuite-55-testbloat.service; then exit 42; fi
 if ! systemctl --machine "testuser@.host" --user status testsuite-55-testchill.service; then exit 24; fi
+
+loginctl disable-linger testuser
 
 # only run this portion of the test if we can set xattrs
 if setfattr -n user.xattr_test -v 1 /sys/fs/cgroup/; then
