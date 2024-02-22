@@ -778,3 +778,9 @@ void *find_configuration_table(const EFI_GUID *guid) {
 _used_ _noreturn_ int raise(int sig) {
         assert_not_reached();
 }
+
+void *xmalloc(size_t size) {
+        void *p = NULL;
+        assert_se(BS->AllocatePool(EfiLoaderData, size, &p) == EFI_SUCCESS);
+        return p;
+}
