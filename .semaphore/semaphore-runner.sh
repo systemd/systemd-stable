@@ -48,8 +48,6 @@ apt-get install -y fdisk tree libfdisk-dev libp11-kit-dev libssl-dev libpwqualit
 apt-get purge --auto-remove -y unattended-upgrades
 systemctl unmask systemd-networkd
 systemctl enable systemd-networkd
-# Remove once https://salsa.debian.org/ci-team/autopkgtest/-/merge_requests/297 is sorted
-adduser --disabled-login --gecos 'Temporary autopkgtest user,,,' autopkgtest
 EOF
     sudo lxc-stop -n "$CONTAINER"
 }
