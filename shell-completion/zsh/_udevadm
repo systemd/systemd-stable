@@ -155,7 +155,7 @@ _udevadm_commands(){
         'test:test an event run'
         'test-builtin:test a built-in command'
         'wait:wait for devices or device symlinks being created'
-        'lock:lock a block device and run a comand'
+        'lock:lock a block device and run a command'
     )
 
     if ((CURRENT == 1)); then
