@@ -21,4 +21,4 @@ ConditionPathExists=!/etc/initrd-release
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart={{LIBEXECDIR}}/systemd-tpm2-setup
+ExecStart={{LIBEXECDIR}}/systemd-tpm2-setup --graceful
