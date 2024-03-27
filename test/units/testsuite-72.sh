@@ -12,6 +12,15 @@ if ! test -x "$SYSUPDATE"; then
     exit 0
 fi
 
+# Loopback devices may not be supported. They are used because sfdisk cannot
+# change the sector size of a file, and we want to test both 512 and 4096 byte
+# sectors. If loopback devices are not supported, we can only test one sector
+# size, and the underlying device is likely to have a sector size of 512 bytes.
+if [[ ! -e /dev/loop-control ]]; then
+    echo "No loopback device support"
+    SECTOR_SIZES="512"
+fi
+
 export SYSTEMD_PAGER=cat
 export SYSTEMD_LOG_LEVEL=debug
 
