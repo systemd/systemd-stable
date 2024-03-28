@@ -1613,7 +1613,7 @@ static void mount_sigchld_event(Unit *u, pid_t pid, int code, int status) {
                                 mount_enter_unmounting(m);
                         } else {
                                 log_unit_warning(u, "Mount still present after %u attempts to unmount, giving up.", m->n_retry_umount);
-                                mount_enter_mounted(m, f);
+                                mount_enter_mounted(m, MOUNT_FAILURE_PROTOCOL);
                         }
                 } else
                         mount_enter_dead_or_mounted(m, f);
