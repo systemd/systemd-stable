@@ -3181,7 +3181,7 @@ static int service_deserialize_item(Unit *u, const char *key, const char *value,
         } else if (streq(key, "main-pid")) {
                 _cleanup_(pidref_done) PidRef pidref = PIDREF_NULL;
 
-                if (deserialize_pidref(fds, value, &pidref) >= 0)
+                if (!pidref_is_set(&s->main_pid) && deserialize_pidref(fds, value, &pidref) >= 0)
                         (void) service_set_main_pidref(s, &pidref);
 
         } else if (streq(key, "main-pid-known")) {
