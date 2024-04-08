@@ -309,6 +309,9 @@ static int table_add_uid_map(
         assert(table);
         assert(add_unavailable);
 
+        if (!p)
+                return 0;
+
         for (size_t i = 0; p && i < p->n_entries; i++) {
                 UidRangeEntry *x = p->entries + i;
 
