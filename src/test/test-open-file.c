@@ -172,14 +172,12 @@ TEST(open_file_to_string) {
         assert_se(streq(s, "/proc/1/ns/mnt::read-only"));
 
         s = mfree(s);
-        assert_se(free_and_strdup(&of->path, "/path:with:colon"));
-        assert_se(free_and_strdup(&of->fdname, "path:with:colon"));
+        assert_se(free_and_strdup(&of->path, "/path:with:colon") >= 0);
+        assert_se(free_and_strdup(&of->fdname, "path:with:colon") >= 0);
         of->flags = 0;
 
-        r = open_file_to_string(of, &s);
-
-        assert_se(r >= 0);
-        assert_se(streq(s, "/path\\:with\\:colon"));
+        assert_se(open_file_to_string(of, &s) >= 0);
+        assert_se(streq(s, "/path\\x3awith\\x3acolon"));
 }
 
 DEFINE_TEST_MAIN(LOG_INFO);
