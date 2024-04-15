@@ -218,7 +218,7 @@ assert_ntp() {
 assert_timedated_signal() {
     local timestamp="${1:?}"
     local value="${2:?}"
-    local args=(-q -n 1 --since="$timestamp" -p info _SYSTEMD_UNIT="busctl-monitor.service")
+    local args=(-q -n 1 --since="$timestamp" -p info _SYSTEMD_UNIT="busctl-monitor" + SYSLOG_IDENTIFIER="busctl-monitor")
 
     journalctl --sync
 
@@ -246,10 +246,6 @@ assert_timesyncd_state() {
 }
 
 testcase_ntp() {
-    # This fails due to https://github.com/systemd/systemd/issues/30886
-    # but it is too complex and risky to backport, so disable the test
-    return
-
     # timesyncd has ConditionVirtualization=!container by default; drop/mock that for testing
     if systemd-detect-virt --container --quiet; then
         systemctl disable --quiet --now systemd-timesyncd
@@ -267,7 +263,7 @@ EOF
         systemctl daemon-reload
     fi
 
-    systemd-run --unit busctl-monitor.service --service-type=notify \
+    systemd-run --unit busctl-monitor.service -p SyslogIdentifier=busctl-monitor --service-type=notify \
         busctl monitor --json=short --match="type=signal,sender=org.freedesktop.timedate1,member=PropertiesChanged,path=/org/freedesktop/timedate1"
 
     : 'Disable NTP'
@@ -302,7 +298,7 @@ assert_timesyncd_signal() {
     local timestamp="${1:?}"
     local property="${2:?}"
     local value="${3:?}"
-    local args=(-q --since="$timestamp" -p info _SYSTEMD_UNIT="busctl-monitor.service")
+    local args=(-q --since="$timestamp" -p info _SYSTEMD_UNIT="busctl-monitor.service" + SYSLOG_IDENTIFIER="busctl-monitor")
 
     journalctl --sync
 
@@ -363,7 +359,7 @@ EOF
     systemctl restart systemd-networkd
     networkctl status ntp99
 
-    systemd-run --unit busctl-monitor.service --service-type=notify \
+    systemd-run --unit busctl-monitor.service -p SyslogIdentifier=busctl-monitor --service-type=notify \
         busctl monitor --json=short --match="type=signal,sender=org.freedesktop.timesync1,member=PropertiesChanged,path=/org/freedesktop/timesync1"
 
     # LinkNTPServers
