@@ -635,7 +635,7 @@ fi
 systemd-sysext unmerge --no-reload
 systemd-sysext merge
 for RETRY in $(seq 60) LAST; do
-  if journalctl --boot --unit foo.service | grep -q -P 'echo\[[0-9]+\]: foo'; then
+  if [[ "$(journalctl --boot _SYSTEMD_UNIT="foo.service" + SYSLOG_IDENTIFIER="sysext-foo" -o cat)" == "foo" ]]; then
     break
   fi
   if [ "${RETRY}" = LAST ]; then
