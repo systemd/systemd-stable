@@ -3,10 +3,6 @@
 set -eux
 set -o pipefail
 
-# This fails due to https://github.com/systemd/systemd/issues/30886
-# but it is too complex and risky to backport, so disable the test
-exit 0
-
 # Rotation/flush test, see https://github.com/systemd/systemd/issues/19895
 journalctl --relinquish-var
 [[ "$(systemd-detect-virt -v)" == "qemu" ]] && ITERATIONS=10 || ITERATIONS=50
