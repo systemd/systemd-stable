@@ -876,6 +876,7 @@ EOF
 [Service]
 Type=oneshot
 RemainAfterExit=yes
+SyslogIdentifier=sysext-foo
 ExecStart=echo foo
 
 [Install]
