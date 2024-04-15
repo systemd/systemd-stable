@@ -46,7 +46,8 @@ monitor_check_rr() (
     # displayed. We turn off pipefail for this, since we don't care about the
     # lhs of this pipe expression, we only care about the rhs' result to be
     # clean
-    timeout -v 30s journalctl -u resolvectl-monitor.service --since "$since" -f --full | grep -m1 "$match"
+    # v255-only: match against a syslog tag as well to work around systemd/systemd#30886
+    timeout -v 30s journalctl --since "$since" -f --full _SYSTEMD_UNIT="resolvectl-monitor.service" + SYSLOG_IDENTIFIER="resolvectl-monitor" | grep -m1 "$match"
 )
 
 restart_resolved() {
@@ -251,8 +252,8 @@ resolvectl status
 resolvectl log-level debug
 
 # Start monitoring queries
-systemd-run -u resolvectl-monitor.service -p Type=notify resolvectl monitor
-systemd-run -u resolvectl-monitor-json.service -p Type=notify resolvectl monitor --json=short
+systemd-run -u resolvectl-monitor.service -p SyslogIdentifier=resolvectl-monitor -p Type=notify resolvectl monitor
+systemd-run -u resolvectl-monitor-json.service -p SyslogIdentifier=resolvectl-monitor-json -p Type=notify resolvectl monitor --json=short
 
 # Check if all the zones are valid (zone-check always returns 0, so let's check
 # if it produces any errors/warnings)
@@ -557,10 +558,10 @@ systemctl stop resolvectl-monitor-json.service
 # Issue: https://github.com/systemd/systemd/issues/29580 (part #2)
 #
 # Check for any warnings regarding malformed messages
-(! journalctl -u resolvectl-monitor.service -u reseolvectl-monitor-json.service -p warning --grep malformed)
+(! journalctl -p warning --grep malformed _SYSTEMD_UNIT="resolvectl-monitor-json.service" + SYSLOG_IDENTIFIER="resolvectl-monitor-json")
 # Verify that all queries recorded by `resolvectl monitor --json` produced a valid JSON
 # with expected fields
-journalctl -p info -o cat _SYSTEMD_UNIT="resolvectl-monitor-json.service" | while read -r line; do
+journalctl -p info -o cat _SYSTEMD_UNIT="resolvectl-monitor-json.service" + SYSLOG_IDENTIFIER="resolvectl-monitor-json" | while read -r line; do
     # Check that both "question" and "answer" fields are arrays
     #
     # The expression is slightly more complicated due to the fact that the "answer" field is optional,
