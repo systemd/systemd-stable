@@ -17,7 +17,7 @@ SYSTEMD_NSPAWN="${STATEDIR:?}/run-nspawn"
 setup_nspawn_root_hook() {
     cat >"${STATEDIR:?}/run-nspawn" <<EOF
 #!/bin/bash
-exec "${TEST_BASE_DIR:?}/test-shutdown.py" -v -- "$_ORIG_NSPAWN" "\$@"
+exec "${TEST_BASE_DIR:?}/test-shutdown.py" -v -- "$_ORIG_NSPAWN" --background= "\$@"
 exit 1
 EOF
     chmod 755 "${STATEDIR:?}"/run-nspawn
@@ -38,6 +38,7 @@ EOF
 
     inst /usr/bin/screen
     echo "PS1='screen\$WINDOW # '" >>"$workspace/root/.bashrc"
+    echo "TERM=linux" >>"$workspace/root/.bash_profile"
     echo 'startup_message off' >"$workspace/etc/screenrc"
     echo 'bell_msg ""' >>"$workspace/etc/screenrc"
 }
