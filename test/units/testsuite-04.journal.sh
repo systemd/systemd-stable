@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: LGPL-2.1-or-later
+# shellcheck disable=SC2317
 set -eux
 set -o pipefail
 
@@ -236,6 +237,9 @@ diff -u /tmp/lb1 - <<'EOF'
 [{"index":-3,"boot_id":"5ea5fc4f82a14186b5332a788ef9435e","first_entry":1666569600994371,"last_entry":1666584266223608},{"index":-2,"boot_id":"bea6864f21ad4c9594c04a99d89948b0","first_entry":1666584266731785,"last_entry":1666584347230411},{"index":-1,"boot_id":"4c708e1fd0744336be16f3931aa861fb","first_entry":1666584348378271,"last_entry":1666584354649355},{"index":0,"boot_id":"35e8501129134edd9df5267c49f744a4","first_entry":1666584356661527,"last_entry":1666584438086856}]
 EOF
 rm -rf "$JOURNAL_DIR" /tmp/lb1
+
+# v255-only: skip the following test case, as it suffers from systemd/systemd#30886
+exit 0
 
 # Check that using --after-cursor/--cursor-file= together with journal filters doesn't
 # skip over entries matched by the filter
