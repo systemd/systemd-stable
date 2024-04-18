@@ -340,7 +340,7 @@ static int help(void) {
                "  -u --unit=UNIT             Show logs from the specified unit\n"
                "     --user-unit=UNIT        Show logs from the specified user unit\n"
                "  -t --identifier=STRING     Show entries with the specified syslog identifier\n"
-               "  -p --priority=RANGE        Show entries with the specified priority\n"
+               "  -p --priority=RANGE        Show entries within the specified priority range\n"
                "     --facility=FACILITY...  Show entries with the specified facilities\n"
                "  -g --grep=PATTERN          Show entries with MESSAGE matching PATTERN\n"
                "     --case-sensitive[=BOOL] Force case sensitive or insensitive matching\n"
