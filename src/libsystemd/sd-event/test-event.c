@@ -808,4 +808,22 @@ TEST(inotify_process_buffered_data) {
         assert_se(sd_event_wait(e, 0) == 0);
 }
 
+TEST(sd_event_source_set_io_fd) {
+        _cleanup_(sd_event_source_unrefp) sd_event_source *s = NULL;
+        _cleanup_(sd_event_unrefp) sd_event *e = NULL;
+        _cleanup_close_pair_ int pfd_a[2] = { -EBADF, -EBADF }, pfd_b[2] = { -EBADF, -EBADF };
+
+        assert_se(sd_event_default(&e) >= 0);
+
+        assert_se(pipe2(pfd_a, O_CLOEXEC) >= 0);
+        assert_se(pipe2(pfd_b, O_CLOEXEC) >= 0);
+
+        assert_se(sd_event_add_io(e, &s, pfd_a[0], EPOLLIN, NULL, INT_TO_PTR(-ENOANO)) >= 0);
+        assert_se(sd_event_source_set_io_fd_own(s, true) >= 0);
+        TAKE_FD(pfd_a[0]);
+
+        assert_se(sd_event_source_set_io_fd(s, pfd_b[0]) >= 0);
+        TAKE_FD(pfd_b[0]);
+}
+
 DEFINE_TEST_MAIN(LOG_DEBUG);
