@@ -3016,7 +3016,10 @@ StandardInputData=V2XigLJyZSBubyBzdHJhbmdlcnMgdG8gbG92ZQpZb3Uga25vdyB0aGUgcnVsZX
         The usual specifiers are expanded in all assignments (see below). Note that this setting is not only
         useful for attaching additional metadata to log records of a unit, but given that all fields and
         values are indexed may also be used to implement cross-unit log record matching. Assign an empty
-        string to reset the list.</para></listitem>
+        string to reset the list.</para>
+
+        <para>Note that this functionality is currently only available in system services, not in per-user
+        services.</para></listitem>
       </varlistentry>
 
       <varlistentry>
@@ -3067,7 +3070,10 @@ StandardInputData=V2XigLJyZSBubyBzdHJhbmdlcnMgdG8gbG92ZQpZb3Uga25vdyB0aGUgcnVsZX
         <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry> about the
         unit are not taken into account. Filtered log messages won't be forwarded to traditional syslog daemons,
         the kernel log buffer (kmsg), the systemd console, or sent as wall messages to all logged-in
-        users.</para></listitem>
+        users.</para>
+
+        <para>Note that this functionality is currently only available in system services, not in per-user
+        services.</para></listitem>
       </varlistentry>
 
       <varlistentry>
