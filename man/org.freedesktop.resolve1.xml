@@ -103,7 +103,7 @@ node /org/freedesktop/resolve1 {
       SetLinkDNSSECNegativeTrustAnchors(in  i ifindex,
                                         in  as names);
       RevertLink(in  i ifindex);
-      RegisterService(in  s id,
+      RegisterService(in  s name,
                       in  s name_template,
                       in  s type,
                       in  q service_port,
