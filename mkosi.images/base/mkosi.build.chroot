@@ -193,12 +193,6 @@ if [ ! -f "$BUILDDIR"/build.ninja ]; then
         )
     fi
 
-    if grep -q '^ID="opensuse' /usr/lib/os-release; then
-        CONFIGURE_OPTS+=(
-            -Dbpf-compiler=gcc
-        )
-    fi
-
     ( set -x; meson setup "$BUILDDIR" "$SRCDIR" "${CONFIGURE_OPTS[@]}" )
 fi
 
