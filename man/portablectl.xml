@@ -45,12 +45,12 @@
     within the file system context of the image.</para>
 
     <para>Portable service images are an efficient way to bundle multiple related services and other units together,
-    and transfer them as a whole between systems. When these images are attached the local system the contained units
+    and transfer them as a whole between systems. When these images are attached to the local system, the contained units
     may run in most ways like regular system-provided units, either with full privileges or inside strict sandboxing,
     depending on the selected configuration. For more details, see
     <ulink url="https://systemd.io/PORTABLE_SERVICES">Portable Services Documentation</ulink>.</para>
 
-    <para>Specifically portable service images may be of the following kind:</para>
+    <para>Portable service images may be of the following kinds:</para>
 
     <itemizedlist>
       <listitem><para>Directory trees containing an OS, including the top-level directories <filename>/usr/</filename>,
@@ -397,7 +397,7 @@
         multiple times, in which case the order in which images are laid down follows the rules specified in
         <citerefentry><refentrytitle>systemd.exec</refentrytitle><manvolnum>5</manvolnum></citerefentry>
         for the <varname>ExtensionImages=</varname> directive and for the
-        <citerefentry><refentrytitle>systemd-sysext</refentrytitle><manvolnum>8</manvolnum></citerefentry> and.
+        <citerefentry><refentrytitle>systemd-sysext</refentrytitle><manvolnum>8</manvolnum></citerefentry> and
         <citerefentry><refentrytitle>systemd-confext</refentrytitle><manvolnum>8</manvolnum></citerefentry> tools.
         The images must contain an <filename>extension-release</filename> file with metadata that matches
         what is defined in the <filename>os-release</filename> of <replaceable>IMAGE</replaceable>. See:
