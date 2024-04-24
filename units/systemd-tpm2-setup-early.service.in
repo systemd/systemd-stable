@@ -20,4 +20,4 @@ ConditionPathExists=!/run/systemd/tpm2-srk-public-key.pem
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart={{LIBEXECDIR}}/systemd-tpm2-setup --early=yes
+ExecStart={{LIBEXECDIR}}/systemd-tpm2-setup --early=yes --graceful
