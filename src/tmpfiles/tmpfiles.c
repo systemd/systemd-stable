@@ -817,7 +817,7 @@ static int dir_cleanup(
                                            cutoff_nsec, sub_path, age_by_file, false))
                                 continue;
 
-                        fd = xopenat(dirfd(d),
+                        fd = xopenat_full(dirfd(d),
                                      de->d_name,
                                      O_RDONLY|O_CLOEXEC|O_NOFOLLOW|O_NOATIME|O_NONBLOCK,
                                      /* xopen_flags = */ 0,
