@@ -46,7 +46,8 @@ monitor_check_rr() (
     # displayed. We turn off pipefail for this, since we don't care about the
     # lhs of this pipe expression, we only care about the rhs' result to be
     # clean
-    timeout -v 30s journalctl -u resmontest.service --since "$since" -f --full | grep -m1 "$match"
+    # v255-only: match against a syslog tag as well to work around systemd/systemd#30886
+    timeout -v 30s journalctl --since "$since" -f --full _SYSTEMD_UNIT="resmontest.service" + SYSLOG_IDENTIFIER="resmontest" | grep -m1 "$match"
 )
 
 restart_resolved() {
@@ -251,7 +252,8 @@ resolvectl status
 resolvectl log-level debug
 
 # Start monitoring queries
-systemd-run -u resmontest.service -p Type=notify resolvectl monitor
+systemd-run -u resmontest.service -p SyslogIdentifier=resmontest -p Type=notify resolvectl monitor
+systemd-run -u resmontest-json.service -p SyslogIdentifier=resmontest-json -p Type=notify resolvectl monitor --json=short
 
 # Check if all the zones are valid (zone-check always returns 0, so let's check
 # if it produces any errors/warnings)
