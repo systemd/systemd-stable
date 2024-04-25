@@ -637,7 +637,7 @@ static int journal_file_verify_header(JournalFile *f) {
                                 return -ENODATA;
                         if (!VALID_REALTIME(le64toh(f->header->tail_entry_realtime)))
                                 return -ENODATA;
-                        if (!VALID_MONOTONIC(le64toh(f->header->tail_entry_realtime)))
+                        if (!VALID_MONOTONIC(le64toh(f->header->tail_entry_monotonic)))
                                 return -ENODATA;
                 } else {
                         /* Otherwise, the fields must be zero. */
@@ -648,7 +648,7 @@ static int journal_file_verify_header(JournalFile *f) {
                                 return -ENODATA;
                         if (f->header->tail_entry_realtime != 0)
                                 return -ENODATA;
-                        if (f->header->tail_entry_realtime != 0)
+                        if (f->header->tail_entry_monotonic != 0)
                                 return -ENODATA;
                 }
         }
@@ -736,8 +736,9 @@ int journal_file_fstat(JournalFile *f) {
                 return r;
 
         /* Refuse appending to files that are already deleted */
-        if (f->last_stat.st_nlink <= 0)
-                return -EIDRM;
+        r = stat_verify_linked(&f->last_stat);
+        if (r < 0)
+                return r;
 
         return 0;
 }
@@ -2529,7 +2530,7 @@ int journal_file_append_entry(
                                                ts->realtime);
                 if (!VALID_MONOTONIC(ts->monotonic))
                         return log_debug_errno(SYNTHETIC_ERRNO(EBADMSG),
-                                               "Invalid monotomic timestamp %" PRIu64 ", refusing entry.",
+                                               "Invalid monotonic timestamp %" PRIu64 ", refusing entry.",
                                                ts->monotonic);
         } else {
                 dual_timestamp_get(&_ts);
