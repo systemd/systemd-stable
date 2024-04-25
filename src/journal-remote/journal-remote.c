@@ -362,8 +362,6 @@ void journal_remote_server_destroy(RemoteServer *s) {
         writer_unref(s->_single_writer);
         hashmap_free(s->writers);
 
-        sd_event_source_unref(s->sigterm_event);
-        sd_event_source_unref(s->sigint_event);
         sd_event_source_unref(s->listen_event);
         sd_event_unref(s->events);
 
@@ -497,7 +495,9 @@ static int accept_connection(
 
         switch (socket_address_family(addr)) {
         case AF_INET:
-        case AF_INET6: {
+        case AF_INET6:
+        case AF_VSOCK:
+        case AF_UNIX: {
                 _cleanup_free_ char *a = NULL;
                 char *b;
 

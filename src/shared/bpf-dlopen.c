@@ -60,11 +60,15 @@ int dlopen_bpf(void) {
                         return log_debug_errno(SYNTHETIC_ERRNO(EOPNOTSUPP),
                                                "neither libbpf.so.1 nor libbpf.so.0 are installed: %s", dlerror());
 
+                log_debug("Loaded 'libbpf.so.0' via dlopen()");
+
                 /* symbols deprecated in 1.0 we use as compat */
                 r = dlsym_many_or_warn(dl, LOG_DEBUG,
                                 DLSYM_ARG(bpf_create_map),
                                 DLSYM_ARG(bpf_probe_prog_type));
         } else {
+                log_debug("Loaded 'libbpf.so.1' via dlopen()");
+
                 /* symbols available from 0.7.0 */
                 r = dlsym_many_or_warn(dl, LOG_DEBUG,
                                 DLSYM_ARG(bpf_map_create),
