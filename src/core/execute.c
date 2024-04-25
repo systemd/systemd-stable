@@ -238,7 +238,7 @@ static void exec_context_tty_reset(const ExecContext *context, const ExecParamet
 
         if (p && p->stdin_fd >= 0) {
                 fd = xopenat_lock(p->stdin_fd, NULL,
-                                  O_RDONLY|O_CLOEXEC|O_NONBLOCK|O_NOCTTY, 0, 0, LOCK_BSD, LOCK_EX);
+                                  O_RDONLY|O_CLOEXEC|O_NONBLOCK|O_NOCTTY, LOCK_BSD, LOCK_EX);
                 if (fd < 0)
                         return;
         } else if (path) {
@@ -4402,7 +4402,7 @@ static int close_remaining_fds(
                 const int *fds, size_t n_fds) {
 
         size_t n_dont_close = 0;
-        int dont_close[n_fds + 14];
+        int dont_close[n_fds + 15];
 
         assert(params);
 
@@ -4437,6 +4437,8 @@ static int close_remaining_fds(
 
         if (user_lookup_fd >= 0)
                 dont_close[n_dont_close++] = user_lookup_fd;
+
+        assert(n_dont_close <= ELEMENTSOF(dont_close));
 
         return close_all_fds(dont_close, n_dont_close);
 }

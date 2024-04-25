@@ -424,7 +424,15 @@ static int dns_scope_socket(
                         return r;
         }
 
-        if (ifindex != 0) {
+        bool addr_is_nonlocal = s->link &&
+            !manager_find_link_address(s->manager, sa.sa.sa_family, sockaddr_in_addr(&sa.sa)) &&
+            in_addr_is_localhost(sa.sa.sa_family, sockaddr_in_addr(&sa.sa)) == 0;
+
+        if (addr_is_nonlocal && ifindex != 0) {
+                /* As a special exception we don't use UNICAST_IF if we notice that the specified IP address
+                 * is on the local host. Otherwise, destination addresses on the local host result in
+                 * EHOSTUNREACH, since Linux won't send the packets out of the specified interface, but
+                 * delivers them directly to the local socket. */
                 r = socket_set_unicast_if(fd, sa.sa.sa_family, ifindex);
                 if (r < 0)
                         return r;
@@ -463,19 +471,13 @@ static int dns_scope_socket(
         else {
                 bool bound = false;
 
-                /* Let's temporarily bind the socket to the specified ifindex. The kernel currently takes
-                 * only the SO_BINDTODEVICE/SO_BINDTOINDEX ifindex into account when making routing decisions
+                /* Let's temporarily bind the socket to the specified ifindex. Older kernels only take
+                 * the SO_BINDTODEVICE/SO_BINDTOINDEX ifindex into account when making routing decisions
                  * in connect() — and not IP_UNICAST_IF. We don't really want any of the other semantics of
                  * SO_BINDTODEVICE/SO_BINDTOINDEX, hence we immediately unbind the socket after the fact
                  * again.
-                 *
-                 * As a special exception we don't do this if we notice that the specified IP address is on
-                 * the local host. SO_BINDTODEVICE in combination with destination addresses on the local
-                 * host result in EHOSTUNREACH, since Linux won't send the packets out of the specified
-                 * interface, but delivers them directly to the local socket. */
-                if (s->link &&
-                    !manager_find_link_address(s->manager, sa.sa.sa_family, sockaddr_in_addr(&sa.sa)) &&
-                    in_addr_is_localhost(sa.sa.sa_family, sockaddr_in_addr(&sa.sa)) == 0) {
+                 */
+                if (addr_is_nonlocal) {
                         r = socket_bind_to_ifindex(fd, ifindex);
                         if (r < 0)
                                 return r;
@@ -589,6 +591,29 @@ static DnsScopeMatch match_subnet_reverse_lookups(
         return _DNS_SCOPE_MATCH_INVALID;
 }
 
+/* https://www.iana.org/assignments/special-use-domain-names/special-use-domain-names.xhtml */
+/* https://www.iana.org/assignments/locally-served-dns-zones/locally-served-dns-zones.xhtml */
+static bool dns_refuse_special_use_domain(const char *domain, DnsQuestion *question) {
+        /* RFC9462 § 6.4: resolvers SHOULD respond to queries of any type other than SVCB for
+         * _dns.resolver.arpa. with NODATA and queries of any type for any domain name under
+         * resolver.arpa with NODATA. */
+        if (dns_name_equal(domain, "_dns.resolver.arpa") > 0) {
+                DnsResourceKey *t;
+
+                /* Only SVCB is permitted to _dns.resolver.arpa */
+                DNS_QUESTION_FOREACH(t, question)
+                        if (t->type == DNS_TYPE_SVCB)
+                                return false;
+
+                return true;
+        }
+
+        if (dns_name_endswith(domain, "resolver.arpa") > 0)
+                return true;
+
+        return false;
+}
+
 DnsScopeMatch dns_scope_good_domain(
                 DnsScope *s,
                 DnsQuery *q) {
@@ -601,6 +626,7 @@ DnsScopeMatch dns_scope_good_domain(
         /* This returns the following return values:
          *
          *    DNS_SCOPE_NO         → This scope is not suitable for lookups of this domain, at all
+         *    DNS_SCOPE_LAST_RESORT→ This scope is not suitable, unless we have no alternative
          *    DNS_SCOPE_MAYBE      → This scope is suitable, but only if nothing else wants it
          *    DNS_SCOPE_YES_BASE+n → This scope is suitable, and 'n' suffix labels match
          *
@@ -641,6 +667,10 @@ DnsScopeMatch dns_scope_good_domain(
 
         /* Never respond to some of the domains listed in RFC6303 + RFC6761 */
         if (dns_name_dont_resolve(domain))
+                return DNS_SCOPE_NO;
+
+        /* Avoid asking invalid questions of some special use domains */
+        if (dns_refuse_special_use_domain(domain, question))
                 return DNS_SCOPE_NO;
 
         /* Never go to network for the _gateway, _outbound, _localdnsstub, _localdnsproxy domain — they're something special, synthesized locally. */
@@ -749,7 +779,7 @@ DnsScopeMatch dns_scope_good_domain(
 
                 if ((s->family == AF_INET && dns_name_endswith(domain, "in-addr.arpa") > 0) ||
                     (s->family == AF_INET6 && dns_name_endswith(domain, "ip6.arpa") > 0))
-                        return DNS_SCOPE_MAYBE;
+                        return DNS_SCOPE_LAST_RESORT;
 
                 if ((dns_name_endswith(domain, "local") > 0 && /* only resolve names ending in .local via mDNS */
                      dns_name_equal(domain, "local") == 0 &&   /* but not the single-label "local" name itself */
@@ -772,7 +802,7 @@ DnsScopeMatch dns_scope_good_domain(
 
                 if ((s->family == AF_INET && dns_name_endswith(domain, "in-addr.arpa") > 0) ||
                     (s->family == AF_INET6 && dns_name_endswith(domain, "ip6.arpa") > 0))
-                        return DNS_SCOPE_MAYBE;
+                        return DNS_SCOPE_LAST_RESORT;
 
                 if ((dns_name_is_single_label(domain) && /* only resolve single label names via LLMNR */
                      dns_name_equal(domain, "local") == 0 && /* don't resolve "local" with LLMNR, it's the top-level domain of mDNS after all, see above */
@@ -1449,9 +1479,10 @@ int dns_scope_announce(DnsScope *scope, bool goodbye) {
                         continue;
                 }
 
-                /* Collect service types for _services._dns-sd._udp.local RRs in a set */
+                /* Collect service types for _services._dns-sd._udp.local RRs in a set. Only two-label names
+                 * (not selective names) are considered according to RFC6763 § 9. */
                 if (!scope->announced &&
-                    dns_resource_key_is_dnssd_ptr(z->rr->key)) {
+                    dns_resource_key_is_dnssd_two_label_ptr(z->rr->key)) {
                         if (!set_contains(types, dns_resource_key_name(z->rr->key))) {
                                 r = set_ensure_put(&types, &dns_name_hash_ops, dns_resource_key_name(z->rr->key));
                                 if (r < 0)
