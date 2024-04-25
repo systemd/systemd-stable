@@ -310,6 +310,9 @@ static int table_add_uid_map(
         assert(table);
         assert(add_unavailable);
 
+        if (!p)
+                return 0;
+
         for (size_t i = 0; p && i < p->n_entries; i++) {
                 UidRangeEntry *x = p->entries + i;
 
@@ -534,7 +537,8 @@ static int table_add_gid_boundaries(Table *table, const UidRange *p) {
         for (size_t i = 0; i < ELEMENTSOF(uid_range_table); i++) {
                 _cleanup_free_ char *name = NULL, *comment = NULL;
 
-                if (!uid_range_covers(p, uid_range_table[i].first, uid_range_table[i].last))
+                if (!uid_range_covers(p, uid_range_table[i].first,
+                                      uid_range_table[i].last - uid_range_table[i].first + 1))
                         continue;
 
                 name = strjoin(special_glyph(SPECIAL_GLYPH_ARROW_DOWN),
