@@ -832,7 +832,6 @@ class Utilities():
 
     def wait_activated(self, link, state='down', timeout=20, fail_assert=True):
         # wait for the interface is activated.
-        invocation_id = check_output('systemctl show systemd-networkd -p InvocationID --value')
         needle = f'{link}: Bringing link {state}'
         flag = state.upper()
         for iteration in range(timeout + 1):
@@ -840,7 +839,7 @@ class Utilities():
                 time.sleep(1)
             if not link_exists(link):
                 continue
-            output = check_output('journalctl _SYSTEMD_INVOCATION_ID=' + invocation_id)
+            output = read_networkd_log()
             if needle in output and flag in check_output(f'ip link show {link}'):
                 return True
         if fail_assert:
@@ -3264,6 +3263,7 @@ class NetworkdNetworkTests(unittest.TestCase, Utilities):
         print(output)
         self.assertRegex(output, 'inet6 .* scope link')
 
+    @unittest.skip("Re-enable once https://github.com/systemd/systemd/issues/30056 is resolved")
     def test_sysctl(self):
         copy_networkd_conf_dropin('25-global-ipv6-privacy-extensions.conf')
         copy_network_unit('25-sysctl.network', '12-dummy.netdev', copy_dropins=False)
@@ -3904,6 +3904,23 @@ class NetworkdTCTests(unittest.TestCase, Utilities):
         output = check_output('tc qdisc show dev dummy98')
         print(output)
         self.assertRegex(output, 'qdisc teql1 31: root')
+
+    @expectedFailureIfModuleIsNotAvailable('sch_fq', 'sch_sfq', 'sch_tbf')
+    def test_qdisc_drop(self):
+        copy_network_unit('12-dummy.netdev', '12-dummy.network')
+        start_networkd()
+        self.wait_online(['dummy98:routable'])
+
+        # Test case for issue #32247 and #32254.
+        for _ in range(20):
+            check_output('tc qdisc replace dev dummy98 root fq')
+            self.assertFalse(networkd_is_failed())
+            check_output('tc qdisc replace dev dummy98 root fq pacing')
+            self.assertFalse(networkd_is_failed())
+            check_output('tc qdisc replace dev dummy98 handle 10: root tbf rate 0.5mbit burst 5kb latency 70ms peakrate 1mbit minburst 1540')
+            self.assertFalse(networkd_is_failed())
+            check_output('tc qdisc add dev dummy98 parent 10:1 handle 100: sfq')
+            self.assertFalse(networkd_is_failed())
 
 class NetworkdStateFileTests(unittest.TestCase, Utilities):
 

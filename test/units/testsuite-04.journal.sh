@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: LGPL-2.1-or-later
+# shellcheck disable=SC2317
 set -eux
 set -o pipefail
 
@@ -237,6 +238,9 @@ diff -u /tmp/lb1 - <<'EOF'
 EOF
 rm -rf "$JOURNAL_DIR" /tmp/lb1
 
+# v255-only: skip the following test case, as it suffers from systemd/systemd#30886
+exit 0
+
 # Check that using --after-cursor/--cursor-file= together with journal filters doesn't
 # skip over entries matched by the filter
 # See: https://github.com/systemd/systemd/issues/30288
@@ -259,4 +263,12 @@ hello
 + echo world
 world
 EOF
+rm -f "$CURSOR_FILE"
+
+# Check that --until works with --after-cursor and --lines/-n
+# See: https://github.com/systemd/systemd/issues/31776
+CURSOR_FILE="$(mktemp)"
+journalctl -q -n 0 --cursor-file="$CURSOR_FILE"
+TIMESTAMP="$(journalctl -q -n 1 --cursor="$(<"$CURSOR_FILE")" --output=short-unix | cut -d ' ' -f 1 | cut -d '.' -f 1)"
+[[ -z "$(journalctl -q -n 10 --after-cursor="$(<"$CURSOR_FILE")" --until "@$((TIMESTAMP - 3))")" ]]
 rm -f "$CURSOR_FILE"
