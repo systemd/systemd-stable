@@ -3918,7 +3918,7 @@ static int setup_ephemeral(const ExecContext *context, ExecRuntime *runtime) {
                  */
                 r = chattr_fd(fd, FS_NOCOW_FL, FS_NOCOW_FL, NULL);
                 if (r < 0)
-                        log_debug_errno(fd, "Failed to disable copy-on-write for %s, ignoring: %m", runtime->ephemeral_copy);
+                        log_debug_errno(r, "Failed to disable copy-on-write for %s, ignoring: %m", runtime->ephemeral_copy);
         }
 
         r = send_one_fd(runtime->ephemeral_storage_socket[1], fd, MSG_DONTWAIT);
