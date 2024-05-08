@@ -435,6 +435,11 @@ void install_changes_dump(int r, const char *verb, const InstallChange *changes,
                         err = log_error_errno(changes[i].type, "Failed to %s unit, unit %s does not exist.",
                                               verb, changes[i].path);
                         break;
+                case -ENOLINK:
+                        err = log_error_errno(changes[i].type, "Failed to %s unit, %s is an unresolvable alias.",
+                                              verb, changes[i].path);
+                        break;
+
                 case -EUNATCH:
                         err = log_error_errno(changes[i].type, "Failed to %s unit, cannot resolve specifiers in \"%s\".",
                                               verb, changes[i].path);
@@ -3600,18 +3605,19 @@ int unit_file_preset_all(
         if (r < 0)
                 return r;
 
+        r = 0;
         STRV_FOREACH(i, lp.search_path) {
                 _cleanup_closedir_ DIR *d = NULL;
 
                 d = opendir(*i);
                 if (!d) {
-                        if (errno == ENOENT)
-                                continue;
-
-                        return -errno;
+                        if (errno != ENOENT)
+                                RET_GATHER(r, -errno);
+                        continue;
                 }
 
-                FOREACH_DIRENT(de, d, return -errno) {
+                FOREACH_DIRENT(de, d, RET_GATHER(r, -errno)) {
+                        int k;
 
                         if (!unit_name_is_valid(de->d_name, UNIT_NAME_ANY))
                                 continue;
@@ -3619,12 +3625,23 @@ int unit_file_preset_all(
                         if (!IN_SET(de->d_type, DT_LNK, DT_REG))
                                 continue;
 
-                        r = preset_prepare_one(scope, &plus, &minus, &lp, de->d_name, &presets, changes, n_changes);
-                        if (r < 0 &&
-                            !IN_SET(r, -EEXIST, -ERFKILL, -EADDRNOTAVAIL, -EBADSLT, -EIDRM, -EUCLEAN, -ELOOP, -ENOENT, -EUNATCH, -EXDEV))
+                        k = preset_prepare_one(scope, &plus, &minus, &lp, de->d_name, &presets, changes, n_changes);
+                        if (k < 0 &&
+                            !IN_SET(k, -EEXIST,
+                                       -ERFKILL,
+                                       -EADDRNOTAVAIL,
+                                       -ETXTBSY,
+                                       -EBADSLT,
+                                       -EIDRM,
+                                       -EUCLEAN,
+                                       -ELOOP,
+                                       -EXDEV,
+                                       -ENOENT,
+                                       -ENOLINK,
+                                       -EUNATCH))
                                 /* Ignore generated/transient/missing/invalid units when applying preset, propagate other errors.
-                                 * Coordinate with install_changes_dump() above. */
-                                return r;
+                                 * Coordinate with install_change_dump_error() above. */
+                                RET_GATHER(r, k);
                 }
         }
 

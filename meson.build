@@ -1685,6 +1685,24 @@ if conf.get('BPF_FRAMEWORK') == 1
                 '-c',
         ]
 
+        # If c_args contains these flags copy them along with the values, in order to avoid breaking
+        # reproducible builds and other functionality
+        propagate_cflags = [
+                '-ffile-prefix-map=',
+                '-fdebug-prefix-map=',
+                '-fmacro-prefix-map=',
+        ]
+
+        foreach opt : c_args
+                foreach flag : propagate_cflags
+                        if opt.startswith(flag)
+                                bpf_clang_flags += [opt]
+                                bpf_gcc_flags += [opt]
+                                break
+                        endif
+                endforeach
+        endforeach
+
         # Generate defines that are appropriate to tell the compiler what architecture
         # we're compiling for. By default we just map meson's cpu_family to __<cpu_family>__.
         # This dictionary contains the exceptions where this doesn't work.
@@ -1697,6 +1715,7 @@ if conf.get('BPF_FRAMEWORK') == 1
                 'riscv32' : ['-D__riscv', '-D__riscv_xlen=32'],
                 'riscv64' : ['-D__riscv', '-D__riscv_xlen=64'],
                 'x86'     : ['-D__i386__'],
+                's390x'   : ['-D__s390__', '-D__s390x__'],
 
                 # For arm, assume hardware fp is available.
                 'arm'     : ['-D__arm__', '-D__ARM_PCS_VFP'],
