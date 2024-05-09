@@ -498,8 +498,7 @@
       <varlistentry>
         <term><varname>OBJECT_PID=<replaceable>PID</replaceable></varname></term>
         <listitem>
-          <para>PID of the program that this message pertains to.
-          </para>
+          <para>PID of the program that this message pertains to.</para>
         </listitem>
       </varlistentry>
 
@@ -517,9 +516,8 @@
         <term><varname>OBJECT_SYSTEMD_UNIT=</varname></term>
         <term><varname>OBJECT_SYSTEMD_USER_UNIT=</varname></term>
         <listitem>
-          <para>These are additional fields added automatically by
-          <command>systemd-journald</command>. Their meaning is the
-          same as
+          <para>These are additional fields added automatically by <command>systemd-journald</command>.
+          Their meaning is the same as
           <varname>_UID=</varname>,
           <varname>_GID=</varname>,
           <varname>_COMM=</varname>,
@@ -535,6 +533,15 @@
           as described above, except that the process identified by
           <replaceable>PID</replaceable> is described, instead of the
           process which logged the message.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><varname>OBJECT_SYSTEMD_INVOCATION_ID=</varname></term>
+        <listitem>
+          <para>An additional field added automatically by <command>systemd-journald</command>. The meaning
+          is mostly the same as <varname>_SYSTEMD_INVOCATION_ID=</varname>, with the difference described
+          above.</para>
         </listitem>
       </varlistentry>
     </variablelist>
