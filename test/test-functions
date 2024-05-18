@@ -183,6 +183,7 @@ BASICTOOLS=(
     lz4cat
     mkfifo
     mktemp
+    modinfo
     modprobe
     mount
     mountpoint
