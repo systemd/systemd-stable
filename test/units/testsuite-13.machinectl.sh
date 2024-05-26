@@ -32,7 +32,7 @@ done
 # Create one "long running" container with some basic signal handling
 create_dummy_container /var/lib/machines/long-running
 cat >/var/lib/machines/long-running/sbin/init <<\EOF
-#!/usr/bin/bash -x
+#!/usr/bin/bash
 
 PID=0
 
@@ -129,6 +129,9 @@ machinectl show-image clone1
 machinectl rename clone1 clone2
 (! machinectl show-image clone1)
 machinectl show-image clone2
+# `machinectl read-only` uses chattr (ioctl(FS_IOC_SETFLAGS)) when the container is backed by a directory,
+# and this operation might not be implemented on certain filesystems (i.e. tmpfs on older kernels), so check
+# if we have chattr support before running following tests
 if lsattr -d /var/lib/machines >/dev/null; then
     [[ "$(machinectl show-image --property=ReadOnly --value clone2)" == no ]]
     machinectl read-only clone2 yes
