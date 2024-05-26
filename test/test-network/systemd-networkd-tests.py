@@ -61,6 +61,7 @@ asan_options = None
 lsan_options = None
 ubsan_options = None
 with_coverage = False
+show_journal = True # When true, show journal on stopping networkd.
 
 active_units = []
 protected_links = {
@@ -180,8 +181,10 @@ def expectedFailureIfRoutingPolicyPortRangeIsNotAvailable():
 
 def expectedFailureIfRoutingPolicyIPProtoIsNotAvailable():
     def f(func):
-        rc = call_quiet('ip rule add not from 192.168.100.19 ipproto tcp table 7')
-        call_quiet('ip rule del not from 192.168.100.19 ipproto tcp table 7')
+        # IP protocol name is parsed by getprotobyname(), and it requires /etc/protocols.
+        # Hence. here we use explicit number: 6 == tcp.
+        rc = call_quiet('ip rule add not from 192.168.100.19 ipproto 6 table 7')
+        call_quiet('ip rule del not from 192.168.100.19 ipproto 6 table 7')
         return func if rc == 0 else unittest.expectedFailure(func)
 
     return f
@@ -243,6 +246,22 @@ def expectedFailureIfNetdevsimWithSRIOVIsNotAvailable():
             return finalize(func, False)
 
         return finalize(func, os.path.exists('/sys/bus/netdevsim/devices/netdevsim99/sriov_numvfs'))
+
+    return f
+
+def expectedFailureIfKernelReturnsInvalidFlags():
+    '''
+    This checks the kernel bug caused by 3ddc2231c8108302a8229d3c5849ee792a63230d.
+    It will be fixed by the following patch:
+    https://patchwork.kernel.org/project/netdevbpf/patch/20240510072932.2678952-1-edumazet@google.com/
+    '''
+    def f(func):
+        call_quiet('ip link add dummy98 type dummy')
+        call_quiet('ip link set up dev dummy98')
+        call_quiet('ip address add 192.0.2.1/24 dev dummy98 noprefixroute')
+        output = check_output('ip address show dev dummy98')
+        remove_link('dummy98')
+        return func if 'noprefixroute' in output else unittest.expectedFailure(func)
 
     return f
 
@@ -424,7 +443,7 @@ def link_exists(link):
     return call_quiet(f'ip link show {link}') == 0
 
 def link_resolve(link):
-    return check_output(f'ip link show {link}').split(':')[1].strip()
+    return check_output(f'ip link show {link}').split(':')[1].strip().split('@')[0]
 
 def remove_link(*links, protect=False):
     for link in links:
@@ -716,6 +735,8 @@ def networkd_is_failed():
     return call_quiet('systemctl is-failed -q systemd-networkd.service') != 1
 
 def stop_networkd(show_logs=True):
+    global show_journal
+    show_logs = show_logs and show_journal
     if show_logs:
         invocation_id = networkd_invocation_id()
     check_output('systemctl stop systemd-networkd.socket')
@@ -727,6 +748,8 @@ def start_networkd():
     check_output('systemctl start systemd-networkd')
 
 def restart_networkd(show_logs=True):
+    global show_journal
+    show_logs = show_logs and show_journal
     if show_logs:
         invocation_id = networkd_invocation_id()
     check_output('systemctl restart systemd-networkd.service')
@@ -1548,6 +1571,7 @@ class NetworkdNetDevTests(unittest.TestCase, Utilities):
                 print(output)
                 self.assertRegex(output, 'macvtap mode ' + mode + ' ')
 
+    @expectedFailureIfModuleIsNotAvailable('macvlan')
     def test_macvlan(self):
         first = True
         for mode in ['private', 'vepa', 'bridge', 'passthru']:
@@ -2581,6 +2605,7 @@ class NetworkdNetworkTests(unittest.TestCase, Utilities):
 
         check_json(networkctl_json())
 
+    @expectedFailureIfKernelReturnsInvalidFlags()
     def test_address_static(self):
         copy_network_unit('25-address-static.network', '12-dummy.netdev', copy_dropins=False)
         self.setup_nftset('addr4', 'ipv4_addr')
@@ -3051,12 +3076,12 @@ class NetworkdNetworkTests(unittest.TestCase, Utilities):
 
         output = check_output('ip rule')
         print(output)
-        self.assertRegex(output, '111')
-        self.assertRegex(output, 'from 192.168.100.18')
-        self.assertRegex(output, '1123-1150')
-        self.assertRegex(output, '3224-3290')
-        self.assertRegex(output, 'tcp')
-        self.assertRegex(output, 'lookup 7')
+        self.assertIn('111:', output)
+        self.assertIn('from 192.168.100.18 ', output)
+        self.assertIn('sport 1123-1150 ', output)
+        self.assertIn('dport 3224-3290 ', output)
+        self.assertRegex(output, 'ipproto (tcp|ipproto-6) ')
+        self.assertIn('lookup 7 ', output)
 
     @expectedFailureIfRoutingPolicyIPProtoIsNotAvailable()
     def test_routing_policy_rule_invert(self):
@@ -3066,10 +3091,11 @@ class NetworkdNetworkTests(unittest.TestCase, Utilities):
 
         output = check_output('ip rule')
         print(output)
-        self.assertRegex(output, '111')
-        self.assertRegex(output, 'not.*?from.*?192.168.100.18')
-        self.assertRegex(output, 'tcp')
-        self.assertRegex(output, 'lookup 7')
+        self.assertIn('111:', output)
+        self.assertIn('not ', output)
+        self.assertIn('from 192.168.100.18 ', output)
+        self.assertRegex(output, 'ipproto (tcp|ipproto-6) ')
+        self.assertIn('lookup 7 ', output)
 
     @expectedFailureIfRoutingPolicyUIDRangeIsNotAvailable()
     def test_routing_policy_rule_uidrange(self):
@@ -3079,10 +3105,10 @@ class NetworkdNetworkTests(unittest.TestCase, Utilities):
 
         output = check_output('ip rule')
         print(output)
-        self.assertRegex(output, '111')
-        self.assertRegex(output, 'from 192.168.100.18')
-        self.assertRegex(output, 'lookup 7')
-        self.assertRegex(output, 'uidrange 100-200')
+        self.assertIn('111:', output)
+        self.assertIn('from 192.168.100.18 ', output)
+        self.assertIn('lookup 7 ', output)
+        self.assertIn('uidrange 100-200 ', output)
 
     def _test_route_static(self, manage_foreign_routes):
         if not manage_foreign_routes:
@@ -3186,11 +3212,11 @@ class NetworkdNetworkTests(unittest.TestCase, Utilities):
         self.assertIn('dev dummy98 weight 10', output)
         self.assertIn('dev dummy98 weight 5', output)
 
-        print('### ip -6 route show 2001:1234:5:7fff:ff:ff:ff:ff')
-        output = check_output('ip -6 route show 2001:1234:5:7fff:ff:ff:ff:ff')
+        print('### ip -6 route show 2001:1234:5:bfff:ff:ff:ff:ff')
+        output = check_output('ip -6 route show 2001:1234:5:bfff:ff:ff:ff:ff')
         print(output)
         # old ip command does not show 'nexthop' keyword and weight...
-        self.assertIn('2001:1234:5:7fff:ff:ff:ff:ff', output)
+        self.assertIn('2001:1234:5:bfff:ff:ff:ff:ff', output)
         self.assertIn('via 2001:1234:5:6fff:ff:ff:ff:ff dev test1', output)
         self.assertIn('via 2001:1234:5:7fff:ff:ff:ff:ff dev test1', output)
         self.assertIn('via 2001:1234:5:8fff:ff:ff:ff:ff dev dummy98', output)
@@ -4751,22 +4777,28 @@ class NetworkdSRIOVTests(unittest.TestCase, Utilities):
     def tearDown(self):
         tear_down_common()
 
-    @expectedFailureIfNetdevsimWithSRIOVIsNotAvailable()
-    def test_sriov(self):
-        copy_network_unit('25-default.link', '25-sriov.network')
-
+    def setup_netdevsim(self, id=99, num_ports=1, num_vfs=0):
         call('modprobe netdevsim')
 
+        # Create netdevsim device.
         with open('/sys/bus/netdevsim/new_device', mode='w', encoding='utf-8') as f:
-            f.write('99 1')
+            f.write(f'{id} {num_ports}')
 
-        with open('/sys/bus/netdevsim/devices/netdevsim99/sriov_numvfs', mode='w', encoding='utf-8') as f:
-            f.write('3')
+        # Create VF.
+        if num_vfs > 0:
+            with open(f'/sys/bus/netdevsim/devices/netdevsim{id}/sriov_numvfs', mode='w', encoding='utf-8') as f:
+                f.write(f'{num_vfs}')
+
+    @expectedFailureIfNetdevsimWithSRIOVIsNotAvailable()
+    def test_sriov(self):
+        copy_network_unit('25-netdevsim.link', '25-sriov.network')
+
+        self.setup_netdevsim(num_vfs=3)
 
         start_networkd()
-        self.wait_online(['eni99np1:routable'])
+        self.wait_online(['sim99:routable'])
 
-        output = check_output('ip link show dev eni99np1')
+        output = check_output('ip link show dev sim99')
         print(output)
         self.assertRegex(output,
                          'vf 0 .*00:11:22:33:44:55.*vlan 5, qos 1, vlan protocol 802.1ad, spoof checking on, link-state enable, trust on, query_rss on\n *'
@@ -4778,18 +4810,15 @@ class NetworkdSRIOVTests(unittest.TestCase, Utilities):
     def test_sriov_udev(self):
         copy_network_unit('25-sriov.link', '25-sriov-udev.network')
 
-        call('modprobe netdevsim')
-
-        with open('/sys/bus/netdevsim/new_device', mode='w', encoding='utf-8') as f:
-            f.write('99 1')
+        self.setup_netdevsim()
 
         start_networkd()
-        self.wait_online(['eni99np1:routable'])
+        self.wait_online(['sim99:routable'])
 
-        # the name eni99np1 may be an alternative name.
-        ifname = link_resolve('eni99np1')
+        # The name sim99 is an alternative name, and cannot be used by udevadm below.
+        ifname = link_resolve('sim99')
 
-        output = check_output('ip link show dev eni99np1')
+        output = check_output('ip link show dev sim99')
         print(output)
         self.assertRegex(output,
                          'vf 0 .*00:11:22:33:44:55.*vlan 5, qos 1, vlan protocol 802.1ad, spoof checking on, link-state enable, trust on, query_rss on\n *'
@@ -4805,7 +4834,7 @@ class NetworkdSRIOVTests(unittest.TestCase, Utilities):
         udev_reload()
         check_output(*udevadm_cmd, 'trigger', '--action=add', '--settle', f'/sys/devices/netdevsim99/net/{ifname}')
 
-        output = check_output('ip link show dev eni99np1')
+        output = check_output('ip link show dev sim99')
         print(output)
         self.assertRegex(output,
                          'vf 0 .*00:11:22:33:44:55.*vlan 5, qos 1, vlan protocol 802.1ad, spoof checking on, link-state enable, trust on, query_rss on\n *'
@@ -4821,7 +4850,7 @@ class NetworkdSRIOVTests(unittest.TestCase, Utilities):
         udev_reload()
         check_output(*udevadm_cmd, 'trigger', '--action=add', '--settle', f'/sys/devices/netdevsim99/net/{ifname}')
 
-        output = check_output('ip link show dev eni99np1')
+        output = check_output('ip link show dev sim99')
         print(output)
         self.assertRegex(output,
                          'vf 0 .*00:11:22:33:44:55.*vlan 5, qos 1, vlan protocol 802.1ad, spoof checking on, link-state enable, trust on, query_rss on\n *'
@@ -4837,7 +4866,7 @@ class NetworkdSRIOVTests(unittest.TestCase, Utilities):
         udev_reload()
         check_output(*udevadm_cmd, 'trigger', '--action=add', '--settle', f'/sys/devices/netdevsim99/net/{ifname}')
 
-        output = check_output('ip link show dev eni99np1')
+        output = check_output('ip link show dev sim99')
         print(output)
         self.assertRegex(output,
                          'vf 0 .*00:11:22:33:44:55.*vlan 5, qos 1, vlan protocol 802.1ad, spoof checking on, link-state enable, trust on, query_rss on\n *'
@@ -4853,7 +4882,7 @@ class NetworkdSRIOVTests(unittest.TestCase, Utilities):
         udev_reload()
         check_output(*udevadm_cmd, 'trigger', '--action=add', '--settle', f'/sys/devices/netdevsim99/net/{ifname}')
 
-        output = check_output('ip link show dev eni99np1')
+        output = check_output('ip link show dev sim99')
         print(output)
         self.assertRegex(output,
                          'vf 0 .*00:11:22:33:44:55.*vlan 5, qos 1, vlan protocol 802.1ad, spoof checking on, link-state enable, trust on, query_rss on\n *'
@@ -5423,6 +5452,7 @@ class NetworkdDHCPClientTests(unittest.TestCase, Utilities):
         self.assertIn('DHCPREPLY(veth-peer)', output)
         self.assertIn('sent size:  0 option: 14 rapid-commit', output)
 
+    @expectedFailureIfKernelReturnsInvalidFlags()
     def test_dhcp_client_ipv4_only(self):
         copy_network_unit('25-veth.netdev', '25-dhcp-server-veth-peer.network', '25-dhcp-client-ipv4-only.network')
 
@@ -6861,6 +6891,7 @@ if __name__ == '__main__':
     parser.add_argument('--lsan-options', help='LSAN options', dest='lsan_options')
     parser.add_argument('--ubsan-options', help='UBSAN options', dest='ubsan_options')
     parser.add_argument('--with-coverage', help='Loosen certain sandbox restrictions to make gcov happy', dest='with_coverage', type=bool, nargs='?', const=True, default=with_coverage)
+    parser.add_argument('--no-journal', help='Do not show journal of systemd-networkd on stop', dest='show_journal', action='store_false')
     ns, unknown_args = parser.parse_known_args(namespace=unittest)
 
     if ns.build_dir:
@@ -6910,6 +6941,7 @@ if __name__ == '__main__':
     lsan_options = ns.lsan_options
     ubsan_options = ns.ubsan_options
     with_coverage = ns.with_coverage
+    show_journal = ns.show_journal
 
     if use_valgrind:
         # Do not forget the trailing space.
