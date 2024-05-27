@@ -5520,12 +5520,14 @@ static int exec_child(
 
                 if (ns_type_supported(NAMESPACE_IPC)) {
                         r = setup_shareable_ns(runtime->shared->ipcns_storage_socket, CLONE_NEWIPC);
-                        if (r == -EPERM)
-                                log_unit_warning_errno(unit, r,
-                                                       "PrivateIPC=yes is configured, but IPC namespace setup failed, ignoring: %m");
-                        else if (r < 0) {
-                                *exit_status = EXIT_NAMESPACE;
-                                return log_unit_error_errno(unit, r, "Failed to set up IPC namespacing: %m");
+                        if (r < 0) {
+                                if (ERRNO_IS_PRIVILEGE(r))
+                                        log_unit_warning_errno(unit, r,
+                                                               "PrivateIPC=yes is configured, but IPC namespace setup failed, ignoring: %m");
+                                else {
+                                        *exit_status = EXIT_NAMESPACE;
+                                        return log_unit_error_errno(unit, r, "Failed to set up IPC namespacing: %m");
+                                }
                         }
                 } else if (context->ipc_namespace_path) {
                         *exit_status = EXIT_NAMESPACE;
