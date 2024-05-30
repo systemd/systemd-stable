@@ -374,7 +374,7 @@ EOF
                                            --json=pretty \
                                            "$imgs/zzz")
 
-    diff -u <(echo "$output") - <<EOF
+    diff -u - <<EOF <(echo "$output")
 [
 	{
 		"type" : "swap",
@@ -434,7 +434,7 @@ EOF
                                            --json=pretty \
                                            "$imgs/zzz")
 
-    diff -u <(echo "$output") - <<EOF
+    diff -u - <<EOF <(echo "$output")
 [
 	{
 		"type" : "swap",
@@ -1023,7 +1023,8 @@ EOF
                                               --json=pretty \
                                               "$imgs/zzz")
 
-    diff -u <(echo "$output1" | grep -E "(offset|raw_size|raw_padding)") <(echo "$output2" | grep -E "(offset|raw_size|raw_padding)")
+    diff -u <(echo "$output1" | grep -E "(offset|raw_size|raw_padding)") \
+            <(echo "$output2" | grep -E "(offset|raw_size|raw_padding)")
 }
 
 test_sector() {
