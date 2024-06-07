@@ -77,3 +77,8 @@ BuildPackages=
         pkgconfig(xkbcommon)
         python3dist(jinja2)
         python3dist(lxml)
+
+Environment=
+        # The kernel versions in CentOS Stream 9 doesn't support orphan_file, but later versions of
+        # mkfs.ext4 enabled it by default, so we disable it explicitly.
+        Environment=SYSTEMD_REPART_MKFS_OPTIONS_EXT4="-O ^orphan_file"

@@ -25,7 +25,7 @@ env:
 
 jobs:
   ci:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     concurrency:
       group: ${{ github.workflow }}-${{ matrix.distro }}-${{ matrix.release }}-${{ github.ref }}
       cancel-in-progress: true
@@ -53,7 +53,7 @@ jobs:
     # (should be done by the end of 2022).
     - name: Fix C9S/EPEL9
       if: ${{ matrix.release == '9-stream' }}
-      run: sudo sed -i '/add_packages/s/systemd-boot/systemd/g' /usr/local/lib/python3.10/dist-packages/mkosi/__init__.py
+      run: sudo sed -i '/add_packages/s/systemd-boot/systemd/g' /usr/local/lib/python3.12/dist-packages/mkosi/__init__.py
 
     # FIXME: temporary workaround for debootstrap issue of Debian testing/sid on Jammy
     - name: Fix Debian testing/sid
