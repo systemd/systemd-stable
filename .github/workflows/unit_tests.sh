@@ -46,18 +46,23 @@ for phase in "${PHASES[@]}"; do
     case $phase in
         SETUP)
             info "Setup phase"
-            # PPA with some newer build dependencies
-            add-apt-repository -y --no-update ppa:upstream-systemd-ci/systemd-ci
-            add-apt-repository -y --no-update --enable-source
+            # This is added by default, and it is often broken, but we don't need anything from it
+            rm -f /etc/apt/sources.list.d/microsoft-prod.{list,sources}
+            # add-apt-repository --enable-source does not work on deb822 style sources.
+            for f in /etc/apt/sources.list.d/*.sources; do
+                sed -i "s/Types: deb/Types: deb deb-src/g" "$f"
+            done
             apt-get -y update
             apt-get -y build-dep systemd
             apt-get -y install "${ADDITIONAL_DEPS[@]}"
-            pip3 install -r .github/workflows/requirements.txt --require-hashes
+            pip3 install -r .github/workflows/requirements.txt --require-hashes --break-system-packages
             ;;
         RUN|RUN_GCC|RUN_CLANG|RUN_CLANG_RELEASE)
             if [[ "$phase" =~ ^RUN_CLANG ]]; then
                 export CC=clang
                 export CXX=clang++
+                export CFLAGS="-fno-sanitize=function"
+                export CXXFLAGS="-fno-sanitize=function"
                 if [[ "$phase" == RUN_CLANG ]]; then
                     # The docs build is slow and is not affected by compiler/flags, so do it just once
                     MESON_ARGS+=(-Dman=enabled)
@@ -82,6 +87,8 @@ for phase in "${PHASES[@]}"; do
             if [[ "$phase" =~ ^RUN_CLANG_ASAN_UBSAN ]]; then
                 export CC=clang
                 export CXX=clang++
+                export CFLAGS="-fno-sanitize=function"
+                export CXXFLAGS="-fno-sanitize=function"
                 # Build fuzzer regression tests only with clang (for now),
                 # see: https://github.com/systemd/systemd/pull/15886#issuecomment-632689604
                 # -Db_lundef=false: See https://github.com/mesonbuild/meson/issues/764
