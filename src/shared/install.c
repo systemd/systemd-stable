@@ -1943,7 +1943,8 @@ static int install_info_symlink_alias(
                 broken = q == 0; /* symlink target does not exist? */
 
                 q = create_symlink(lp, info->path, alias_path, force || broken, changes, n_changes);
-                r = r < 0 ? r : q;
+                if (q != 0 && r >= 0)
+                        r = q;
         }
 
         return r;
@@ -2042,7 +2043,7 @@ static int install_info_symlink_wants(
                         return -ENOMEM;
 
                 q = create_symlink(lp, info->path, path, true, changes, n_changes);
-                if ((q < 0 && r >= 0) || r == 0)
+                if (q != 0 && r >= 0)
                         r = q;
 
                 if (unit_file_exists(scope, lp, dst) == 0) {
