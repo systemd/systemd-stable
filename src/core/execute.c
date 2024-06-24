@@ -4701,7 +4701,7 @@ static int get_open_file_fd(Unit *u, const OpenFile *of) {
                 else if (FLAGS_SET(of->flags, OPENFILE_TRUNCATE))
                         flags |= O_TRUNC;
 
-                fd = fd_reopen(ofd, flags | O_CLOEXEC);
+                fd = fd_reopen(ofd, flags | O_NOCTTY | O_CLOEXEC);
                 if (fd < 0)
                         return log_unit_error_errno(u, fd, "Failed to open file %s: %m", of->path);
 
