@@ -104,6 +104,20 @@ for key in "${!running[@]}"; do
     unset "running[$key]"
 done
 
+# Write all pending messages, so they don't get mixed with the summaries below
+journalctl --sync
+
+# No need for full test logs in this case
+if [[ -s /skipped-tests ]]; then
+    : "=== SKIPPED TESTS ==="
+    cat /skipped-tests
+fi
+
+if [[ -s /failed ]]; then
+    : "=== FAILED TESTS ==="
+    cat /failed
+fi
+
 set -x
 
 # Test logs are sometimes lost, as the system shuts down immediately after
