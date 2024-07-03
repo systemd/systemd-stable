@@ -55,6 +55,11 @@ jobs:
       if: ${{ matrix.release == '9-stream' }}
       run: sudo sed -i '/add_packages/s/systemd-boot/systemd/g' /usr/local/lib/python3.10/dist-packages/mkosi/__init__.py
 
+    # FIXME: temporary workaround for debootstrap issue of Debian testing/sid on Jammy
+    - name: Fix Debian testing/sid
+      if: ${{ matrix.distro == 'debian' && matrix.release == 'testing' }}
+      run: sudo sed -i 's/merged-usr/no-merged-usr/g' /usr/local/lib/python3.10/dist-packages/mkosi/__init__.py
+
     - name: Install
       run: sudo apt-get update && sudo apt-get install --no-install-recommends python3-pexpect python3-jinja2
 
