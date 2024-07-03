@@ -82,6 +82,11 @@ jobs:
     - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b
     - uses: systemd/mkosi@4be912b0fa4931403fddf649aa242cd4406471c4
 
+    # FIXME: temporary workaround for debootstrap issue of Debian testing/sid on Jammy
+    - name: Fix Debian testing/sid
+      if: ${{ matrix.distro == 'debian' && matrix.release == 'testing' }}
+      run: sudo sed -i 's/merged-usr/no-merged-usr/g' /usr/local/lib/python3.10/dist-packages/mkosi/distributions/debian.py
+
     - name: Configure
       run: |
         tee mkosi.default <<- EOF
