@@ -8,6 +8,10 @@
 [Distribution]
 Distribution=arch
 
+# Booting with UEFI does not work on Arch in this branch
+[Host]
+QemuBoot=linux
+
 [Content]
 Packages=
         compsize
