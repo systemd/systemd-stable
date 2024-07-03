@@ -7,6 +7,10 @@
 Distribution=debian
 Release=testing
 
+# Booting with UEFI does not work on Debian in this branch
+[Host]
+QemuBoot=linux
+
 [Content]
 Packages=
         cryptsetup-bin
