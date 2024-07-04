@@ -978,7 +978,7 @@ static int uid_is_ok(uid_t uid, const char *name, bool check_with_gid) {
                 if (p)
                         return 0;
                 if (!IN_SET(errno, 0, ENOENT))
-                        return -errno;
+                        log_warning_errno(errno, "Unexpected failure while looking up UID '" UID_FMT "' via NSS, assuming it doesn't exist: %m", uid);
 
                 if (check_with_gid) {
                         errno = 0;
@@ -987,7 +987,7 @@ static int uid_is_ok(uid_t uid, const char *name, bool check_with_gid) {
                                 if (!streq(g->gr_name, name))
                                         return 0;
                         } else if (!IN_SET(errno, 0, ENOENT))
-                                return -errno;
+                                log_warning_errno(errno, "Unexpected failure while looking up GID '" GID_FMT "' via NSS, assuming it doesn't exist: %m", uid);
                 }
         }
 
@@ -1092,7 +1092,7 @@ static int add_user(Item *i) {
                         return 0;
                 }
                 if (!errno_is_not_exists(errno))
-                        return log_error_errno(errno, "Failed to check if user %s already exists: %m", i->name);
+                        log_warning_errno(errno, "Unexpected failure while looking up user '%s' via NSS, assuming it doesn't exist: %m", i->name);
         }
 
         /* Try to use the suggested numeric UID */
@@ -1198,7 +1198,7 @@ static int gid_is_ok(gid_t gid, bool check_with_uid) {
                 if (g)
                         return 0;
                 if (!IN_SET(errno, 0, ENOENT))
-                        return -errno;
+                        log_warning_errno(errno, "Unexpected failure while looking up GID '" GID_FMT "' via NSS, assuming it doesn't exist: %m", gid);
 
                 if (check_with_uid) {
                         errno = 0;
@@ -1206,7 +1206,7 @@ static int gid_is_ok(gid_t gid, bool check_with_uid) {
                         if (p)
                                 return 0;
                         if (!IN_SET(errno, 0, ENOENT))
-                                return -errno;
+                                log_warning_errno(errno, "Unexpected failure while looking up GID '" GID_FMT "' via NSS, assuming it doesn't exist: %m", gid);
                 }
         }
 
@@ -1236,7 +1236,7 @@ static int get_gid_by_name(const char *name, gid_t *gid) {
                         return 0;
                 }
                 if (!errno_is_not_exists(errno))
-                        return log_error_errno(errno, "Failed to check if group %s already exists: %m", name);
+                        log_warning_errno(errno, "Unexpected failure while looking up group '%s' via NSS, assuming it doesn't exist: %m", name);
         }
 
         return -ENOENT;
