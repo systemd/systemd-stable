@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: LGPL-2.1-or-later */
 
+#include <linux/sched.h>
 #include <sys/eventfd.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
@@ -43,6 +44,7 @@
 #include "iovec-util.h"
 #include "missing_ioprio.h"
 #include "missing_prctl.h"
+#include "missing_sched.h"
 #include "missing_securebits.h"
 #include "missing_syscall.h"
 #include "mkdir-label.h"
@@ -3721,7 +3723,7 @@ static int get_open_file_fd(const ExecContext *c, const ExecParameters *p, const
                 else if (FLAGS_SET(of->flags, OPENFILE_TRUNCATE))
                         flags |= O_TRUNC;
 
-                fd = fd_reopen(ofd, flags | O_CLOEXEC);
+                fd = fd_reopen(ofd, flags|O_NOCTTY|O_CLOEXEC);
                 if (fd < 0)
                         return log_exec_error_errno(c, p, fd, "Failed to open file %s: %m", of->path);
 
@@ -4286,15 +4288,14 @@ int exec_invoke(
         }
 
         if (context->cpu_sched_set) {
-                struct sched_param param = {
+                struct sched_attr attr = {
+                        .size = sizeof(attr),
+                        .sched_policy = context->cpu_sched_policy,
                         .sched_priority = context->cpu_sched_priority,
+                        .sched_flags = context->cpu_sched_reset_on_fork ? SCHED_FLAG_RESET_ON_FORK : 0,
                 };
 
-                r = sched_setscheduler(0,
-                                       context->cpu_sched_policy |
-                                       (context->cpu_sched_reset_on_fork ?
-                                        SCHED_RESET_ON_FORK : 0),
-                                       &param);
+                r = sched_setattr(/* pid= */ 0, &attr, /* flags= */ 0);
                 if (r < 0) {
                         *exit_status = EXIT_SETSCHEDULER;
                         return log_exec_error_errno(context, params, errno, "Failed to set up CPU scheduling: %m");

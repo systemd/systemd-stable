@@ -524,6 +524,7 @@ decl_headers = '''
 #include <uchar.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <sched.h>
 '''
 
 foreach decl : ['char16_t',
@@ -531,6 +532,7 @@ foreach decl : ['char16_t',
                 'struct mount_attr',
                 'struct statx',
                 'struct dirent64',
+                'struct sched_attr',
                ]
 
         # We get -1 if the size cannot be determined
@@ -578,6 +580,7 @@ foreach ident : [
                                  #include <unistd.h>'''],     # no known header declares pivot_root
         ['ioprio_get',        '''#include <sched.h>'''],      # no known header declares ioprio_get
         ['ioprio_set',        '''#include <sched.h>'''],      # no known header declares ioprio_set
+        ['sched_setattr',     '''#include <sched.h>'''],      # no known header declares sched_setattr
         ['name_to_handle_at', '''#include <sys/types.h>
                                  #include <sys/stat.h>
                                  #include <fcntl.h>'''],
@@ -1691,6 +1694,7 @@ if conf.get('BPF_FRAMEWORK') == 1
                 '-ffile-prefix-map=',
                 '-fdebug-prefix-map=',
                 '-fmacro-prefix-map=',
+                '--sysroot=',
         ]
 
         foreach opt : c_args
@@ -1710,15 +1714,15 @@ if conf.get('BPF_FRAMEWORK') == 1
         # C.f. https://mesonbuild.com/Reference-tables.html#cpu-families
         # and src/basic/missing_syscall_def.h.
         cpu_arch_defines = {
-                'ppc'     : ['-D__powerpc__'],
-                'ppc64'   : ['-D__powerpc64__', '-D_CALL_ELF=2'],
-                'riscv32' : ['-D__riscv', '-D__riscv_xlen=32'],
-                'riscv64' : ['-D__riscv', '-D__riscv_xlen=64'],
-                'x86'     : ['-D__i386__'],
-                's390x'   : ['-D__s390__', '-D__s390x__'],
+                'ppc'     : ['-D__powerpc__', '-D__TARGET_ARCH_powerpc'],
+                'ppc64'   : ['-D__powerpc64__', '-D__TARGET_ARCH_powerpc', '-D_CALL_ELF=2'],
+                'riscv32' : ['-D__riscv', '-D__riscv_xlen=32', '-D__TARGET_ARCH_riscv'],
+                'riscv64' : ['-D__riscv', '-D__riscv_xlen=64', '-D__TARGET_ARCH_riscv'],
+                'x86'     : ['-D__i386__', '-D__TARGET_ARCH_x86'],
+                's390x'   : ['-D__s390__', '-D__s390x__', '-D__TARGET_ARCH_s390'],
 
                 # For arm, assume hardware fp is available.
-                'arm'     : ['-D__arm__', '-D__ARM_PCS_VFP'],
+                'arm'     : ['-D__arm__', '-D__ARM_PCS_VFP', '-D__TARGET_ARCH_arm'],
         }
 
         bpf_arch_flags = cpu_arch_defines.get(host_machine.cpu_family(),
