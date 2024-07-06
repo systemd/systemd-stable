@@ -68,8 +68,6 @@ jobs:
             release: tumbleweed
           - distro: centos
             release: "9"
-          - distro: centos
-            release: "8"
 
     env:
       SYSTEMD_LOG_LEVEL: debug
