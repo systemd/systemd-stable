@@ -173,6 +173,7 @@ def property_grammar():
              ('ID_INPUT_TOUCHSCREEN', Or((Literal('0'), Literal('1')))),
              ('ID_INPUT_TRACKBALL', Or((Literal('0'), Literal('1')))),
              ('ID_SIGNAL_ANALYZER', Or((Literal('0'), Literal('1')))),
+             ('ID_HARDWARE_WALLET', Or((Literal('0'), Literal('1')))),
              ('POINTINGSTICK_SENSITIVITY', INTEGER),
              ('ID_INPUT_JOYSTICK_INTEGRATION', Or(('internal', 'external'))),
              ('ID_INPUT_TOUCHPAD_INTEGRATION', Or(('internal', 'external'))),
