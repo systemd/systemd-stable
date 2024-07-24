@@ -151,42 +151,6 @@ struct Varlink {
         sd_event_source *defer_event_source;
 };
 
-typedef struct VarlinkServerSocket VarlinkServerSocket;
-
-struct VarlinkServerSocket {
-        VarlinkServer *server;
-
-        int fd;
-        char *address;
-
-        sd_event_source *event_source;
-
-        LIST_FIELDS(VarlinkServerSocket, sockets);
-};
-
-struct VarlinkServer {
-        unsigned n_ref;
-        VarlinkServerFlags flags;
-
-        LIST_HEAD(VarlinkServerSocket, sockets);
-
-        Hashmap *methods;
-        VarlinkConnect connect_callback;
-        VarlinkDisconnect disconnect_callback;
-
-        sd_event *event;
-        int64_t event_priority;
-
-        unsigned n_connections;
-        Hashmap *by_uid;
-
-        void *userdata;
-        char *description;
-
-        unsigned connections_max;
-        unsigned connections_per_uid_max;
-};
-
 static const char* const varlink_state_table[_VARLINK_STATE_MAX] = {
         [VARLINK_IDLE_CLIENT]              = "idle-client",
         [VARLINK_AWAITING_REPLY]           = "awaiting-reply",

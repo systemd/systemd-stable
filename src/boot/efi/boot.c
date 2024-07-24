@@ -1343,7 +1343,7 @@ static void config_entry_parse_tries(
                 return;
 
         /* Boot counter in the middle of the name? */
-        if (!streq16(counter, suffix))
+        if (!strcaseeq16(counter, suffix))
                 return;
 
         entry->tries_left = tries_left;
