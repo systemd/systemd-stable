@@ -1943,7 +1943,8 @@ static int install_info_symlink_alias(
                 broken = q == 0; /* symlink target does not exist? */
 
                 q = create_symlink(lp, info->path, alias_path, force || broken, changes, n_changes);
-                r = r < 0 ? r : q;
+                if (q != 0 && r >= 0)
+                        r = q;
         }
 
         return r;
@@ -1966,7 +1967,7 @@ static int install_info_symlink_wants(
 
         UnitNameFlags valid_dst_type = UNIT_NAME_ANY;
         const char *n;
-        int r = 0, q;
+        int r, q;
 
         assert(info);
         assert(lp);
@@ -2042,7 +2043,7 @@ static int install_info_symlink_wants(
                         return -ENOMEM;
 
                 q = create_symlink(lp, info->path, path, true, changes, n_changes);
-                if ((q < 0 && r >= 0) || r == 0)
+                if (q != 0 && r >= 0)
                         r = q;
 
                 if (unit_file_exists(scope, lp, dst) == 0) {
@@ -2114,15 +2115,15 @@ static int install_info_apply(
         r = install_info_symlink_alias(scope, info, lp, config_path, force, changes, n_changes);
 
         q = install_info_symlink_wants(scope, file_flags, info, lp, config_path, info->wanted_by, ".wants/", changes, n_changes);
-        if (r == 0)
+        if (q != 0 && r >= 0)
                 r = q;
 
         q = install_info_symlink_wants(scope, file_flags, info, lp, config_path, info->required_by, ".requires/", changes, n_changes);
-        if (r == 0)
+        if (q != 0 && r >= 0)
                 r = q;
 
         q = install_info_symlink_wants(scope, file_flags, info, lp, config_path, info->upheld_by, ".upholds/", changes, n_changes);
-        if (r == 0)
+        if (q != 0 && r >= 0)
                 r = q;
 
         return r;
