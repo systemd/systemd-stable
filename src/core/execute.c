@@ -6031,6 +6031,7 @@ int exec_spawn(Unit *unit,
         assert(params->fds || (params->n_socket_fds + params->n_storage_fds <= 0));
 
         LOG_CONTEXT_PUSH_UNIT(unit);
+        LOG_CONTEXT_SET_LOG_LEVEL(context->log_level_max >= 0 ? context->log_level_max : log_get_max_level());
 
         if (context->std_input == EXEC_INPUT_SOCKET ||
             context->std_output == EXEC_OUTPUT_SOCKET ||
