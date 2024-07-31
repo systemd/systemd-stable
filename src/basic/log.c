@@ -388,9 +388,10 @@ void log_forget_fds(void) {
         console_fd_is_tty = -1;
 }
 
-void log_set_max_level(int level) {
+int log_set_max_level(int level) {
         assert(level == LOG_NULL || (level & LOG_PRIMASK) == level);
 
+        int old = log_max_level;
         log_max_level = level;
 
         /* Also propagate max log level to libc's syslog(), just in case some other component loaded into our
@@ -403,6 +404,8 @@ void log_set_max_level(int level) {
 
         /* Ensure that our own LOG_NULL define maps sanely to the log mask */
         assert_cc(LOG_UPTO(LOG_NULL) == 0);
+
+        return old;
 }
 
 void log_set_facility(int facility) {
