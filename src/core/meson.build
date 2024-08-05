@@ -162,7 +162,7 @@ executor_libs = get_option('link-executor-shared') ? \
         ] : [
                 libcore_static,
                 libshared_static,
-                libbasic_static,
+                libbasic,
                 libsystemd_static,
         ]
 
