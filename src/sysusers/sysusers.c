@@ -1356,8 +1356,14 @@ static int process_item(Item *i) {
         case ADD_USER: {
                 Item *j = NULL;
 
-                if (!i->gid_set)
+                if (!i->gid_set) {
                         j = ordered_hashmap_get(groups, i->group_name ?: i->name);
+
+                        /* If that's not a match, also check if the group name
+                         * matches a user name in the queue. */
+                        if (!j && i->group_name)
+                                j = ordered_hashmap_get(users, i->group_name);
+                }
 
                 if (j && j->todo_group) {
                         /* When a group with the target name is already in queue,
