@@ -369,6 +369,7 @@ possible_common_cc_flags = [
         '-Wstrict-aliasing=2',
         '-Wstrict-prototypes',
         '-Wsuggest-attribute=noreturn',
+        '-Wunterminated-string-initialization',
         '-Wunused-function',
         '-Wwrite-strings',
         '-Wzero-length-bounds',
