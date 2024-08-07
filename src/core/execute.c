@@ -4578,14 +4578,6 @@ static int exec_child(
                 }
         }
 
-        if (context->nice_set) {
-                r = setpriority_closest(context->nice);
-                if (r < 0) {
-                        *exit_status = EXIT_NICE;
-                        return log_unit_error_errno(unit, r, "Failed to set up process scheduling priority (nice level): %m");
-                }
-        }
-
         if (context->cpu_sched_set) {
                 struct sched_attr attr = {
                         .size = sizeof(attr),
@@ -4598,6 +4590,14 @@ static int exec_child(
                 if (r < 0) {
                         *exit_status = EXIT_SETSCHEDULER;
                         return log_unit_error_errno(unit, errno, "Failed to set up CPU scheduling: %m");
+                }
+        }
+
+        if (context->nice_set) {
+                r = setpriority_closest(context->nice);
+                if (r < 0) {
+                        *exit_status = EXIT_NICE;
+                        return log_unit_error_errno(unit, r, "Failed to set up process scheduling priority (nice level): %m");
                 }
         }
 
