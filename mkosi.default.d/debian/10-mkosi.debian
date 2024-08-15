@@ -18,6 +18,7 @@ Packages=
         iproute2
         isc-dhcp-server
         libbpf1
+        libcryptsetup12
         libfido2-1
         libgcrypt20
         libglib2.0-0
