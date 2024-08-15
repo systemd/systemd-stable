@@ -1074,6 +1074,18 @@ Table=1234</programlisting></para>
           carrier. Defaults to false. If enabled, and the <varname>IgnoreCarrierLoss=</varname> setting
           is not explicitly set, then it is enabled as well.</para>
 
+          <para>With this enabled, to make the interface enter the <literal>configured</literal> state,
+          which is required to make <command>systemd-networkd-wait-online</command> work properly for the
+          interface, all dynamic address configuration mechanisms like <varname>DHCP=</varname> and
+          <varname>IPv6AcceptRA=</varname> (which is enabled by default in most cases) need to be disabled.
+          Also, <varname>DuplicateAddressDetection=</varname> (which is enabled by default for IPv4
+          link-local addresses and all IPv6 addresses) needs to be disabled for all static address
+          configurations. Otherwise, without carrier, the interface will be stuck in the
+          <literal>configuring</literal> state, and <command>systemd-networkd-wait-online</command> for the
+          interface will timeout. Also, it is recommended to set
+          <varname>RequiredForOnline=no-carrier</varname> to make
+          <command>systemd-networkd-wait-online</command> work for the interface.</para>
+
           <xi:include href="version-info.xml" xpointer="v235"/>
         </listitem>
       </varlistentry>
@@ -1563,7 +1575,8 @@ NFTSet=prefix:netdev:filter:eth_ipv4_prefix</programlisting>
           one of predefined names <literal>default</literal>, <literal>main</literal>, and
           <literal>local</literal>, and names defined in <varname>RouteTable=</varname> in
           <citerefentry><refentrytitle>networkd.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
-          or a number between 1 and 4294967295. Defaults to <literal>main</literal>.</para>
+          or a number between 1 and 4294967295. Defaults to <literal>main</literal>.
+          Ignored if <varname>L3MasterDevice=</varname> is true.</para>
 
           <xi:include href="version-info.xml" xpointer="v235"/>
         </listitem>
