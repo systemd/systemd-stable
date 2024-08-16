@@ -392,7 +392,7 @@ DEFINE_PARSE_NUMBER(char, parse_number8);
 DEFINE_PARSE_NUMBER(char16_t, parse_number16);
 
 char16_t *hexdump(const void *data, size_t size) {
-        static const char hex[16] = "0123456789abcdef";
+        static const char hex[] = "0123456789abcdef";
         const uint8_t *d = data;
 
         assert(data || size == 0);
