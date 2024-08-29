@@ -928,6 +928,7 @@ static int fd_copy_directory(
 
         _cleanup_close_ int fdf = -EBADF, fdt = -EBADF;
         _cleanup_closedir_ DIR *d = NULL;
+        struct stat dt_st;
         bool exists, created;
         int r;
 
@@ -984,6 +985,9 @@ static int fd_copy_directory(
 
         fdt = openat(dt, to, O_RDONLY|O_DIRECTORY|O_CLOEXEC|O_NOCTTY|O_NOFOLLOW);
         if (fdt < 0)
+                return -errno;
+
+        if (exists && FLAGS_SET(copy_flags, COPY_RESTORE_DIRECTORY_TIMESTAMPS) && fstat(fdt, &dt_st) < 0)
                 return -errno;
 
         r = 0;
@@ -1078,7 +1082,9 @@ static int fd_copy_directory(
 
                 (void) copy_xattr(dirfd(d), fdt, copy_flags);
                 (void) futimens(fdt, (struct timespec[]) { st->st_atim, st->st_mtim });
-        }
+        } else if (FLAGS_SET(copy_flags, COPY_RESTORE_DIRECTORY_TIMESTAMPS))
+                /* If the directory already exists, make sure the timestamps stay the same as before. */
+                (void) futimens(fdt, (struct timespec[]) { dt_st.st_atim, dt_st.st_mtim });
 
         if (copy_flags & COPY_FSYNC_FULL) {
                 if (fsync(fdt) < 0)
