@@ -5862,6 +5862,10 @@ static int run(int argc, char *argv[]) {
         if (!context)
                 return log_oom();
 
+        r = context_read_seed(context, arg_root);
+        if (r < 0)
+                return r;
+
         strv_uniq(arg_definitions);
 
         r = context_read_definitions(context, arg_definitions, arg_root);
@@ -5925,10 +5929,6 @@ static int run(int argc, char *argv[]) {
         (void) context_dump_partitions(context, node);
         putchar('\n');
 #endif
-
-        r = context_read_seed(context, arg_root);
-        if (r < 0)
-                return r;
 
         /* Open all files to copy blocks from now, since we want to take their size into consideration */
         r = context_open_copy_block_paths(
