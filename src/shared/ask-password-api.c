@@ -168,7 +168,16 @@ static int ask_password_keyring(const char *keyname, AskPasswordFlags flags, cha
         if (r < 0)
                 return r;
 
-        return retrieve_key(serial, ret);
+        _cleanup_strv_free_erase_ char **l = NULL;
+        r = retrieve_key(serial, &l);
+        if (r < 0)
+                return r;
+
+        if (strv_isempty(l))
+                return log_debug_errno(SYNTHETIC_ERRNO(ENOKEY), "Found an empty password from keyring.");
+
+        *ret = TAKE_PTR(l);
+        return 0;
 }
 
 static int backspace_chars(int ttyfd, size_t p) {
@@ -321,8 +330,8 @@ int ask_password_plymouth(
                         return -ENOENT;
 
                 } else if (IN_SET(buffer[0], 2, 9)) {
+                        _cleanup_strv_free_erase_ char **l = NULL;
                         uint32_t size;
-                        char **l;
 
                         /* One or more answers */
                         if (p < 5)
@@ -340,15 +349,16 @@ int ask_password_plymouth(
                         if (!l)
                                 return -ENOMEM;
 
-                        *ret = l;
-                        break;
+                        if (strv_isempty(l))
+                                return log_debug_errno(SYNTHETIC_ERRNO(ECANCELED), "Received an empty password.");
+
+                        *ret = TAKE_PTR(l);
+                        return 0;
 
                 } else
                         /* Unknown packet */
                         return -EIO;
         }
-
-        return 0;
 }
 
 #define NO_ECHO "(no echo) "
@@ -944,8 +954,8 @@ finish:
 
 static int ask_password_credential(const char *credential_name, AskPasswordFlags flags, char ***ret) {
         _cleanup_(erase_and_freep) char *buffer = NULL;
+        _cleanup_strv_free_erase_ char **l = NULL;
         size_t size;
-        char **l;
         int r;
 
         assert(credential_name);
@@ -959,7 +969,10 @@ static int ask_password_credential(const char *credential_name, AskPasswordFlags
         if (!l)
                 return -ENOMEM;
 
-        *ret = l;
+        if (strv_isempty(l))
+                return log_debug_errno(SYNTHETIC_ERRNO(ENOKEY), "Found an empty password in credential.");
+
+        *ret = TAKE_PTR(l);
         return 0;
 }
 
