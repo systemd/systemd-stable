@@ -95,18 +95,24 @@ static void test_address_get(sd_netlink *rtnl, int ifindex) {
         struct in_addr in_data;
         struct ifa_cacheinfo cache;
         const char *label;
+        int ret;
 
         log_debug("/* %s */", __func__);
 
         assert_se(sd_rtnl_message_new_addr(rtnl, &m, RTM_GETADDR, ifindex, AF_INET) >= 0);
         assert_se(m);
         assert_se(sd_netlink_message_set_request_dump(m, true) >= 0);
-        assert_se(sd_netlink_call(rtnl, m, -1, &r) == 1);
 
-        assert_se(sd_netlink_message_read_in_addr(r, IFA_LOCAL, &in_data) == 0);
-        assert_se(sd_netlink_message_read_in_addr(r, IFA_ADDRESS, &in_data) == 0);
-        assert_se(sd_netlink_message_read_string(r, IFA_LABEL, &label) == 0);
-        assert_se(sd_netlink_message_read_cache_info(r, IFA_CACHEINFO, &cache) == 0);
+        ret = sd_netlink_call(rtnl, m, -1, &r);
+        assert_se(ret >= 0);
+
+        /* If the loopback device is down we won't get any results. */
+        if (ret > 0) {
+                assert_se(sd_netlink_message_read_in_addr(r, IFA_LOCAL, &in_data) == 0);
+                assert_se(sd_netlink_message_read_in_addr(r, IFA_ADDRESS, &in_data) == 0);
+                assert_se(sd_netlink_message_read_string(r, IFA_LABEL, &label) == 0);
+                assert_se(sd_netlink_message_read_cache_info(r, IFA_CACHEINFO, &cache) == 0);
+        }
 }
 
 static void test_route(sd_netlink *rtnl) {
