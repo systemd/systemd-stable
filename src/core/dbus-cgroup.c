@@ -1417,7 +1417,7 @@ int bus_cgroup_set_property(
                                         for (type = 0; type < _CGROUP_IO_LIMIT_TYPE_MAX; type++)
                                                 a->limits[type] = cgroup_io_limit_defaults[type];
 
-                                        LIST_PREPEND(device_limits, c->io_device_limits, a);
+                                        LIST_APPEND(device_limits, c->io_device_limits, a);
                                 }
 
                                 a->limits[iol_type] = u64;
@@ -1497,7 +1497,7 @@ int bus_cgroup_set_property(
                                                 free(a);
                                                 return -ENOMEM;
                                         }
-                                        LIST_PREPEND(device_weights, c->io_device_weights, a);
+                                        LIST_APPEND(device_weights, c->io_device_weights, a);
                                 }
 
                                 a->weight = weight;
@@ -1571,7 +1571,7 @@ int bus_cgroup_set_property(
                                                 free(a);
                                                 return -ENOMEM;
                                         }
-                                        LIST_PREPEND(device_latencies, c->io_device_latencies, a);
+                                        LIST_APPEND(device_latencies, c->io_device_latencies, a);
                                 }
 
                                 a->target_usec = target;
@@ -1652,7 +1652,7 @@ int bus_cgroup_set_property(
                                                 return -ENOMEM;
                                         }
 
-                                        LIST_PREPEND(device_bandwidths, c->blockio_device_bandwidths, a);
+                                        LIST_APPEND(device_bandwidths, c->blockio_device_bandwidths, a);
                                 }
 
                                 if (read)
@@ -1746,7 +1746,7 @@ int bus_cgroup_set_property(
                                                 free(a);
                                                 return -ENOMEM;
                                         }
-                                        LIST_PREPEND(device_weights, c->blockio_device_weights, a);
+                                        LIST_APPEND(device_weights, c->blockio_device_weights, a);
                                 }
 
                                 a->weight = weight;
