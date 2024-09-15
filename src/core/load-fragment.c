@@ -2789,6 +2789,7 @@ int config_parse_environ(
                 COMMON_CREDS_SPECIFIERS(ltype),
                 { 'h', specifier_user_home,  NULL },
                 { 's', specifier_user_shell, NULL },
+                {}
         };
 
         for (const char *p = rvalue;; ) {
