@@ -18,6 +18,7 @@
 #include "capability-util.h"
 #include "fd-util.h"
 #include "fileio.h"
+#include "fs-util.h"
 #include "macro.h"
 #include "memory-util.h"
 #include "missing_sched.h"
@@ -1225,6 +1226,57 @@ TEST(restrict_suid_sgid) {
         }
 
         assert_se(wait_for_terminate_and_check("suidsgidseccomp", pid, WAIT_LOG) == EXIT_SUCCESS);
+}
+
+static void test_seccomp_suppress_sync_child(void) {
+        _cleanup_(unlink_and_freep) char *path = NULL;
+        _cleanup_close_ int fd = -EBADF;
+
+        assert_se(tempfn_random("/tmp/seccomp_suppress_sync", NULL, &path) >= 0);
+        assert_se((fd = open(path, O_RDWR | O_CREAT | O_SYNC | O_CLOEXEC, 0666)) >= 0);
+        fd = safe_close(fd);
+
+        assert_se(fdatasync(-1) < 0 && errno == EBADF);
+        assert_se(fsync(-1) < 0 && errno == EBADF);
+        assert_se(syncfs(-1) < 0 && errno == EBADF);
+
+        assert_se(fdatasync(INT_MAX) < 0 && errno == EBADF);
+        assert_se(fsync(INT_MAX) < 0 && errno == EBADF);
+        assert_se(syncfs(INT_MAX) < 0 && errno == EBADF);
+
+        assert_se(seccomp_suppress_sync() >= 0);
+
+        assert_se((fd = open(path, O_RDWR | O_CREAT | O_SYNC | O_CLOEXEC, 0666)) < 0 && errno == EINVAL);
+
+        assert_se(fdatasync(INT_MAX) >= 0);
+        assert_se(fsync(INT_MAX) >= 0);
+        assert_se(syncfs(INT_MAX) >= 0);
+
+        assert_se(fdatasync(-1) < 0 && errno == EBADF);
+        assert_se(fsync(-1) < 0 && errno == EBADF);
+        assert_se(syncfs(-1) < 0 && errno == EBADF);
+}
+
+TEST(seccomp_suppress_sync) {
+        pid_t pid;
+
+        if (!is_seccomp_available()) {
+                log_notice("Seccomp not available, skipping %s", __func__);
+                return;
+        }
+        if (!have_seccomp_privs()) {
+                log_notice("Not privileged, skipping %s", __func__);
+                return;
+        }
+
+        assert_se((pid = fork()) >= 0);
+
+        if (pid == 0) {
+                test_seccomp_suppress_sync_child();
+                _exit(EXIT_SUCCESS);
+        }
+
+        assert_se(wait_for_terminate_and_check("seccomp_suppress_sync", pid, WAIT_LOG) == EXIT_SUCCESS);
 }
 
 DEFINE_TEST_MAIN(LOG_DEBUG);
