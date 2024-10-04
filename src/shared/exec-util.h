@@ -19,6 +19,7 @@ typedef enum {
         EXEC_DIR_PARALLEL             = 1 << 0, /* Execute scripts in parallel, if possible */
         EXEC_DIR_IGNORE_ERRORS        = 1 << 1, /* Ignore non-zero exit status of scripts */
         EXEC_DIR_SET_SYSTEMD_EXEC_PID = 1 << 2, /* Set $SYSTEMD_EXEC_PID environment variable */
+        EXEC_DIR_WARN_WORLD_WRITABLE  = 1 << 3, /* Warn if world writable files are found */
 } ExecDirFlags;
 
 typedef enum ExecCommandFlags {
