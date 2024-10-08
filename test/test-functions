@@ -1927,13 +1927,9 @@ check_result_qemu_unittests() {
 }
 
 create_rc_local() {
-    dinfo "Create rc.local"
-    mkdir -p "${initdir:?}/etc/rc.d"
-    cat >"$initdir/etc/rc.d/rc.local" <<EOF
-#!/usr/bin/env bash
-exit 0
-EOF
-    chmod 0755 "$initdir/etc/rc.d/rc.local"
+    dinfo "Mask rc.local generator"
+    mkdir -p "${initdir:?}/etc/systemd/system-generators/"
+    ln -s /dev/null "$initdir/etc/systemd/system-generators/systemd-rc-local-generator"
 }
 
 install_execs() {
