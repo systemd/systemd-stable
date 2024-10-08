@@ -190,6 +190,7 @@ BASICTOOLS=(
     id
     ionice
     ip
+    iptables
     jq
     killall
     ldd
