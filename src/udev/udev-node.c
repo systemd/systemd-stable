@@ -383,6 +383,87 @@ static int stack_directory_open(sd_device *dev, const char *slink, int *ret_dirf
         return 0;
 }
 
+static int link_update_diskseq(sd_device *dev, const char *slink, bool add) {
+        _cleanup_free_ char *buf = NULL;
+        const char *fname, *diskseq, *subsystem = NULL, *devtype = NULL;
+        int r;
+
+        assert(dev);
+        assert(slink);
+
+        (void) sd_device_get_subsystem(dev, &subsystem);
+        if (!streq_ptr(subsystem, "block"))
+                return 0;
+
+        fname = path_startswith(slink, "/dev/disk/by-diskseq");
+        if (isempty(fname))
+                return 0;
+
+        (void) sd_device_get_devtype(dev, &devtype);
+        if (streq_ptr(devtype, "partition")) {
+                _cleanup_free_ char *suffix = NULL;
+                const char *partn, *p;
+
+                /* Check if the symlink has an expected suffix "-part%n". See 60-persistent-storage.rules. */
+
+                r = sd_device_get_sysnum(dev, &partn);
+                if (r < 0) {
+                        /* Cannot verify the symlink is owned by this device. Let's create the stack directory for the symlink. */
+                        log_device_debug_errno(dev, r, "Failed to get sysnum, but symlink '%s' is requested, ignoring: %m", slink);
+                        return 0;
+                }
+
+                suffix = strjoin("-part", partn);
+                if (!suffix)
+                        return -ENOMEM;
+
+                p = endswith(fname, suffix);
+                if (!p) {
+                        log_device_debug(dev, "Unexpected by-diskseq symlink '%s' is requested, proceeding anyway.", slink);
+                        return 0;
+                }
+
+                buf = strndup(fname, p - fname);
+                if (!buf)
+                        return -ENOMEM;
+
+                fname = buf;
+        }
+
+        /* Check if the diskseq part of the symlink is in digits. */
+        if (!in_charset(fname, DIGITS)) {
+                log_device_debug(dev, "Unexpected by-diskseq symlink '%s' is requested, proceeding anyway.", slink);
+                return 0; /* unexpected by-diskseq symlink */
+        }
+
+        /* On removal, we cannot verify the diskseq. Skipping further check below. */
+        if (!add) {
+                if (unlink(slink) < 0 && errno != ENOENT)
+                        return log_device_debug_errno(dev, errno, "Failed to remove '%s': %m", slink);
+
+                (void) rmdir_parents(slink, "/dev");
+                return 1; /* done */
+        }
+
+        /* Check if the diskseq matches with the DISKSEQ property. */
+        r = sd_device_get_property_value(dev, "DISKSEQ", &diskseq);
+        if (r < 0) {
+                log_device_debug_errno(dev, r, "Failed to get DISKSEQ property, but symlink '%s' is requested, ignoring: %m", slink);
+                return 0;
+        }
+
+        if (!streq(fname, diskseq)) {
+                log_device_debug(dev, "Unexpected by-diskseq symlink '%s' is requested (DISKSEQ=%s), proceeding anyway.", slink, diskseq);
+                return 0;
+        }
+
+        r = node_symlink(dev, /* devnode = */ NULL, slink);
+        if (r < 0)
+                return r;
+
+        return 1; /* done */
+}
+
 static int link_update(sd_device *dev, const char *slink, bool add) {
         _cleanup_close_ int dirfd = -EBADF, lockfd = -EBADF;
         _cleanup_free_ char *devnode = NULL;
@@ -390,6 +471,10 @@ static int link_update(sd_device *dev, const char *slink, bool add) {
 
         assert(dev);
         assert(slink);
+
+        r = link_update_diskseq(dev, slink, add);
+        if (r != 0)
+                return r;
 
         r = stack_directory_open(dev, slink, &dirfd, &lockfd);
         if (r < 0)

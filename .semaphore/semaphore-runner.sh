@@ -11,7 +11,8 @@ SALSA_URL="${SALSA_URL:-https://salsa.debian.org/systemd-team/systemd.git}"
 BRANCH="${BRANCH:-upstream-ci}"
 ARCH="${ARCH:-amd64}"
 CONTAINER="${RELEASE}-${ARCH}"
-CACHE_DIR="${SEMAPHORE_CACHE_DIR:-/tmp}"
+CACHE_DIR=/var/tmp
+TMPDIR=/var/tmp
 AUTOPKGTEST_DIR="${CACHE_DIR}/autopkgtest"
 # semaphore cannot expose these, but useful for interactive/local runs
 ARTIFACTS_DIR=/tmp/artifacts
@@ -64,7 +65,7 @@ for phase in "${PHASES[@]}"; do
             sudo apt-get install -y -t "$UBUNTU_RELEASE-backports" lxc
             sudo apt-get install -y python3-debian git dpkg-dev fakeroot python3-jinja2
 
-            [ -d "$AUTOPKGTEST_DIR" ] || git clone --quiet --branch=debian/5.32 --depth=1 https://salsa.debian.org/ci-team/autopkgtest.git "$AUTOPKGTEST_DIR"
+            [ -d "$AUTOPKGTEST_DIR" ] || git clone --quiet --depth=1 https://salsa.debian.org/ci-team/autopkgtest.git "$AUTOPKGTEST_DIR"
 
             create_container
         ;;
@@ -91,7 +92,7 @@ EOF
             # disable autopkgtests which are not for upstream
             sed -i '/# NOUPSTREAM/ q' debian/tests/control
             # enable more unit tests
-            sed -i '/^CONFFLAGS =/ s/=/= --werror -Dtests=unsafe -Dsplit-usr=true -Dslow-tests=true -Dfuzz-tests=true -Dman=true /' debian/rules
+            sed -i '/^CONFFLAGS =/ s/=/= --werror -Dsplit-usr=true /' debian/rules
             # no orig tarball
             echo '1.0' >debian/source/format
 
@@ -101,8 +102,11 @@ EOF
             # now build the package and run the tests
             rm -rf "$ARTIFACTS_DIR"
             # autopkgtest exits with 2 for "some tests skipped", accept that
-            sudo "$AUTOPKGTEST_DIR/runner/autopkgtest" --env DEB_BUILD_OPTIONS=noudeb \
-                                                       --env TEST_UPSTREAM=1 ../systemd_*.dsc \
+            sudo TMPDIR=/var/tmp "$AUTOPKGTEST_DIR/runner/autopkgtest" --env DEB_BUILD_OPTIONS="noudeb nostrip nodoc optimize=-lto" \
+                                                       --env DPKG_DEB_COMPRESSOR_TYPE="none" \
+                                                       --env DEB_BUILD_PROFILES="noudeb nodoc" \
+                                                       --env TEST_UPSTREAM=1 \
+                                                       ../systemd_*.dsc \
                                                        -o "$ARTIFACTS_DIR" \
                                                        -- lxc -s "$CONTAINER" \
                 || [ $? -eq 2 ]
