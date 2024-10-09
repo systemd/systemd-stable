@@ -645,7 +645,7 @@ static uint64_t partition_min_size(const Context *context, const Partition *p) {
                 return p->current_size;
         }
 
-        if (p->verity == VERITY_SIG)
+        if (IN_SET(p->type.designator, PARTITION_ROOT_VERITY_SIG, PARTITION_USR_VERITY_SIG))
                 return VERITY_SIG_SIZE;
 
         sz = p->current_size != UINT64_MAX ? p->current_size : HARD_MIN_SIZE;
@@ -3683,6 +3683,8 @@ static int partition_target_sync(Context *context, Partition *p, PartitionTarget
 
         assert_se((whole_fd = fdisk_get_devfd(context->fdisk_context)) >= 0);
 
+        log_info("Syncing future partition %"PRIu64" contents to disk.", p->partno);
+
         if (t->decrypted && fsync(t->decrypted->fd) < 0)
                 return log_error_errno(errno, "Failed to sync changes to '%s': %m", t->decrypted->volume);
 
@@ -4603,6 +4605,8 @@ static int do_copy_files(Context *context, Partition *p, const char *root) {
                         return -errno;
 
                 sfd = chase_and_open(*source, arg_copy_source, CHASE_PREFIX_ROOT, O_PATH|O_DIRECTORY|O_CLOEXEC|O_NOCTTY, NULL);
+                if (sfd == -ENOTDIR)
+                        continue;
                 if (sfd < 0)
                         return log_error_errno(sfd, "Failed to open source file '%s%s': %m", strempty(arg_copy_source), *source);
 
