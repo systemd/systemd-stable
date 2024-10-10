@@ -914,6 +914,47 @@ EOF
     assert_in "${loop}p3 : start= *${start}, size= *${size}, type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, uuid=DB081670-07AE-48CA-9F5E-813D5E40B976, name=\"linux-generic-2\"" "$output"
 }
 
+testcase_random_seed() {
+    local defs imgs output
+
+    # For issue #34257
+
+    defs="$(mktemp --directory "/tmp/test-repart.defs.XXXXXXXXXX")"
+    imgs="$(mktemp --directory "/var/tmp/test-repart.imgs.XXXXXXXXXX")"
+    # shellcheck disable=SC2064
+    trap "rm -rf '$defs' '$imgs'" RETURN
+    chmod 0755 "$defs"
+
+    tee "$defs/root.conf" <<EOF
+[Partition]
+Type=root
+EOF
+
+    tee "$defs/home.conf" <<EOF
+[Partition]
+Type=home
+Label=home-first
+EOF
+
+    tee "$defs/swap.conf" <<EOF
+[Partition]
+Type=swap
+SizeMaxBytes=64M
+PaddingMinBytes=92M
+EOF
+
+    systemd-repart --definitions="$defs" \
+                   --empty=create \
+                   --size=1G \
+                   --dry-run=no \
+                   --seed=random \
+                   --json=pretty \
+                   "$imgs/zzz"
+
+    sfdisk -d "$imgs/zzz"
+    [[ "$(sfdisk -d "$imgs/zzz" | grep -F 'uuid=' | awk '{ print $8 }' | sort -u | wc -l)" == "3" ]]
+}
+
 test_basic
 test_dropin
 test_multiple_definitions
@@ -923,6 +964,7 @@ test_issue_21817
 test_issue_24553
 test_zero_uuid
 test_verity
+testcase_random_seed
 
 # Valid block sizes on the Linux block layer are >= 512 and <= PAGE_SIZE, and
 # must be powers of 2. Which leaves exactly four different ones to test on

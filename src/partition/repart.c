@@ -3291,13 +3291,13 @@ static int do_copy_files(Partition *p, const char *root) {
                                                 sfd, ".",
                                                 pfd, fn,
                                                 UID_INVALID, GID_INVALID,
-                                                COPY_REFLINK|COPY_MERGE|COPY_REPLACE|COPY_SIGINT|COPY_HARDLINKS|COPY_ALL_XATTRS);
+                                                COPY_REFLINK|COPY_MERGE|COPY_REPLACE|COPY_SIGINT|COPY_HARDLINKS|COPY_ALL_XATTRS|COPY_RESTORE_DIRECTORY_TIMESTAMPS);
                         } else
                                 r = copy_tree_at(
                                                 sfd, ".",
                                                 tfd, ".",
                                                 UID_INVALID, GID_INVALID,
-                                                COPY_REFLINK|COPY_MERGE|COPY_REPLACE|COPY_SIGINT|COPY_HARDLINKS|COPY_ALL_XATTRS);
+                                                COPY_REFLINK|COPY_MERGE|COPY_REPLACE|COPY_SIGINT|COPY_HARDLINKS|COPY_ALL_XATTRS|COPY_RESTORE_DIRECTORY_TIMESTAMPS);
                         if (r < 0)
                                 return log_error_errno(r, "Failed to copy '%s' to '%s%s': %m", *source, strempty(arg_root), *target);
                 } else {
@@ -5862,6 +5862,10 @@ static int run(int argc, char *argv[]) {
         if (!context)
                 return log_oom();
 
+        r = context_read_seed(context, arg_root);
+        if (r < 0)
+                return r;
+
         strv_uniq(arg_definitions);
 
         r = context_read_definitions(context, arg_definitions, arg_root);
@@ -5925,10 +5929,6 @@ static int run(int argc, char *argv[]) {
         (void) context_dump_partitions(context, node);
         putchar('\n');
 #endif
-
-        r = context_read_seed(context, arg_root);
-        if (r < 0)
-                return r;
 
         /* Open all files to copy blocks from now, since we want to take their size into consideration */
         r = context_open_copy_block_paths(
