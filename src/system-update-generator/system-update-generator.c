@@ -20,12 +20,14 @@ static const char *arg_dest = NULL;
 
 static int generate_symlink(void) {
         const char *p = NULL;
+        int r;
 
-        if (laccess("/system-update", F_OK) < 0) {
-                if (errno == ENOENT)
+        r = laccess("/system-update", F_OK);
+        if (r < 0) {
+                if (r == -ENOENT)
                         return 0;
 
-                log_error_errno(errno, "Failed to check for system update: %m");
+                log_error_errno(r, "Failed to check for system update: %m");
                 return -EINVAL;
         }
 

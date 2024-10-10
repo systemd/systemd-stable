@@ -35,6 +35,7 @@
 #include "strv.h"
 #include "tests.h"
 #include "tmpfile-util.h"
+#include "uid-range.h"
 
 char* setup_fake_runtime_dir(void) {
         char t[] = "/tmp/fake-xdg-runtime-XXXXXX", *p;
@@ -170,6 +171,20 @@ bool have_namespaces(void) {
                 return false;
 
         assert_not_reached();
+}
+
+bool userns_has_single_user(void) {
+        _cleanup_(uid_range_freep) UidRange *uidrange = NULL;
+
+        /* Check if we're in a user namespace with only a single user mapped in. We special case this
+         * scenario in a few tests because it's the only kind of namespace that can be created unprivileged
+         * and as such happens more often than not, so we make sure to deal with it so that all tests pass
+         * in such environments. */
+
+        if (uid_range_load_userns(&uidrange, NULL) < 0)
+                return false;
+
+        return uidrange->n_entries == 1 && uidrange->entries[0].nr == 1;
 }
 
 bool can_memlock(void) {
