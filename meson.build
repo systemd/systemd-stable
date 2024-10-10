@@ -514,10 +514,10 @@ conf.set('SIZEOF_TIMEX_MEMBER', cc.sizeof('typeof(((struct timex *)0)->freq)', p
 
 decl_headers = '''
 #include <dirent.h>
-#include <uchar.h>
+#include <sched.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
-#include <sched.h>
+#include <uchar.h>
 '''
 
 foreach decl : ['char16_t',
