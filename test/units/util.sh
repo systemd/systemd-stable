@@ -3,19 +3,29 @@
 
 # Utility functions for shell tests
 
-assert_true() {(
+assert_ok() {(
     set +ex
 
     local rc
 
     "$@"
     rc=$?
-    if [[ $rc -ne 0 ]]; then
+    if [[ "$rc" -ne 0 ]]; then
         echo "FAIL: command '$*' failed with exit code $rc" >&2
         exit 1
     fi
 )}
 
+assert_fail() {(
+    set +ex
+
+    local rc
+
+    if "$@"; then
+        echo "FAIL: command '$*' unexpectedly succeeded" >&2
+        exit 1
+    fi
+)}
 
 assert_eq() {(
     set +ex
