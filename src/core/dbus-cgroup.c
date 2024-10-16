@@ -1970,11 +1970,12 @@ int bus_cgroup_set_property(
                         prefixes = streq(name, "IPAddressAllow") ? &c->ip_address_allow : &c->ip_address_deny;
                         reduced = streq(name, "IPAddressAllow") ? &c->ip_address_allow_reduced : &c->ip_address_deny_reduced;
 
+                        fputs(name, f);
+                        fputs("=\n", f);
+
                         if (n == 0) {
                                 *reduced = true;
                                 *prefixes = set_free(*prefixes);
-                                fputs(name, f);
-                                fputs("=\n", f);
                         } else {
                                 *reduced = false;
 
@@ -1983,7 +1984,7 @@ int bus_cgroup_set_property(
                                         return r;
 
                                 const struct in_addr_prefix *p;
-                                SET_FOREACH(p, new_prefixes)
+                                SET_FOREACH(p, *prefixes)
                                         fprintf(f, "%s=%s\n", name,
                                                 IN_ADDR_PREFIX_TO_STRING(p->family, &p->address, p->prefixlen));
                         }
