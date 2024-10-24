@@ -137,20 +137,11 @@ ninja --version
 for args in "${ARGS[@]}"; do
     SECONDS=0
 
-    # mold < 1.1 does not support LTO.
-    if dpkg --compare-versions "$(dpkg-query --showformat='${Version}' --show mold)" ge 1.1; then
-        fatal "Newer mold version detected, please remove this workaround."
-    elif [[ "$args" == *"-Db_lto=true"* ]]; then
-        LD="gold"
-    else
-        LD="$LINKER"
-    fi
-
     info "Checking build with $args"
     # shellcheck disable=SC2086
     if ! AR="$AR" \
-         CC="$CC" CC_LD="$LD" CFLAGS="$CFLAGS" \
-         CXX="$CXX" CXX_LD="$LD" CXXFLAGS="$CXXFLAGS" \
+         CC="$CC" CC_LD="$LINKER" CFLAGS="$CFLAGS" \
+         CXX="$CXX" CXX_LD="$LINKER" CXXFLAGS="$CXXFLAGS" \
          meson setup \
                -Dtests=unsafe -Dslow-tests=true -Dfuzz-tests=true --werror \
                -Dnobody-group=nogroup -Dcryptolib="${CRYPTOLIB:?}" \
