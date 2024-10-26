@@ -4654,7 +4654,7 @@ static int bus_name_pid_lookup_callback(sd_bus_message *reply, void *userdata, s
         e = sd_bus_message_get_error(reply);
         if (e) {
                 r = sd_bus_error_get_errno(e);
-                log_warning_errno(r, "GetConnectionUnixProcessID() failed: %s", bus_error_message(e, r));
+                log_unit_warning_errno(UNIT(s), r, "GetConnectionUnixProcessID() failed: %s", bus_error_message(e, r));
                 return 1;
         }
 
@@ -4665,7 +4665,7 @@ static int bus_name_pid_lookup_callback(sd_bus_message *reply, void *userdata, s
         }
 
         if (!pid_is_valid(pid)) {
-                log_debug_errno(SYNTHETIC_ERRNO(EINVAL), "GetConnectionUnixProcessID() returned invalid PID");
+                log_unit_debug_errno(UNIT(s), SYNTHETIC_ERRNO(EINVAL), "GetConnectionUnixProcessID() returned invalid PID");
                 return 1;
         }
 
@@ -4724,7 +4724,7 @@ static void service_bus_name_owner_change(Unit *u, const char *new_owner) {
                                 "s",
                                 s->bus_name);
                 if (r < 0)
-                        log_debug_errno(r, "Failed to request owner PID of service name, ignoring: %m");
+                        log_unit_debug_errno(u, r, "Failed to request owner PID of service name, ignoring: %m");
         }
 }
 
