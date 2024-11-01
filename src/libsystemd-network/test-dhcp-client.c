@@ -45,7 +45,7 @@ static void test_request_basic(sd_event *e) {
         sd_dhcp_client *client;
 
         if (verbose)
-                printf("* %s\n", __func__);
+                log_info("* %s", __func__);
 
         /* Initialize client without Anonymize settings. */
         r = sd_dhcp_client_new(&client, false);
@@ -105,7 +105,7 @@ static void test_request_anonymize(sd_event *e) {
         sd_dhcp_client *client;
 
         if (verbose)
-                printf("* %s\n", __func__);
+                log_info("* %s", __func__);
 
         /* Initialize client with Anonymize settings. */
         r = sd_dhcp_client_new(&client, true);
@@ -137,7 +137,7 @@ static void test_checksum(void) {
         };
 
         if (verbose)
-                printf("* %s\n", __func__);
+                log_info("* %s", __func__);
 
         assert_se(dhcp_packet_checksum((uint8_t*)&buf, 20) == be16toh(0x78ae));
 }
@@ -270,7 +270,7 @@ static int test_discover_message_verify(size_t size, struct DHCPMessage *dhcp) {
         assert_se(res == DHCP_DISCOVER);
 
         if (verbose)
-                printf("  recv DHCP Discover 0x%08x\n", be32toh(dhcp->xid));
+                log_info("  recv DHCP Discover 0x%08x", be32toh(dhcp->xid));
 
         return 0;
 }
@@ -280,7 +280,7 @@ static void test_discover_message(sd_event *e) {
         int res, r;
 
         if (verbose)
-                printf("* %s\n", __func__);
+                log_info("* %s", __func__);
 
         r = sd_dhcp_client_new(&client, false);
         assert_se(r >= 0);
@@ -425,7 +425,7 @@ static int test_addr_acq_acquired(sd_dhcp_client *client, int event,
                          sizeof(addrs[0].s_addr)) == 0);
 
         if (verbose)
-                printf("  DHCP address acquired\n");
+                log_info("  DHCP address acquired");
 
         sd_event_exit(e, 0);
 
@@ -444,7 +444,7 @@ static int test_addr_acq_recv_request(size_t size, DHCPMessage *request) {
         assert_se(msg_bytes[size - 1] == SD_DHCP_OPTION_END);
 
         if (verbose)
-                printf("  recv DHCP Request  0x%08x\n", be32toh(xid));
+                log_info("  recv DHCP Request  0x%08x", be32toh(xid));
 
         memcpy(&test_addr_acq_ack[26], &udp_check, sizeof(udp_check));
         memcpy(&test_addr_acq_ack[32], &xid, sizeof(xid));
@@ -457,7 +457,7 @@ static int test_addr_acq_recv_request(size_t size, DHCPMessage *request) {
         assert_se(res == sizeof(test_addr_acq_ack));
 
         if (verbose)
-                printf("  send DHCP Ack\n");
+                log_info("  send DHCP Ack");
 
         return 0;
 };
@@ -475,7 +475,7 @@ static int test_addr_acq_recv_discover(size_t size, DHCPMessage *discover) {
         xid = discover->xid;
 
         if (verbose)
-                printf("  recv DHCP Discover 0x%08x\n", be32toh(xid));
+                log_info("  recv DHCP Discover 0x%08x", be32toh(xid));
 
         memcpy(&test_addr_acq_offer[26], &udp_check, sizeof(udp_check));
         memcpy(&test_addr_acq_offer[32], &xid, sizeof(xid));
@@ -488,7 +488,7 @@ static int test_addr_acq_recv_discover(size_t size, DHCPMessage *discover) {
         assert_se(res == sizeof(test_addr_acq_offer));
 
         if (verbose)
-                printf("  sent DHCP Offer\n");
+                log_info("  sent DHCP Offer");
 
         return 0;
 }
@@ -498,7 +498,7 @@ static void test_addr_acq(sd_event *e) {
         int res, r;
 
         if (verbose)
-                printf("* %s\n", __func__);
+                log_info("* %s", __func__);
 
         r = sd_dhcp_client_new(&client, false);
         assert_se(r >= 0);
