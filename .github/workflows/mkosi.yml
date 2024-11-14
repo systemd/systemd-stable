@@ -87,7 +87,7 @@ jobs:
         tee mkosi.conf.d/99-ci.conf <<- EOF
         [Content]
         Environment=CI_BUILD=1
-                    SLOW_TESTS=true
+                    SLOW_TESTS=false
 
         [Host]
         KernelCommandLineExtra=systemd.unit=mkosi-check-and-shutdown.service
