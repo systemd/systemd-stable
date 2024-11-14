@@ -14,6 +14,7 @@
 #include "string-table.h"
 #include "string-util.h"
 #include "strv.h"
+#include "vlan-util.h"
 
 /*
   # .network
@@ -181,7 +182,7 @@ static Network *network_free(Network *network) {
         free(network->ifname);
         free(network->hostname);
         strv_free(network->dns);
-        free(network->vlan);
+        strv_free(network->vlan);
         free(network->bridge);
         free(network->bond);
 
@@ -531,7 +532,7 @@ static int network_set_vlan(Context *context, const char *ifname, const char *va
                         return r;
         }
 
-        return free_and_strdup(&network->vlan, value);
+        return strv_extend(&network->vlan, value);
 }
 
 static int network_set_bridge(Context *context, const char *ifname, const char *value) {
@@ -941,14 +942,29 @@ static int parse_cmdline_rd_peerdns(Context *context, const char *key, const cha
         assert(context);
         assert(key);
 
-        if (proc_cmdline_value_missing(key, value))
-                return network_set_dhcp_use_dns(context, "", true);
-
-        r = parse_boolean(value);
+        r = value ? parse_boolean(value) : true;
         if (r < 0)
                 return r;
 
         return network_set_dhcp_use_dns(context, "", r);
+}
+
+static int extract_vlan_id(const char *vlan_name, uint16_t *ret) {
+        assert(!isempty(vlan_name));
+        assert(ret);
+
+        /* From dracut.cmdline(7):
+         * We support the four styles of vlan names:
+         *   VLAN_PLUS_VID (vlan0005),
+         *   VLAN_PLUS_VID_NO_PAD (vlan5),
+         *   DEV_PLUS_VID (eth0.0005), and
+         *   DEV_PLUS_VID_NO_PAD (eth0.5). */
+
+        for (const char *p = vlan_name + strlen(vlan_name) - 1; p > vlan_name; p--)
+                if (!ascii_isdigit(*p))
+                        return parse_vlanid(p+1, ret);
+
+        return -EINVAL;
 }
 
 static int parse_cmdline_vlan(Context *context, const char *key, const char *value) {
@@ -974,6 +990,10 @@ static int parse_cmdline_vlan(Context *context, const char *key, const char *val
                 if (r < 0)
                         return r;
         }
+
+        r = extract_vlan_id(name, &netdev->vlan_id);
+        if (r < 0)
+                return log_debug_errno(r, "Failed to parse VLAN ID from VLAN device name '%s': %m", name);
 
         return network_set_vlan(context, p + 1, name);
 }
@@ -1315,8 +1335,8 @@ void network_dump(Network *network, FILE *f) {
                 STRV_FOREACH(dns, network->dns)
                         fprintf(f, "DNS=%s\n", *dns);
 
-        if (network->vlan)
-                fprintf(f, "VLAN=%s\n", network->vlan);
+        STRV_FOREACH(v, network->vlan)
+                fprintf(f, "VLAN=%s\n", *v);
 
         if (network->bridge)
                 fprintf(f, "Bridge=%s\n", network->bridge);
@@ -1352,6 +1372,13 @@ void netdev_dump(NetDev *netdev, FILE *f) {
 
         if (netdev->mtu > 0)
                 fprintf(f, "MTUBytes=%" PRIu32 "\n", netdev->mtu);
+
+        if (streq(netdev->kind, "vlan")) {
+                fprintf(f,
+                        "\n[VLAN]\n"
+                        "Id=%u\n",
+                        netdev->vlan_id);
+        }
 }
 
 void link_dump(Link *link, FILE *f) {
