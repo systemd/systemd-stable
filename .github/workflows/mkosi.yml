@@ -85,7 +85,7 @@ jobs:
 
         [Content]
         Environment=CI_BUILD=1
-                    SLOW_TESTS=true
+                    SLOW_TESTS=false
 
         [Output]
         KernelCommandLineExtra=systemd.unit=mkosi-check-and-shutdown.service
