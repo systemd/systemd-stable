@@ -129,6 +129,8 @@ jobs:
         CopyFiles=/
         Minimize=guess
         EOF
+        sudo ln -svf "$(dirname "$(readlink /usr/bin/bootctl)")/systemd-keyutil" /usr/lib/systemd/systemd-keyutil
+        /usr/lib/systemd/systemd-keyutil --version
 
     - name: Generate secure boot key
       run: mkosi genkey
