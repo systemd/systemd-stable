@@ -124,6 +124,8 @@ jobs:
         ExecStart=false
         EOF
         cp mkosi.images/initrd/mkosi.extra/usr/lib/systemd/system/emergency.service.d/poweroff.conf mkosi.images/system/mkosi.extra/usr/lib/systemd/system/emergency.service.d/poweroff.conf
+        sudo ln -svf "$(dirname "$(readlink /usr/bin/bootctl)")/systemd-keyutil" /usr/lib/systemd/systemd-keyutil
+        /usr/lib/systemd/systemd-keyutil --version
 
     - name: Generate secure boot key
       run: mkosi --debug genkey
