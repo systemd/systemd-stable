@@ -3,9 +3,6 @@
 set -eux
 set -o pipefail
 
-# shellcheck source=test/units/util.sh
-. "$(dirname "$0")"/util.sh
-
 at_exit() {
     set +e
     userdel -r foobarbaz

@@ -134,7 +134,7 @@ static PatternCompileCase arg_case = PATTERN_COMPILE_CASE_AUTO;
 
 STATIC_DESTRUCTOR_REGISTER(arg_file, strv_freep);
 STATIC_DESTRUCTOR_REGISTER(arg_facilities, set_freep);
-STATIC_DESTRUCTOR_REGISTER(arg_verify_key, freep);
+STATIC_DESTRUCTOR_REGISTER(arg_verify_key, erase_and_freep);
 STATIC_DESTRUCTOR_REGISTER(arg_syslog_identifier, strv_freep);
 STATIC_DESTRUCTOR_REGISTER(arg_system_units, strv_freep);
 STATIC_DESTRUCTOR_REGISTER(arg_user_units, strv_freep);
@@ -784,9 +784,11 @@ static int parse_argv(int argc, char *argv[]) {
                         break;
 
                 case ARG_VERIFY_KEY:
-                        r = free_and_strdup(&arg_verify_key, optarg);
-                        if (r < 0)
-                                return r;
+                        erase_and_free(arg_verify_key);
+                        arg_verify_key = strdup(optarg);
+                        if (!arg_verify_key)
+                                return log_oom();
+
                         /* Use memset not explicit_bzero() or similar so this doesn't look confusing
                          * in ps or htop output. */
                         memset(optarg, 'x', strlen(optarg));
