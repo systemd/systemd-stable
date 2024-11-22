@@ -22,6 +22,7 @@
 #include "user-util.h"
 #include "userdb.h"
 #include "verbs.h"
+#include "virt.h"
 
 static enum {
         OUTPUT_CLASSIC,
@@ -129,10 +130,16 @@ static int show_user(UserRecord *ur, Table *table) {
         return 0;
 }
 
+static bool test_show_mapped(void) {
+        /* Show mapped user range only in environments where user mapping is a thing. */
+        return running_in_userns() > 0;
+}
+
 static const struct {
         uid_t first, last;
         const char *name;
         UserDisposition disposition;
+        bool (*test)(void);
 } uid_range_table[] = {
         {
                 .first = 1,
@@ -165,6 +172,7 @@ static const struct {
                 .last = MAP_UID_MAX,
                 .name = "mapped",
                 .disposition = USER_REGULAR,
+                .test = test_show_mapped,
         },
 };
 
@@ -177,6 +185,9 @@ static int table_add_uid_boundaries(Table *table, const UidRange *p) {
                 _cleanup_free_ char *name = NULL, *comment = NULL;
 
                 if (!uid_range_covers(p, uid_range_table[i].first, uid_range_table[i].last - uid_range_table[i].first + 1))
+                        continue;
+
+                if (uid_range_table[i].test && !uid_range_table[i].test())
                         continue;
 
                 name = strjoin(special_glyph(SPECIAL_GLYPH_ARROW_DOWN),
@@ -538,6 +549,9 @@ static int table_add_gid_boundaries(Table *table, const UidRange *p) {
 
                 if (!uid_range_covers(p, uid_range_table[i].first,
                                       uid_range_table[i].last - uid_range_table[i].first + 1))
+                        continue;
+
+                if (uid_range_table[i].test && !uid_range_table[i].test())
                         continue;
 
                 name = strjoin(special_glyph(SPECIAL_GLYPH_ARROW_DOWN),
