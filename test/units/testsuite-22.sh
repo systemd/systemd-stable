@@ -3,6 +3,14 @@
 set -eux
 set -o pipefail
 
+if systemd-detect-virt --quiet --container; then
+    # This comes from the selinux package and tries to write
+    # some files under sysfs, which will be read-only in a container,
+    # so mask it. It's not our tmpfiles.d file anyway.
+    mkdir -p /run/tmpfiles.d/
+    ln -s /dev/null /run/tmpfiles.d/selinux-policy.conf
+fi
+
 : >/failed
 
 for t in "${0%.sh}".*.sh; do
