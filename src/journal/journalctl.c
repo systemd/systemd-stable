@@ -1865,15 +1865,18 @@ static int setup_keys(void) {
         state_size = FSPRG_stateinbytes(FSPRG_RECOMMENDED_SECPAR);
         state = alloca_safe(state_size);
 
-        log_info("Generating seed...");
+        if (!arg_quiet)
+                log_info("Generating seed...");
         r = crypto_random_bytes(seed, seed_size);
         if (r < 0)
                 return log_error_errno(r, "Failed to acquire random seed: %m");
 
-        log_info("Generating key pair...");
+        if (!arg_quiet)
+                log_info("Generating key pair...");
         FSPRG_GenMK(NULL, mpk, seed, seed_size, FSPRG_RECOMMENDED_SECPAR);
 
-        log_info("Generating sealing key...");
+        if (!arg_quiet)
+                log_info("Generating sealing key...");
         FSPRG_GenState0(state, mpk, seed, seed_size);
 
         assert(arg_interval > 0);
@@ -1888,7 +1891,7 @@ static int setup_keys(void) {
 
         r = chattr_secret(fd, CHATTR_WARN_UNSUPPORTED_FLAGS);
         if (r < 0)
-                log_full_errno(ERRNO_IS_NOT_SUPPORTED(r) ? LOG_DEBUG : LOG_WARNING,
+                log_full_errno(ERRNO_IS_NOT_SUPPORTED(r) || arg_quiet ? LOG_DEBUG : LOG_WARNING,
                                r, "Failed to set file attributes on '%s', ignoring: %m", k);
 
         struct FSSHeader h = {
@@ -1921,7 +1924,7 @@ static int setup_keys(void) {
         if (r < 0)
                 return r;
 
-        if (on_tty()) {
+        if (on_tty() && !arg_quiet) {
                 hn = gethostname_malloc();
                 if (hn)
                         hostname_cleanup(hn);
@@ -1952,7 +1955,7 @@ static int setup_keys(void) {
 
         puts(key);
 
-        if (on_tty()) {
+        if (on_tty() && !arg_quiet) {
                 fprintf(stderr, "%s", ansi_normal());
 #if HAVE_QRENCODE
                 _cleanup_free_ char *url = NULL;
