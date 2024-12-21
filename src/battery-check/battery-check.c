@@ -153,13 +153,13 @@ static int run(int argc, char *argv[]) {
 
         log_setup();
 
-        r = proc_cmdline_parse(parse_proc_cmdline_item, NULL, PROC_CMDLINE_STRIP_RD_PREFIX);
-        if (r < 0)
-                log_warning_errno(r, "Failed to parse kernel command line, ignoring: %m");
-
         r = parse_argv(argc, argv);
         if (r <= 0)
                 return r;
+
+        r = proc_cmdline_parse(parse_proc_cmdline_item, NULL, PROC_CMDLINE_STRIP_RD_PREFIX);
+        if (r < 0)
+                log_warning_errno(r, "Failed to parse kernel command line, ignoring: %m");
 
         if (!arg_doit) {
                 log_info("Checking battery status and AC power existence is disabled by the kernel command line, skipping execution.");
