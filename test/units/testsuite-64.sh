@@ -854,7 +854,7 @@ testcase_mdadm_basic() {
         "/dev/disk/by-label/$part_name" # ext4 partition
     )
     # Create a simple RAID 1 with an ext4 filesystem
-    echo y | mdadm --create "$raid_dev" --name "$raid_name" --uuid "$uuid" /dev/disk/by-id/ata-foobar_deadbeefmdadm{0..1} -v -f --level=1 --raid-devices=2
+    printf 'y\ny\n' | mdadm --create "$raid_dev" --name "$raid_name" --uuid "$uuid" /dev/disk/by-id/ata-foobar_deadbeefmdadm{0..1} -v -f --level=1 --raid-devices=2
     udevadm wait --settle --timeout=30 "$raid_dev"
     mkfs.ext4 -L "$part_name" "$raid_dev"
     udevadm wait --settle --timeout=30 "${expected_symlinks[@]}"
@@ -883,7 +883,7 @@ testcase_mdadm_basic() {
         "/dev/disk/by-label/$part_name" # ext4 partition
     )
     # Create a simple RAID 5 with an ext4 filesystem
-    echo y | mdadm --create "$raid_dev" --name "$raid_name" --uuid "$uuid" /dev/disk/by-id/ata-foobar_deadbeefmdadm{0..2} -v -f --level=5 --raid-devices=3
+    printf 'y\ny\n' | mdadm --create "$raid_dev" --name "$raid_name" --uuid "$uuid" /dev/disk/by-id/ata-foobar_deadbeefmdadm{0..2} -v -f --level=5 --raid-devices=3
     udevadm wait --settle --timeout=30 "$raid_dev"
     mkfs.ext4 -L "$part_name" "$raid_dev"
     udevadm wait --settle --timeout=30 "${expected_symlinks[@]}"
@@ -923,7 +923,7 @@ testcase_mdadm_basic() {
         "/dev/disk/by-id/md-uuid-$uuid-part3"
     )
     # Create a simple RAID 10 with an ext4 filesystem
-    echo y | mdadm --create "$raid_dev" --name "$raid_name" --uuid "$uuid" /dev/disk/by-id/ata-foobar_deadbeefmdadm{0..3} -v -f --level=10 --raid-devices=4
+    printf 'y\ny\n' | mdadm --create "$raid_dev" --name "$raid_name" --uuid "$uuid" /dev/disk/by-id/ata-foobar_deadbeefmdadm{0..3} -v -f --level=10 --raid-devices=4
     udevadm wait --settle --timeout=30 "$raid_dev"
     # Partition the raid device
     # Here, 'udevadm lock' is meaningless, as udevd does not lock MD devices.
@@ -976,7 +976,7 @@ testcase_mdadm_lvm() {
         "/dev/disk/by-label/$part_name" # ext4 partition
     )
     # Create a RAID 10 with LVM + ext4
-    echo y | mdadm --create "$raid_dev" --name "$raid_name" --uuid "$uuid" /dev/disk/by-id/ata-foobar_deadbeefmdadmlvm{0..3} -v -f --level=10 --raid-devices=4
+    printf 'y\ny\n' | mdadm --create "$raid_dev" --name "$raid_name" --uuid "$uuid" /dev/disk/by-id/ata-foobar_deadbeefmdadmlvm{0..3} -v -f --level=10 --raid-devices=4
     udevadm wait --settle --timeout=30 "$raid_dev"
     # Create an LVM on the MD
     lvm pvcreate -y "$raid_dev"
