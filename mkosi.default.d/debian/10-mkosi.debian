@@ -19,6 +19,7 @@ Packages=
         isc-dhcp-server
         libbpf1
         libfido2-1
+        libgcrypt20
         libglib2.0-0
         libgnutls30
         libidn2-0
