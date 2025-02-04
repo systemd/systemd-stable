@@ -823,7 +823,7 @@ Path=/efi/EFI/Linux
 MatchPattern=foobarOS_@v+@l-@d.efi \
              foobarOS_@v+@l.efi \
              foobarOS_@v.efi
-Mode=0444
+Mode=0644
 TriesLeft=3
 TriesDone=0
 InstancesMax=2</programlisting></para>
