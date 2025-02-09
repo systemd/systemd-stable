@@ -2051,7 +2051,7 @@ static int create_symlink(Item *i) {
         if (r < 0)
                 return log_error_errno(r, "Failed to extract filename from path '%s': %m", i->path);
         if (r == O_DIRECTORY)
-                return log_error_errno(SYNTHETIC_ERRNO(EISDIR), "Cannot open path '%s' for creating FIFO, is a directory.", i->path);
+                return log_error_errno(SYNTHETIC_ERRNO(EISDIR), "Cannot open path '%s' for creating symlink, is a directory.", i->path);
 
         pfd = path_open_parent_safe(i->path, i->allow_failure);
         if (pfd < 0)
