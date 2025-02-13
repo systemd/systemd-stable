@@ -1238,6 +1238,24 @@ TEST(condition_test_os_release) {
         assert_se(condition_test(condition, environ) > 0);
         condition_free(condition);
 
+        /* Test shell style globs */
+
+        assert_se((condition = condition_new(CONDITION_OS_RELEASE, "ID_LIKE$=*THISHOPEFULLYWONTEXIST*", false, false)));
+        assert_se(condition_test(condition, environ) == 0);
+        condition_free(condition);
+
+        assert_se((condition = condition_new(CONDITION_OS_RELEASE, "ID_THISHOPEFULLYWONTEXIST$=*rhel*", false, false)));
+        assert_se(condition_test(condition, environ) == 0);
+        condition_free(condition);
+
+        assert_se((condition = condition_new(CONDITION_OS_RELEASE, "ID_LIKE!$=*THISHOPEFULLYWONTEXIST*", false, false)));
+        assert_se(condition_test(condition, environ) >= 0);
+        condition_free(condition);
+
+        assert_se((condition = condition_new(CONDITION_OS_RELEASE, "ID_THISHOPEFULLYWONTEXIST!$=*rhel*", false, false)));
+        assert_se(condition_test(condition, environ) >= 0);
+        condition_free(condition);
+
         /* load_os_release_pairs() removes quotes, we have to add them back,
          * otherwise we get a string: "PRETTY_NAME=Debian GNU/Linux 10 (buster)"
          * which is wrong, as the value is not quoted anymore. */
