@@ -45,6 +45,9 @@ jobs:
             release: 9-stream
 
     steps:
+    - name: mkosi dependencies
+      run: sudo apt-get install --assume-yes --no-install-recommends python3-pyelftools makepkg python3-pexpect python3-jinja2
+
     - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
     - uses: systemd/mkosi@792cbc60eb2dc4a58d66bb3c212bf92f8d50f6ea
 
@@ -54,14 +57,6 @@ jobs:
     - name: Fix C9S/EPEL9
       if: ${{ matrix.release == '9-stream' }}
       run: sudo sed -i '/add_packages/s/systemd-boot/systemd/g' /usr/local/lib/python3.12/dist-packages/mkosi/__init__.py
-
-    # FIXME: temporary workaround for debootstrap issue of Debian testing/sid on Jammy
-    - name: Fix Debian testing/sid
-      if: ${{ matrix.distro == 'debian' && matrix.release == 'testing' }}
-      run: sudo sed -i 's/merged-usr/no-merged-usr/g' /usr/local/lib/python3.10/dist-packages/mkosi/__init__.py
-
-    - name: Install
-      run: sudo apt-get update && sudo apt-get install --no-install-recommends python3-pexpect python3-jinja2
 
     - name: Configure
       run: |
