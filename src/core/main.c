@@ -2902,7 +2902,8 @@ int main(int argc, char *argv[]) {
                                         goto finish;
                         }
 
-                        if (mac_init() < 0) {
+                        r = mac_init();
+                        if (r < 0) {
                                 error_message = "Failed to initialize MAC support";
                                 goto finish;
                         }
@@ -2977,7 +2978,8 @@ int main(int argc, char *argv[]) {
                  * operate. */
                 capability_ambient_set_apply(0, /* also_inherit= */ false);
 
-                if (mac_init() < 0) {
+                r = mac_init();
+                if (r < 0) {
                         error_message = "Failed to initialize MAC support";
                         goto finish;
                 }
