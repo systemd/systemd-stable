@@ -138,10 +138,10 @@ jobs:
       run: mkosi summary
 
     - name: Build
-      run: mkosi --debug
+      run: sudo mkosi --debug
 
     - name: Boot systemd-nspawn
       run: test "$(sudo mkosi --debug boot 1>&2; echo $?)" -eq 123
 
     - name: Boot QEMU
-      run: timeout -k 30 10m test "$(mkosi --debug qemu 1>&2; echo $?)" -eq 123
+      run: timeout -k 30 10m test "$(sudo mkosi --debug qemu 1>&2; echo $?)" -eq 123
