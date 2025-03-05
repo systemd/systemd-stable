@@ -142,16 +142,16 @@ jobs:
         /usr/lib/systemd/systemd-keyutil --version
 
     - name: Generate secure boot key
-      run: mkosi --debug genkey
+      run: sudo mkosi --debug genkey
 
     - name: Show ${{ matrix.distro }} image summary
-      run: mkosi summary
+      run: sudo mkosi summary
 
     - name: Build ${{ matrix.distro }}
-      run: mkosi --debug
+      run: sudo mkosi --debug
 
     - name: Boot ${{ matrix.distro }} systemd-nspawn
       run: test "$(sudo mkosi --debug boot 1>&2; echo $?)" -eq 123
 
     - name: Boot ${{ matrix.distro }} QEMU
-      run: timeout -k 30 10m test "$(mkosi --debug qemu 1>&2; echo $?)" -eq 123
+      run: timeout -k 30 10m test "$(sudo mkosi --debug qemu 1>&2; echo $?)" -eq 123
