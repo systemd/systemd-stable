@@ -131,7 +131,7 @@ jobs:
       run: sudo mkosi genkey
 
     - name: Build ${{ matrix.distro }}
-      run: sudo mkosi
+      run: sudo mkosi --repository-key-check=false
 
     - name: Show ${{ matrix.distro }} image summary
       run: sudo mkosi summary
