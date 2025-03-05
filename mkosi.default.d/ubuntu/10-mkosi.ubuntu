@@ -26,6 +26,7 @@ Packages=
         libtss2-dev # Use the -dev package to avoid churn in updating version numbers
         linux-tools-common
         linux-tools-generic
+        login
         netcat-openbsd
         polkitd
         procps
