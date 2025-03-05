@@ -74,6 +74,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+    - name: Build dependencies
+      run: sudo apt install --yes makepkg
+
     - uses: systemd/mkosi@bbe715f42911f9660712377a5b39335b9391ae22
 
     - name: Configure
