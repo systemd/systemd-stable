@@ -148,7 +148,7 @@ jobs:
       run: sudo mkosi summary
 
     - name: Build ${{ matrix.distro }}
-      run: sudo mkosi --debug --repository-key-check=false
+      run: sudo env -u SUDO_USER -u SUDO_UID -u SUDO_GID mkosi --debug --repository-key-check=false
 
     - name: Boot ${{ matrix.distro }} systemd-nspawn
       run: test "$(sudo mkosi --debug boot 1>&2; echo $?)" -eq 123
