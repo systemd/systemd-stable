@@ -128,13 +128,13 @@ jobs:
         /usr/lib/systemd/systemd-keyutil --version
 
     - name: Generate secure boot key
-      run: mkosi genkey
+      run: sudo mkosi genkey
 
     - name: Build ${{ matrix.distro }}
-      run: mkosi
+      run: sudo mkosi
 
     - name: Show ${{ matrix.distro }} image summary
-      run: mkosi summary
+      run: sudo mkosi summary
 
     - name: Boot ${{ matrix.distro }} systemd-nspawn
       run: sudo mkosi boot ${{ env.KERNEL_CMDLINE }} audit=0
@@ -143,7 +143,7 @@ jobs:
       run: sudo mkosi shell bash -c "[[ -e /testok ]] || { cat /failed-services; exit 1; }"
 
     - name: Boot ${{ matrix.distro }} QEMU
-      run: timeout -k 30 10m mkosi qemu
+      run: timeout -k 30 10m sudo mkosi qemu
 
     - name: Check ${{ matrix.distro }} QEMU
       run: sudo mkosi shell bash -c "[[ -e /testok ]] || { cat /failed-services; exit 1; }"
