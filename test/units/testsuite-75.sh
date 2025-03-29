@@ -16,6 +16,11 @@ set -o pipefail
 
 : >/failed
 
+if ! command -v resolvectl >/dev/null || ! command -v networkctl >/dev/null; then
+    echo "resolved/networkd not found, skipping..." | tee --append /skipped
+    exit 77
+fi
+
 RUN_OUT="$(mktemp)"
 
 run() {
