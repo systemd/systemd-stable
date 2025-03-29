@@ -14,6 +14,11 @@ set -o pipefail
 # shellcheck source=test/units/util.sh
 . "$(dirname "$0")"/util.sh
 
+if ! command -v resolvectl >/dev/null || ! command -v networkctl >/dev/null; then
+    echo "resolved/networkd not found, skipping..." | tee --append /skipped
+    exit 77
+fi
+
 RUN_OUT="$(mktemp)"
 
 run() {
