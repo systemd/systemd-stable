@@ -425,6 +425,8 @@ static void check_parent_match(sd_device_enumerator *e, sd_device *dev) {
 
 TEST(sd_device_enumerator_add_match_parent) {
         _cleanup_(sd_device_enumerator_unrefp) sd_device_enumerator *e = NULL;
+        /* Some devices have thousands of children. Avoid spending too much time in the double loop below. */
+        unsigned iterations = 200;
         int r;
 
         assert_se(sd_device_enumerator_new(&e) >= 0);
@@ -441,6 +443,9 @@ TEST(sd_device_enumerator_add_match_parent) {
                 _cleanup_(sd_device_enumerator_unrefp) sd_device_enumerator *p = NULL;
                 const char *syspath;
                 sd_device *parent;
+
+                if (iterations-- == 0)
+                        break;
 
                 assert_se(sd_device_get_syspath(dev, &syspath) >= 0);
 
@@ -470,6 +475,8 @@ TEST(sd_device_enumerator_add_match_parent) {
 
 TEST(sd_device_get_child) {
         _cleanup_(sd_device_enumerator_unrefp) sd_device_enumerator *e = NULL;
+        /* Some devices have thousands of children. Avoid spending too much time in the double loop below. */
+        unsigned iterations = 3000;
         int r;
 
         assert_se(sd_device_enumerator_new(&e) >= 0);
@@ -502,6 +509,9 @@ TEST(sd_device_get_child) {
 
                 FOREACH_DEVICE_CHILD_WITH_SUFFIX(parent, child, suffix) {
                         const char *s;
+
+                        if (iterations-- == 0)
+                                return;
 
                         assert_se(child);
                         assert_se(suffix);
