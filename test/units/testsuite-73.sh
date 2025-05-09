@@ -243,6 +243,10 @@ test_vc_keymap() {
         rm -f /etc/X11/xorg.conf.d/00-keyboard.conf /etc/default/keyboard
 
         # set VC keymap
+
+        # Skip lv keymap and friends, otherwise the sanitizer detects heap-buffer-overflow in libxkbcommon.
+        [[ "$i" =~ ^lv ]] && continue
+
         assert_rc 0 localectl set-keymap "$i"
         output=$(localectl)
 
