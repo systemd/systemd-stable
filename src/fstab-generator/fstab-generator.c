@@ -108,15 +108,15 @@ static int mount_array_add_internal(
                 char *in_what,
                 char *in_where,
                 const char *in_fstype,
-                const char *in_options) {
+                char *in_options) {
 
         _cleanup_free_ char *what = NULL, *where = NULL, *fstype = NULL, *options = NULL;
-        int r;
 
         /* This takes what and where. */
 
         what = ASSERT_PTR(in_what);
         where = in_where;
+        options = in_options;
 
         fstype = strdup(isempty(in_fstype) ? "auto" : in_fstype);
         if (!fstype)
@@ -124,19 +124,6 @@ static int mount_array_add_internal(
 
         if (streq(fstype, "swap"))
                 where = mfree(where);
-
-        if (!isempty(in_options)) {
-                _cleanup_strv_free_ char **options_strv = NULL;
-
-                r = strv_split_full(&options_strv, in_options, ",", 0);
-                if (r < 0)
-                        return r;
-
-                r = strv_make_nulstr(options_strv, &options, NULL);
-        } else
-                r = strv_make_nulstr(STRV_MAKE("defaults"), &options, NULL);
-        if (r < 0)
-                return r;
 
         if (!GREEDY_REALLOC(arg_mounts, arg_n_mounts + 1))
                 return -ENOMEM;
@@ -167,7 +154,7 @@ static int mount_array_add(bool for_initrd, const char *str) {
         if (!isempty(str))
                 return -EINVAL;
 
-        return mount_array_add_internal(for_initrd, TAKE_PTR(what), TAKE_PTR(where), fstype, options);
+        return mount_array_add_internal(for_initrd, TAKE_PTR(what), TAKE_PTR(where), fstype, TAKE_PTR(options));
 }
 
 static int mount_array_add_swap(bool for_initrd, const char *str) {
@@ -185,7 +172,7 @@ static int mount_array_add_swap(bool for_initrd, const char *str) {
         if (!isempty(str))
                 return -EINVAL;
 
-        return mount_array_add_internal(for_initrd, TAKE_PTR(what), NULL, "swap", options);
+        return mount_array_add_internal(for_initrd, TAKE_PTR(what), NULL, "swap", TAKE_PTR(options));
 }
 
 static int write_options(FILE *f, const char *options) {
@@ -476,17 +463,13 @@ static int mandatory_mount_drop_unapplicable_options(
 
         assert(flags);
         assert(where);
-        assert(options);
         assert(ret_options);
 
         if (!(*flags & (MOUNT_NOAUTO|MOUNT_NOFAIL|MOUNT_AUTOMOUNT))) {
-                _cleanup_free_ char *opts = NULL;
+                r = strdup_or_null(options, ret_options);
+                if (r < 0)
+                        return r;
 
-                opts = strdup(options);
-                if (!opts)
-                        return -ENOMEM;
-
-                *ret_options = TAKE_PTR(opts);
                 return 0;
         }
 
@@ -522,7 +505,6 @@ static int add_mount(
 
         assert(what);
         assert(where);
-        assert(opts);
         assert(target_unit);
         assert(source);
 
@@ -816,6 +798,9 @@ static int add_sysusr_sysroot_usr_bind_mount(const char *source) {
 static MountPointFlags fstab_options_to_flags(const char *options, bool is_swap) {
         MountPointFlags flags = 0;
 
+        if (isempty(options))
+                return 0;
+
         if (fstab_test_option(options, "x-systemd.makefs\0"))
                 flags |= MOUNT_MAKEFS;
         if (fstab_test_option(options, "x-systemd.growfs\0"))
@@ -891,7 +876,6 @@ static int parse_fstab_one(
 
         assert(what_original);
         assert(fstype);
-        assert(options);
 
         if (prefix_sysroot && !mount_in_initrd(where_original, options, accept_root))
                 return 0;
