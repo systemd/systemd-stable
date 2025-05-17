@@ -14,6 +14,11 @@ set -o pipefail
 # shellcheck source=test/units/util.sh
 . "$(dirname "$0")"/util.sh
 
+if ! command -v resolvectl >/dev/null || ! command -v networkctl >/dev/null; then
+    echo "resolved/networkd not found, skipping..." | tee --append /skipped
+    exit 77
+fi
+
 RUN_OUT="$(mktemp)"
 
 run() {
@@ -222,10 +227,13 @@ keymgr . generate algorithm=ECDSAP256SHA256 ksk=yes zsk=yes
 # Create a trust anchor for resolved with our root zone
 keymgr . ds | sed 's/ DS/ IN DS/g' >/etc/dnssec-trust-anchors.d/root.positive
 # Create a bind-compatible trust anchor (for delv)
-# Note: the trust-anchors directive is relatively new, so use the original
-#       managed-keys one until it's widespread enough
+# Note: managed-keys was removed in version 9.21, use the newer trust-anchors directive
 {
-    echo 'managed-keys {'
+    if systemd-analyze compare-versions "$(delv -v | awk '{print $2}')" ge 9.21; then
+        echo 'trust-anchors {'
+    else
+        echo 'managed-keys {'
+    fi
     keymgr . dnskey | sed -r 's/^\. DNSKEY ([0-9]+ [0-9]+ [0-9]+) (.+)$/. static-key \1 "\2";/g'
     echo '};'
 } >/etc/bind.keys
