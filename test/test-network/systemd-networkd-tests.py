@@ -6977,6 +6977,10 @@ if __name__ == '__main__':
     if not os.path.exists(os.path.join(systemd_source_dir, "meson_options.txt")):
         raise RuntimeError(f"{systemd_source_dir} doesn't appear to be a systemd source tree")
 
+    if networkd_bin is None or resolved_bin is None or timesyncd_bin is None:
+        print("networkd tests require networkd/resolved/timesyncd to be enabled")
+        sys.exit(77)
+
     use_valgrind = ns.use_valgrind
     enable_debug = ns.enable_debug
     asan_options = ns.asan_options
