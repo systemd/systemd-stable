@@ -82,6 +82,9 @@ jobs:
 
     - name: Configure
       run: |
+        # mkosi GHA clones and builds from main but tools are not compatible with this branch, 24.04 ships 255 which is enough
+        sudo apt install --reinstall systemd systemd-container systemd-boot systemd-ukify
+
         tee mkosi.conf <<- EOF
         [Distribution]
         Distribution=${{ matrix.distro }}
@@ -138,8 +141,6 @@ jobs:
         ExecStart=false
         EOF
         cp mkosi.presets/10-initrd/mkosi.extra/usr/lib/systemd/system/emergency.service.d/poweroff.conf mkosi.presets/20-final/mkosi.extra/usr/lib/systemd/system/emergency.service.d/poweroff.conf
-        sudo ln -svf "$(dirname "$(readlink /usr/bin/bootctl)")/systemd-keyutil" /usr/lib/systemd/systemd-keyutil
-        /usr/lib/systemd/systemd-keyutil --version
 
     - name: Generate secure boot key
       run: sudo mkosi --debug genkey
