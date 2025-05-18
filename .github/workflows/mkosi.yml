@@ -60,6 +60,9 @@ jobs:
 
     - name: Configure
       run: |
+        # mkosi GHA clones and builds from main but tools are not compatible with this branch, 24.04 ships 255 which is enough
+        sudo apt install --reinstall systemd systemd-container systemd-boot systemd-ukify
+
         tee mkosi.default <<- EOF
         [Distribution]
         Distribution=${{ matrix.distro }}
