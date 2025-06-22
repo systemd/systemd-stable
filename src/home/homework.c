@@ -4,6 +4,7 @@
 #include <sys/mount.h>
 
 #include "blockdev-util.h"
+#include "chase.h"
 #include "chown-recursive.h"
 #include "copy.h"
 #include "fd-util.h"
@@ -1032,15 +1033,23 @@ static int home_deactivate(UserRecord *h, bool force) {
 }
 
 static int copy_skel(int root_fd, const char *skel) {
+        _cleanup_close_ int skel_fd = -EBADF;
         int r;
 
         assert(root_fd >= 0);
 
-        r = copy_tree_at(AT_FDCWD, skel, root_fd, ".", UID_INVALID, GID_INVALID, COPY_MERGE|COPY_REPLACE, NULL);
+        r = chase(skel, /* root= */ NULL, /* flags= */ 0, /* ret_path= */ NULL, &skel_fd);
         if (r == -ENOENT) {
                 log_info("Skeleton directory %s missing, ignoring.", skel);
                 return 0;
         }
+
+        r = copy_tree_at(
+                        skel_fd, /* from= */ NULL,
+                        root_fd, ".",
+                        UID_INVALID, GID_INVALID,
+                        COPY_MERGE|COPY_REPLACE,
+                        /* denylist= */ NULL);
         if (r < 0)
                 return log_error_errno(r, "Failed to copy in %s: %m", skel);
 
