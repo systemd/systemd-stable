@@ -1175,7 +1175,7 @@ static int home_start_work(Home *h, const char *verb, UserRecord *hr, UserRecord
         if (stdin_fd < 0)
                 return stdin_fd;
 
-        log_debug("Sending to worker: %s", formatted);
+        log_debug("Sending request to worker");
 
         stdout_fd = memfd_create_wrapper("homework-stdout", MFD_CLOEXEC | MFD_NOEXEC_SEAL);
         if (stdout_fd < 0)
