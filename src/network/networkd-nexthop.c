@@ -942,6 +942,14 @@ int manager_rtnl_process_nexthop(sd_netlink *rtnl, sd_netlink_message *message, 
          * set NHA_OID attribute when NHA_BLACKHOLE or NHA_GROUP is set. Just for safety. */
         if (!nexthop_owned_by_link(tmp))
                 link = NULL;
+        else if (!link) {
+                /* A nexthop that is neither a group nor a blackhole is usually bound to a link through
+                 * NHA_OIF. However, fdb nexthops (NHA_FDB, used e.g. by EVPN multihoming) do not have
+                 * NHA_OIF. We do not manage such nexthops, hence ignore them. Otherwise, nexthop_add()
+                 * would hit assert(link). */
+                log_debug("rtnl: received nexthop message without NHA_OIF attribute for ID %"PRIu32", ignoring.", tmp->id);
+                return 0;
+        }
 
         (void) nexthop_get(m, link, tmp, &nexthop);
 
