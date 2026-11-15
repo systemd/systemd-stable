@@ -942,6 +942,14 @@ int manager_rtnl_process_nexthop(sd_netlink *rtnl, sd_netlink_message *message, 
          * set NHA_OID attribute when NHA_BLACKHOLE or NHA_GROUP is set. Just for safety. */
         if (!nexthop_owned_by_link(tmp))
                 link = NULL;
+        else if (!link) {
+                /* A nexthop that is neither a group nor a blackhole is usually bound to a link through
+                 * NHA_OIF. However, fdb nexthops (NHA_FDB, used e.g. by EVPN multihoming) do not have
+                 * NHA_OIF. We do not manage such nexthops, hence ignore them. Otherwise, nexthop_add()
+                 * would hit assert(link). */
+                log_debug("rtnl: received nexthop message without NHA_OIF attribute for ID %"PRIu32", ignoring.", tmp->id);
+                return 0;
+        }
 
         (void) nexthop_get(m, link, tmp, &nexthop);
 
@@ -951,6 +959,9 @@ int manager_rtnl_process_nexthop(sd_netlink *rtnl, sd_netlink_message *message, 
                         nexthop->flags = tmp->flags;
                         nexthop_enter_configured(nexthop);
                         log_nexthop_debug(tmp, "Received remembered", link);
+                } else if (!m->manage_foreign_nexthops) {
+                        nexthop_enter_configured(tmp);
+                        log_nexthop_debug(tmp, "Ignoring received", link);
                 } else {
                         nexthop_enter_configured(tmp);
                         log_nexthop_debug(tmp, "Remembering", link);
@@ -974,7 +985,9 @@ int manager_rtnl_process_nexthop(sd_netlink *rtnl, sd_netlink_message *message, 
                         } else
                                 log_nexthop_debug(nexthop, "Removed", link);
                 } else
-                        log_nexthop_debug(tmp, "Kernel removed unknown", link);
+                        log_nexthop_debug(tmp,
+                                          m->manage_foreign_nexthops ? "Kernel removed unknown" : "Ignoring received",
+                                          link);
                 break;
 
         default:
@@ -987,6 +1000,14 @@ int manager_rtnl_process_nexthop(sd_netlink *rtnl, sd_netlink_message *message, 
 static int nexthop_section_verify(NextHop *nh) {
         if (section_is_invalid(nh->section))
                 return -EINVAL;
+
+        if (!nh->network->manager->manage_foreign_nexthops && nh->id == 0)
+                /* We do not track foreign nexthops, so we cannot find an ID unused by the kernel. */
+                return log_warning_errno(SYNTHETIC_ERRNO(EINVAL),
+                                         "%s: [NextHop] section without Id= is not supported if "
+                                         "ManageForeignNextHops=no is set in networkd.conf. "
+                                         "Ignoring [NextHop] section from line %u.",
+                                         nh->section->filename, nh->section->line);
 
         if (!hashmap_isempty(nh->group)) {
                 if (in_addr_is_set(nh->family, &nh->gw))
