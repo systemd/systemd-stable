@@ -1924,6 +1924,11 @@ int manager_rtnl_process_route(sd_netlink *rtnl, sd_netlink_message *message, Ma
                 return process_route_one(m, link, type, TAKE_PTR(tmp), has_cacheinfo ? &cacheinfo : NULL);
 
         r = route_convert(m, tmp, &converted);
+        if (r == -ENOENT && !m->manage_foreign_nexthops) {
+                /* The route uses a nexthop we do not track, as ManageForeignNextHops=no. */
+                log_link_debug(link, "rtnl: received route with unknown nexthop ID %"PRIu32", ignoring.", tmp->nexthop_id);
+                return 0;
+        }
         if (r < 0) {
                 log_link_warning_errno(link, r, "rtnl: failed to convert received route, ignoring: %m");
                 return 0;
